@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Light theme -->
+    <color name="bg_light">#F7F6F2</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="primary">#01696F</color>
+    <color name="text_primary">#241F18</color>
+    <color name="text_muted">#6F6A62</color>
+    <color name="text_hint">#B0AAA2</color>
+    <color name="border">#D8D3CB</color>
+
+    <!-- Dark background layers -->
+    <color name="bg_dark">#0F0F0E</color>
+    <color name="dark_surface">#161614</color>
+    <color name="dark_surface_2">#1C1B19</color>
+    <color name="dark_input_bg">#131312</color>
+
+    <!-- Border / divider -->
+    <color name="dark_border">#272523</color>
+    <color name="dark_divider">#1E1D1B</color>
+
+    <!-- Text -->
+    <color name="dark_text_primary">#EDEAE4</color>
+    <color name="dark_text_muted">#9C9790</color>
+    <color name="dark_text_hint">#6B6862</color>
+    <color name="dark_text_faint">#5E5C57</color>
+
+    <!-- Primary accent — richer, warmer teal -->
+    <color name="dark_primary">#52A3B0</color>
+    <color name="dark_primary_hover">#66B5C0</color>
+    <color name="dark_primary_dim">#1E3638</color>
+    <color name="dark_primary_soft">#172C2E</color>
+
+    <!-- Icon -->
+    <color name="dark_icon">#7FA8AB</color>
+
+    <!-- Button text -->
+    <color name="dark_btn_text">#FFFFFF</color>
+
+    <!-- Error -->
+    <color name="dark_error">#D163A7</color>
+</resources>
