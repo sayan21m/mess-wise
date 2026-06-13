@@ -42,4 +42,12 @@
 
     <!-- Error -->
     <color name="dark_error">#D163A7</color>
+
+    <color name="mw_bg">#FFFDF7</color>
+    <color name="mw_surface">#FFFFFFFF</color>
+    <color name="mw_primary">#2E7D32</color>
+    <color name="mw_primary_light">#DDF3DF</color>
+    <color name="mw_text_active">#1B5E20</color>
+    <color name="mw_text_inactive">#8A8F98</color>
+    <color name="mw_badge">#FF7043</color>
 </resources>
