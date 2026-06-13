@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_dark"
     android:fillViewport="true"
+    android:fitsSystemWindows="true"
     android:overScrollMode="never">
 
     <LinearLayout
@@ -137,6 +139,7 @@
                         android:textSize="14sp"
                         android:inputType="textPersonName"
                         android:imeOptions="actionNext"
+                        android:nextFocusDown="@id/etManagerMail"
                         android:background="#1F1C1C"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp" />
@@ -177,6 +180,7 @@
                         android:textSize="14sp"
                         android:inputType="textEmailAddress"
                         android:imeOptions="actionNext"
+                        android:nextFocusDown="@id/etMessName"
                         android:background="#1F1C1C"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp" />
@@ -218,6 +222,7 @@
                         android:textSize="14sp"
                         android:inputType="textEmailAddress"
                         android:imeOptions="actionNext"
+                        android:nextFocusDown="@id/etCreatePassword"
                         android:background="#1F1C1C"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp" />
@@ -260,6 +265,7 @@
                         android:textSize="14sp"
                         android:inputType="textPassword"
                         android:imeOptions="actionNext"
+                        android:nextFocusDown="@id/etConfirmPassword"
                         android:background="#1F1C1C"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp" />
@@ -301,7 +307,7 @@
                         android:textColorHint="@color/dark_text_hint"
                         android:textSize="14sp"
                         android:inputType="textPassword"
-                        android:imeOptions="actionNext"
+                        android:imeOptions="actionDone"
                         android:background="#1F1C1C"
                         android:paddingTop="14dp"
                         android:paddingBottom="14dp" />
