@@ -1,3 +1,35 @@
 <resources>
     <string name="app_name">Mess Wise</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Manage your preference and account</string>
+    <string name="section_account">ACCOUNT</string>
+    <string name="section_preferences">PREFERENCES</string>
+    <string name="section_support">SUPPORT</string>
+    <string name="setting_profile">Profile</string>
+    <string name="setting_profile_desc">View and edit your profile</string>
+    <string name="setting_change_password">Change Password</string>
+    <string name="setting_change_password_desc">Update your password</string>
+    <string name="setting_update_mobile">Update Mobile Number</string>
+    <string name="setting_update_mobile_desc">Change your registered number</string>
+    <string name="setting_email_address">Email Address</string>
+    <string name="setting_email_address_desc">Update your email address</string>
+    <string name="setting_notifications">Notifications</string>
+    <string name="setting_notifications_desc">Manage notification preferences</string>
+    <string name="setting_theme">Theme</string>
+    <string name="setting_theme_desc">Dark</string>
+    <string name="setting_language">Language</string>
+    <string name="setting_language_desc">English</string>
+    <string name="setting_meal_preferences">Meal Preferences</string>
+    <string name="setting_meal_preferences_desc">Set your meal and food preferences</string>
+    <string name="setting_help_faqs">Help &amp; FAQs</string>
+    <string name="setting_help_faqs_desc">Get help and find answers</string>
+    <string name="setting_contact_support">Contact Support</string>
+    <string name="setting_contact_support_desc">We are here to help you</string>
+    <string name="setting_terms_conditions">Terms &amp; Conditions</string>
+    <string name="setting_terms_conditions_desc">Read our terms and conditions</string>
+    <string name="setting_privacy_policy">Privacy Policy</string>
+    <string name="setting_privacy_policy_desc">Read our privacy policy</string>
+    <string name="logout">Logout</string>
+    <string name="logout_desc">Sign out from your account</string>
+    <string name="version_text">Version 1.0.0</string>
 </resources>

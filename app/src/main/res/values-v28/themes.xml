@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MessWise" parent="Base.Theme.MessWise">
+        <item name="android:windowLayoutInDisplayCutoutMode">never</item>
+    </style>
+
+    <style name="Theme.MessWise.Dark" parent="Base.Theme.MessWise.Dark">
+        <item name="android:windowLayoutInDisplayCutoutMode">never</item>
+    </style>
+</resources>

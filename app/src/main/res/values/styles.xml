@@ -1,18 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MessWise" parent="Theme.Material3.Light.NoActionBar">
-        <item name="colorPrimary">@color/mw_primary</item>
-        <item name="android:windowBackground">@color/mw_bg</item>
-    </style>
-
-    <style name="MessWise.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/mw_primary_light</item>
-        <item name="shapeAppearance">@style/MessWise.IndicatorShape</item>
-    </style>
-
-    <style name="MessWise.IndicatorShape" parent="">
+    <style name="ShapeAppearance.MessWise.IndicatorShape" parent="ShapeAppearance.Material3.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">18dp</item>
+    </style>
+
+    <style name="App.CustomIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/dark_primary_dim</item>
+        <item name="marginHorizontal">12dp</item>
     </style>
 
 </resources>
