@@ -54,7 +54,7 @@
     <color name="mw_text_active">#1B5E20</color>
     <color name="mw_text_inactive">#8A8F98</color>
     <color name="mw_badge">#FF7043</color>
-
+    <color name="mw_text">#FFFFFF</color>
     <color name="mw_bg">#000000</color>
     <color name="nav_selected">#4F8CFF</color>
     <color name="nav_unselected">#A0A0A0</color>

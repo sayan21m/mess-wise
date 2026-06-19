@@ -1,5 +1,6 @@
 package com.srtech.messwise.fragment_ui.dashboard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,10 +13,11 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.srtech.messwise.R;
+import com.srtech.messwise.ui.SettingsActivity;
 
 public class HomeFragment extends Fragment {
 
-    private ImageView imgProfileGif;
+    private ImageView profile;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -28,6 +30,14 @@ public class HomeFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.home_fragment, container, false);
+
+        profile = view.findViewById(R.id.profile);
+
+        profile.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
+        });
+
         return view;
     }
 }

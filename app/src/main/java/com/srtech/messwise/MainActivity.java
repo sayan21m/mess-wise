@@ -3,7 +3,11 @@ package com.srtech.messwise;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.OvershootInterpolator;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -14,11 +18,20 @@ import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
+import com.srtech.messwise.ui.AdminWheelMenuView;
+
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
+    private FrameLayout adminWheelContainer;
+    private AdminWheelMenuView adminWheelMenu;
     private BottomNavigationView bottomNav;
+    private boolean isWheelOpen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+//            v.setPadding(0, 0, 0, 0);
             return insets;
         });
 
@@ -46,19 +60,69 @@ public class MainActivity extends AppCompatActivity {
             loadFragment(new HomeFragment());
         }
 
+        adminWheelContainer = findViewById(R.id.adminWheelContainer);
+        adminWheelMenu = findViewById(R.id.adminWheelMenu);
+
+        adminWheelMenu.setOnWheelItemClickListener(index -> {
+            closeAdminWheel();
+
+//            switch (index) {
+//                case 0:
+//                    startActivity(new Intent(this, ManageMembersActivity.class));
+//                    break;
+//                case 1:
+//                    startActivity(new Intent(this, MealActivity.class));
+//                    break;
+//                case 2:
+//                    startActivity(new Intent(this, ReportsActivity.class));
+//                    break;
+//                case 3:
+//                    startActivity(new Intent(this, SettingsActivity.class));
+//                    break;
+//            }
+        });
+
+        adminWheelContainer.setOnClickListener(v -> closeAdminWheel());
+
         bottomNav.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
             int id = item.getItemId();
 
-            if (id == R.id.homeFragment) selectedFragment = new HomeFragment();
+            if (id == R.id.adminFragment) {
+                toggleAdminWheel();
+                return false;
+            } else {
+                closeAdminWheel();
 
-            if (selectedFragment != null) {
-                loadFragment(selectedFragment);
-                return true;
+                if (id == R.id.homeFragment) {
+                    loadFragment(new HomeFragment());
+                    return true;
+                }
             }
-
             return false;
         });
+    }
+
+    private void toggleAdminWheel() {
+        if (isWheelOpen) closeAdminWheel();
+        else openAdminWheel();
+    }
+
+    private void openAdminWheel() {
+        isWheelOpen = true;
+        adminWheelContainer.setVisibility(View.VISIBLE);
+        adminWheelContainer.setAlpha(0f);
+        adminWheelContainer.animate().alpha(1f).setDuration(180).start();
+        adminWheelMenu.startOpenAnimation();
+    }
+
+    private void closeAdminWheel() {
+        if (!isWheelOpen) return;
+        isWheelOpen = false;
+        adminWheelContainer.animate()
+                .alpha(0f)
+                .setDuration(150)
+                .withEndAction(() -> adminWheelContainer.setVisibility(View.GONE))
+                .start();
     }
 
     private void loadFragment(Fragment fragment) {

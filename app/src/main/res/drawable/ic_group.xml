@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    ```
+    <!-- Center Person -->
+    <path
+        android:fillColor="#4F8CFF"
+        android:pathData="M12,11A3,3 0 1,1 12,5A3,3 0 1,1 12,11Z"/>
+
+    <path
+        android:fillColor="#4F8CFF"
+        android:pathData="M12,13C9.33,13 4,14.34 4,17V19H20V17C20,14.34 14.67,13 12,13Z"/>
+
+    <!-- Left Person -->
+    <path
+        android:fillColor="#82AFFF"
+        android:pathData="M6.5,10A2.5,2.5 0 1,1 6.5,5A2.5,2.5 0 1,1 6.5,10Z"/>
+
+    <!-- Right Person -->
+    <path
+        android:fillColor="#82AFFF"
+        android:pathData="M17.5,10A2.5,2.5 0 1,1 17.5,5A2.5,2.5 0 1,1 17.5,10Z"/>
+    ```
+
+</vector>

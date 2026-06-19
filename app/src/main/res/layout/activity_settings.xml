@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
+    android:id="@+id/main"
     android:fillViewport="true">
 
     <LinearLayout
@@ -254,6 +255,7 @@
         <!-- LOGOUT -->
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/logout_btn"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="32dp"

@@ -16,9 +16,9 @@
         android:title="Expenses" />
 
     <item
-        android:id="@+id/mealFragment"
-        android:icon="@drawable/ic_meal"
-        android:title="Meal" />
+        android:id="@+id/adminFragment"
+        android:icon="@drawable/ic_privacy"
+        android:title="Admin" />
 
     <item
         android:id="@+id/SummaryFragment"
