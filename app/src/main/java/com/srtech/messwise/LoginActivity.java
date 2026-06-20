@@ -9,6 +9,7 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -187,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
 
                     String messName = snapshot.child("messName").getValue(String.class);
-                    boolean isAdmin = snapshot.child("admin_uid").getValue(String.class) == userId;
+                    boolean isAdmin = userId.equals(snapshot.child("admin_uid").getValue(String.class));
                     boolean isMember = snapshot.child("member").child(userId).exists();
 
                     if (isAdmin || isMember) {

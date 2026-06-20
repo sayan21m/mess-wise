@@ -1,6 +1,8 @@
 package com.srtech.messwise;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,13 +30,17 @@ import com.srtech.messwise.ui.AdminWheelMenuView;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
     private FrameLayout adminWheelContainer;
     private AdminWheelMenuView adminWheelMenu;
     private BottomNavigationView bottomNav;
-    private boolean isWheelOpen = false;
+    private boolean isWheelOpen = false, isAdmin = false;
+    private SharedPreferences prefs;
+    private String userId, messId, messName;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
             loadFragment(new HomeFragment());
         }
 
+        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        userId = prefs.getString("userId", null);
+        messId = prefs.getString("messId", null);
+        messName = prefs.getString("messName", null);
+        isAdmin = prefs.getBoolean("isAdmin", false);
+
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);
 
@@ -92,8 +104,12 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.adminFragment) {
-                toggleAdminWheel();
-                return false;
+                if (isAdmin) {
+                    toggleAdminWheel();
+                    return false;
+                } else {
+                    Toast.makeText(this, "You are not an admin!", Toast.LENGTH_SHORT).show();
+                }
             } else {
                 closeAdminWheel();
 
