@@ -448,13 +448,14 @@
                         app:layout_constraintTop_toBottomOf="@id/tvParticipating" />
 
                     <TextView
+                        android:id="@+id/show_date_2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:background="@drawable/card_background"
                         android:gravity="center"
                         android:padding="6dp"
-                        android:text="48 Entries"
+                        android:text="June 2025"
                         android:textColor="#4CAF50"
                         android:textSize="10sp"
                         app:drawableStartCompat="@drawable/ic_summary"
@@ -505,170 +506,7 @@
                     android:orientation="vertical"
                     app:layout_constraintTop_toBottomOf="@id/iconDistribution">
 
-                    <!-- Member Row Template -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-                        <TextView
-                            android:layout_width="60dp"
-                            android:layout_height="wrap_content"
-                            android:text="Sayan"
-                            android:textColor="@color/white"
-                            android:textSize="13sp" />
-                        <ProgressBar
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_height="8dp"
-                            android:layout_weight="1"
-                            android:layout_marginHorizontal="12dp"
-                            android:progress="80"
-                            android:progressTint="#7C4DFF"
-                            android:progressBackgroundTint="@color/dark_border"/>
-                        <TextView
-                            android:layout_width="30dp"
-                            android:layout_height="wrap_content"
-                            android:text="24"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-                        <TextView
-                            android:layout_width="60dp"
-                            android:layout_height="wrap_content"
-                            android:text="Rahul"
-                            android:textColor="@color/white"
-                            android:textSize="13sp" />
-                        <ProgressBar
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_height="8dp"
-                            android:layout_weight="1"
-                            android:layout_marginHorizontal="12dp"
-                            android:progress="60"
-                            android:progressTint="@color/teal_accent"
-                            android:progressBackgroundTint="@color/dark_border"/>
-                        <TextView
-                            android:layout_width="30dp"
-                            android:layout_height="wrap_content"
-                            android:text="18"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-                        <TextView
-                            android:layout_width="60dp"
-                            android:layout_height="wrap_content"
-                            android:text="Ankit"
-                            android:textColor="@color/white"
-                            android:textSize="13sp" />
-                        <ProgressBar
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_height="8dp"
-                            android:layout_weight="1"
-                            android:layout_marginHorizontal="12dp"
-                            android:progress="40"
-                            android:progressTint="#4F8CFF"
-                            android:progressBackgroundTint="@color/dark_border"/>
-                        <TextView
-                            android:layout_width="30dp"
-                            android:layout_height="wrap_content"
-                            android:text="12"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-                        <TextView
-                            android:layout_width="60dp"
-                            android:layout_height="wrap_content"
-                            android:text="Priya"
-                            android:textColor="@color/white"
-                            android:textSize="13sp" />
-                        <ProgressBar
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_height="8dp"
-                            android:layout_weight="1"
-                            android:layout_marginHorizontal="12dp"
-                            android:progress="70"
-                            android:progressTint="#4CAF50"
-                            android:progressBackgroundTint="@color/dark_border"/>
-                        <TextView
-                            android:layout_width="30dp"
-                            android:layout_height="wrap_content"
-                            android:text="21"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-                        <TextView
-                            android:layout_width="60dp"
-                            android:layout_height="wrap_content"
-                            android:text="Tushar"
-                            android:textColor="@color/white"
-                            android:textSize="13sp" />
-                        <ProgressBar
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_height="8dp"
-                            android:layout_weight="1"
-                            android:layout_marginHorizontal="12dp"
-                            android:progress="30"
-                            android:progressTint="#FF7043"
-                            android:progressBackgroundTint="@color/dark_border"/>
-                        <TextView
-                            android:layout_width="30dp"
-                            android:layout_height="wrap_content"
-                            android:text="9"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnDetailedReport"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:padding="8dp"
-                    android:text="VIEW DETAILED REPORT"
-                    android:textColor="@color/teal_accent"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    app:drawableEndCompat="@drawable/ic_chevron_right"
-                    app:drawableTint="@color/teal_accent"
-                    android:drawablePadding="8dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/distributionList" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
