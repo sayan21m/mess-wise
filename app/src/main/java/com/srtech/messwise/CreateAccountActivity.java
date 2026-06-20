@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.srtech.messwise.utils.FormUtils;
 
 import java.util.UUID;
 
@@ -59,7 +60,11 @@ public class CreateAccountActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+
+            int bottomPadding = Math.max(systemBars.bottom, ime.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding);
+
             return insets;
         });
 
@@ -78,6 +83,9 @@ public class CreateAccountActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         cbAgree = findViewById(R.id.cbAgree);
         loginActivity = findViewById(R.id.loginActivity);
+
+        // Setup automatic form scrolling
+        FormUtils.setupAutoScroll(etManagerName, etManagerMail, etMessName, etCreatePassword, etConfirmPassword);
 
         typeAdmin.setOnClickListener(v -> {
             typeAdmin.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.dark_primary));

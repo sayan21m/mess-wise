@@ -28,6 +28,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.srtech.messwise.utils.FormUtils;
 
 public class LoginActivity extends AppCompatActivity {
     TextView createAccount;
@@ -56,7 +57,11 @@ public class LoginActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+
+            int bottomPadding = Math.max(systemBars.bottom, ime.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding);
+
             return insets;
         });
 
@@ -70,6 +75,9 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         cbRemember = findViewById(R.id.cbRemember);
         loginBtn = findViewById(R.id.btnLogin);
+
+        // Setup automatic form scrolling
+        FormUtils.setupAutoScroll(etMessId, etUserMail, etPassword);
 
         // Check if user is already logged in
         if (isUserLoggedIn()) {

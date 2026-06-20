@@ -30,8 +30,7 @@
                 android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_mess_logo"
-                android:contentDescription="MessWise Logo"
-                app:tint="@color/dark_primary" />
+                android:contentDescription="MessWise Logo" />
 
         </androidx.cardview.widget.CardView>
 
