@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/bg_dark"
     android:fillViewport="true"
-    android:fitsSystemWindows="true"
     android:overScrollMode="never">
 
     <LinearLayout
@@ -14,7 +13,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:padding="24dp">
+        android:padding="24dp"
+        android:paddingBottom="80dp">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
