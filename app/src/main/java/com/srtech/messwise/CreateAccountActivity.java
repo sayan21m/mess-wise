@@ -211,22 +211,57 @@ public class CreateAccountActivity extends AppCompatActivity {
                     createAccountBtn.setText("Create Account");
 
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show();
                         FirebaseUser user = firebaseAuth.getCurrentUser();
-                        String userId = user.getUid();
+                        handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
+                    } else {
+                        Exception e = task.getException();
 
+                        if (e instanceof com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                            firebaseAuth.signInWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener(this, loginTask -> {
+                                        if (loginTask.isSuccessful()) {
+                                            FirebaseUser user = firebaseAuth.getCurrentUser();
+                                            handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
+                                        } else {
+                                            Toast.makeText(this, "Email exists, but login failed. Check password.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        } else {
+                            Toast.makeText(this, "Creation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void handleMessJoinAfterAuth(FirebaseUser user, String messId, String name, String email, String messName, boolean rememberMe) {
+        if (user == null) {
+            Toast.makeText(this, "User is null", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uid = user.getUid();
+
+        db.getReference()
+                .child("messes")
+                .child(messId)
+                .child("members")
+                .child(uid)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        Toast.makeText(this, "You are already a member of this mess", Toast.LENGTH_SHORT).show();
+                    } else {
                         saveToDatabase(messId, user, name, email);
 
-                        // Save login state if remember me is checked
                         if (rememberMe) {
-                            saveLoginState(userId, messId, messName, isAdmin);
+                            saveLoginState(uid, messId, messName, isAdmin);
                         }
 
-                        // Navigate to main AFTER account is created
-                        navigateToMain(userId, messId, messName, isAdmin);
-                    } else {
-                        Toast.makeText(this, "Creation failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        navigateToMain(uid, messId, messName, isAdmin);
                     }
+                })
+                .addOnFailureListener(error -> {
+                    Toast.makeText(this, "Failed to check mess membership", Toast.LENGTH_SHORT).show();
                 });
     }
 

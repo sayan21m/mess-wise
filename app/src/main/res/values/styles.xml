@@ -11,4 +11,26 @@
         <item name="marginHorizontal">12dp</item>
     </style>
 
+    <style name="CustomDatePickerTheme"
+        parent="ThemeOverlay.Material3.MaterialCalendar">
+
+        <item name="colorSurface">#000000</item>
+        <item name="colorOnSurface">#0B91A2</item>
+
+        <item name="colorPrimary">#00BFA5</item>
+        <item name="colorOnPrimary">#0B91A2</item>
+
+        <item name="materialCalendarStyle">
+            @style/MessWiseCalendarStyle
+        </item>
+
+    </style>
+
+    <style name="MessWiseCalendarStyle"
+        parent="Widget.Material3.MaterialCalendar">
+
+        <item name="backgroundTint">#000000</item>
+
+    </style>
+
 </resources>

@@ -114,7 +114,7 @@ public class LoginActivity extends AppCompatActivity {
         editor.putString("messId", messId);
         editor.putString("messName", messName);
         editor.putBoolean("isAdmin", isAdmin);
-        editor.apply();  // Save asynchronously
+        editor.apply();
     }
 
     private void clearLoginState() {

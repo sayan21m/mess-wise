@@ -1,5 +1,6 @@
 package com.srtech.messwise;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -19,6 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.srtech.messwise.admin_ui.MealAdminActivity;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
@@ -66,20 +69,20 @@ public class MainActivity extends AppCompatActivity {
         adminWheelMenu.setOnWheelItemClickListener(index -> {
             closeAdminWheel();
 
-//            switch (index) {
+            switch (index) {
 //                case 0:
 //                    startActivity(new Intent(this, ManageMembersActivity.class));
 //                    break;
-//                case 1:
-//                    startActivity(new Intent(this, MealActivity.class));
-//                    break;
+                case 1:
+                    startActivity(new Intent(this, MealAdminActivity.class));
+                    break;
 //                case 2:
 //                    startActivity(new Intent(this, ReportsActivity.class));
 //                    break;
 //                case 3:
 //                    startActivity(new Intent(this, SettingsActivity.class));
 //                    break;
-//            }
+            }
         });
 
         adminWheelContainer.setOnClickListener(v -> closeAdminWheel());

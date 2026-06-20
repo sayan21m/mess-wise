@@ -16,7 +16,6 @@
     <color name="color_bg">#0F1117</color>
     <color name="color_surface">#161B27</color>
     <color name="color_border">#1F2637</color>
-<!--    <color name="bg_dark">#0F0F0E</color>-->
     <color name="bg_dark">#0F1117</color>
     <color name="dark_surface">#161614</color>
     <color name="dark_surface_2">#1C1B19</color>
@@ -32,7 +31,7 @@
     <color name="dark_text_hint">#6B6862</color>
     <color name="dark_text_faint">#5E5C57</color>
 
-    <!-- Primary accent — richer, warmer teal -->
+    <!-- Primary accent -->
     <color name="dark_primary">#52A3B0</color>
     <color name="dark_primary_hover">#66B5C0</color>
     <color name="dark_primary_dim">#1E3638</color>
@@ -47,18 +46,24 @@
     <!-- Error -->
     <color name="dark_error">#D55467</color>
 
-<!--    <color name="mw_bg">#FFFDF7</color>-->
-    <color name="mw_surface">#FFFFFFFF</color>
     <color name="mw_primary">#2E7D32</color>
     <color name="mw_primary_light">#DDF3DF</color>
     <color name="mw_text_active">#1B5E20</color>
     <color name="mw_text_inactive">#8A8F98</color>
     <color name="mw_badge">#FF7043</color>
     <color name="mw_text">#FFFFFF</color>
-    <color name="mw_bg">#000000</color>
+
     <color name="nav_selected">#4F8CFF</color>
     <color name="nav_unselected">#A0A0A0</color>
     <color name="nav_indicator">#E8E1FF</color>
-
     <color name="dark_success">#22C55E</color>
+
+    <!-- Premium Dark Theme (Fintech/Dashboard) -->
+    <color name="mw_bg">#0B1120</color>
+    <color name="mw_surface">#111827</color>
+    <color name="mw_accent">#00BFA5</color>
+    <color name="mw_secondary">#94A3B8</color>
+    <color name="mw_border">#1E293B</color>
+
+    <color name="teal_accent">#00BFA5</color>
 </resources>
