@@ -1,0 +1,67 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Background (optional, but keep it for consistency if needed) -->
+    <!-- <path android:fillColor="#0B1120" android:pathData="M50,50m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0" /> -->
+
+    <group android:name="bobbing_group" android:pivotX="50" android:pivotY="50">
+        <!-- Main Duck Group -->
+        <group android:name="duck_main">
+
+            <!-- Body -->
+            <path android:name="body" android:pathData="M25,70 C25,55 35,45 50,45 C65,45 75,55 75,70 C75,80 65,90 50,90 C35,90 25,80 25,70 Z">
+                <aapt:attr name="android:fillColor">
+                    <gradient android:startX="25" android:startY="45" android:endX="75" android:endY="90" android:type="linear">
+                        <item android:color="#FFD700" android:offset="0.0" />
+                        <item android:color="#B8860B" android:offset="1.0" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+
+            <!-- Head & Helmet Group -->
+            <group android:name="head_group" android:pivotX="65" android:pivotY="40">
+                <!-- Head -->
+                <path android:name="head" android:pathData="M53,40 A12,12 0 1,1 77,40 A12,12 0 1,1 53,40">
+                    <aapt:attr name="android:fillColor">
+                        <gradient android:startX="53" android:startY="28" android:endX="77" android:endY="52" android:type="linear">
+                            <item android:color="#FFD700" android:offset="0.0" />
+                            <item android:color="#B8860B" android:offset="1.0" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+                <!-- Eye -->
+                <path android:fillColor="#000000" android:pathData="M68,38 A1.5,1.5 0 1,1 71,38 A1.5,1.5 0 1,1 68,38" />
+                <!-- Beak -->
+                <path android:fillColor="#FF8C00" android:pathData="M76,40 L87,43 L76,46 Z" />
+                <!-- Helmet -->
+                <path android:fillColor="#2C3E50" android:pathData="M53,38 Q53,24 65,24 Q77,24 77,38 L53,38 Z" />
+                <!-- Helmet Visor -->
+                <path android:fillColor="#BDC3C7" android:pathData="M63,30 L75,30 L75,33 L63,33 Z" />
+            </group>
+
+            <!-- Wing holding Bat -->
+            <group android:name="wing_group" android:pivotX="40" android:pivotY="60">
+                <path android:fillColor="#DAA520" android:pathData="M35,60 C40,50 50,60 45,70 C40,80 30,70 35,60 Z" />
+                <!-- Bat -->
+                <group android:name="bat_group" android:pivotX="40" android:pivotY="65" android:rotation="-15">
+                    <path android:fillColor="#8B4513" android:pathData="M38,65 L35,95 L45,95 L42,65 Z" /> <!-- Bat blade -->
+                    <path android:fillColor="#5D4037" android:pathData="M39,55 L38,65 L42,65 L41,55 Z" /> <!-- Handle -->
+                </group>
+            </group>
+
+        </group>
+
+        <!-- Legs -->
+        <group android:name="leg_left_group" android:pivotX="45" android:pivotY="85">
+             <path android:fillColor="#F39C12" android:pathData="M43,85 L43,98 M40,98 L46,98" android:strokeWidth="2" android:strokeColor="#F39C12" />
+        </group>
+        <group android:name="leg_right_group" android:pivotX="55" android:pivotY="85">
+             <path android:fillColor="#F39C12" android:pathData="M57,85 L57,98 M54,98 L60,98" android:strokeWidth="2" android:strokeColor="#F39C12" />
+        </group>
+
+    </group>
+</vector>

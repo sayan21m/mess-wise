@@ -1,17 +1,24 @@
 package com.srtech.messwise;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -96,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("SGT", "MainActivity Init - userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
 
+        checkAndShowMonthlyAwards();
+
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);
 
@@ -172,6 +181,171 @@ public class MainActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
+    }
+
+    private void checkAndShowMonthlyAwards() {
+        if (messId == null) return;
+
+        Calendar now = Calendar.getInstance();
+        int currentMonth = now.get(Calendar.MONTH);
+        int currentYear = now.get(Calendar.YEAR);
+        String lastShown = prefs.getString("last_award_shown", "");
+        String currentKey = currentMonth + "_" + currentYear;
+
+        // Only show if not already shown this month
+        if (lastShown.equals(currentKey)) return;
+
+        Calendar prevMonth = (Calendar) now.clone();
+        prevMonth.add(Calendar.MONTH, -1);
+        int targetMonth = prevMonth.get(Calendar.MONTH);
+        int targetYear = prevMonth.get(Calendar.YEAR);
+
+        SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
+
+        db.getReference().child(messId).child("member").get().addOnSuccessListener(snapshot -> {
+            java.util.List<String> winners = new java.util.ArrayList<>();
+            java.util.List<String> ducks = new java.util.ArrayList<>();
+            int maxMeals = -1, minMeals = Integer.MAX_VALUE;
+            boolean dataFound = false;
+
+            for (DataSnapshot memberSnapshot : snapshot.getChildren()) {
+                String name = memberSnapshot.child("name").getValue(String.class);
+                if (name == null) continue;
+                
+                int totalMeals = 0;
+                DataSnapshot history = memberSnapshot.child("meal_count_history");
+
+                for (DataSnapshot entry : history.getChildren()) {
+                    String dateKey = entry.getKey();
+                    if (dateKey == null) continue;
+                    try {
+                        java.util.Date parsedDate = entryFormat.parse(dateKey);
+                        if (parsedDate != null) {
+                            Calendar entryCal = Calendar.getInstance();
+                            entryCal.setTime(parsedDate);
+                            if (entryCal.get(Calendar.MONTH) == targetMonth && entryCal.get(Calendar.YEAR) == targetYear) {
+                                Integer count = entry.getValue(Integer.class);
+                                if (count != null) {
+                                    totalMeals += count;
+                                    dataFound = true;
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (totalMeals > maxMeals) {
+                    maxMeals = totalMeals;
+                    winners.clear();
+                    winners.add(name);
+                } else if (totalMeals == maxMeals && maxMeals != -1) {
+                    winners.add(name);
+                }
+
+                if (totalMeals < minMeals && totalMeals >= 0) {
+                    minMeals = totalMeals;
+                    ducks.clear();
+                    ducks.add(name);
+                } else if (totalMeals == minMeals && minMeals != Integer.MAX_VALUE) {
+                    ducks.add(name);
+                }
+            }
+
+            if (dataFound) {
+                String winnersStr = String.join(", ", winners);
+                String ducksStr = String.join(", ", ducks);
+                showAwardDialog(winnersStr, maxMeals, ducksStr, minMeals, prevMonth);
+                prefs.edit().putString("last_award_shown", currentKey).apply();
+            }
+        });
+    }
+
+    private void showAwardDialog(String winner, int maxMeals, String duck, int minMeals, Calendar month) {
+        Dialog dialog = new Dialog(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_monthly_awards, null);
+        dialog.setContentView(dialogView);
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView tvMonth = dialogView.findViewById(R.id.tvMonth);
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+        tvMonth.setText(sdf.format(month.getTime()));
+
+        ((TextView) dialogView.findViewById(R.id.tvWinnerName)).setText(winner);
+        ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(maxMeals + " Meals");
+        ((TextView) dialogView.findViewById(R.id.tvDuckName)).setText(duck);
+        ((TextView) dialogView.findViewById(R.id.tvDuckMeals)).setText(minMeals + " Meals");
+
+        ImageView ivDuck = dialogView.findViewById(R.id.ivDuck);
+        TextView tvDuckLabel = dialogView.findViewById(R.id.tvDuckLabel);
+        
+        // Use the new animated golden duck
+        ivDuck.setImageResource(R.drawable.ic_duck_animated);
+        Drawable drawable = ivDuck.getDrawable();
+        if (drawable instanceof Animatable) {
+            ((Animatable) drawable).start();
+        }
+
+        if (minMeals == 0) {
+            tvDuckLabel.setText("🦆 GOLDEN DUCK");
+            tvDuckLabel.setTextColor(Color.parseColor("#FFD700"));
+        }
+
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+
+        View winnerLayout = dialogView.findViewById(R.id.winnerLayout);
+        View duckLayout = dialogView.findViewById(R.id.duckLayout);
+        View btnClose = dialogView.findViewById(R.id.btnClose);
+        View ivWinner = dialogView.findViewById(R.id.ivWinner);
+        // ivDuck is already defined as ImageView earlier in the method
+        
+        // Initial States
+        winnerLayout.setAlpha(0f);
+        winnerLayout.setScaleX(0.8f);
+        winnerLayout.setScaleY(0.8f);
+        
+        duckLayout.setAlpha(0f);
+        duckLayout.setTranslationX(-100f);
+        
+        btnClose.setAlpha(0f);
+        btnClose.setTranslationY(50f);
+
+        dialog.show();
+        
+        // Animation Sequence
+        winnerLayout.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(1000)
+                .setStartDelay(300)
+                .setInterpolator(new OvershootInterpolator(1.2f))
+                .start();
+
+        ivWinner.animate()
+                .rotationY(360f)
+                .setDuration(1500)
+                .setStartDelay(500)
+                .start();
+
+        // Duck Animation: "Waddle" Walk from left
+        duckLayout.animate()
+                .alpha(1f)
+                .translationX(0f)
+                .setDuration(1200)
+                .setStartDelay(1000)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+
+        btnClose.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(600)
+                .setStartDelay(1800)
+                .start();
     }
 
     private void resetMeal() {

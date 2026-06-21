@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Premium Metallic Gold Duck Body -->
+    <path
+        android:pathData="M16,14c1.66,0 3,1.34 3,3s-1.34,3 -3,3H8c-2.21,0 -4,-1.79 -4,-4c0,-1.71 1.07,-3.17 2.58,-3.75C6.21,11.83 6,11.19 6,10.5c0,-1.93 1.57,-3.5 3.5,-3.5c0.55,0 1.07,0.13 1.53,0.36C11.66,6.34 13.16,5.5 14.83,5.5c2.48,0 4.5,2.02 4.5,4.5c0,0.28 -0.03,0.55 -0.08,0.82c1.46,0.39 2.58,1.72 2.58,3.3c0,1.86 -1.47,3.38 -3.31,3.48c-0.16,-1.98 -1.82,-3.54 -3.85,-3.54L16,14.06L16,14z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="20"
+                android:endY="20"
+                android:startX="4"
+                android:startY="4"
+                android:type="linear">
+                <item android:color="#FFFFD700" android:offset="0.0" />
+                <item android:color="#FFF59E0B" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Professional Beak -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M19.33,10L22,10.5L20,12L21.5,13.5L19,13Z" />
+
+    <!-- Cricket Bat (Integrated) -->
+    <path
+        android:fillColor="#8D6E63"
+        android:pathData="M7,7.5L5.5,14L7.5,14L9,7.5Z" />
+
+    <!-- Cricket Ball (Red Accent) -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M17.5,17.5m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+
+    <!-- Eye (Minimalist) -->
+    <path
+        android:fillColor="#0B1120"
+        android:pathData="M13,9.5m-0.5,0a0.5,0.5 0,1 1,1 0a0.5,0.5 0,1 1,-1 0" />
+
+</vector>
