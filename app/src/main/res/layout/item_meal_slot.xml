@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_admin_popup"
+    android:backgroundTint="#1F2937"
+    android:padding="12dp">
+
+    <View
+        android:id="@+id/iconBg"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_profile_circle"
+        android:backgroundTint="#2D3748"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_meal"
+        app:layout_constraintBottom_toBottomOf="@id/iconBg"
+        app:layout_constraintEnd_toEndOf="@id/iconBg"
+        app:layout_constraintStart_toStartOf="@id/iconBg"
+        app:layout_constraintTop_toTopOf="@id/iconBg"
+        app:tint="#FFB300" />
+
+    <TextView
+        android:id="@+id/tvSlotName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:text="Lunch"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/ivDelete"
+        app:layout_constraintStart_toEndOf="@id/iconBg"
+        app:layout_constraintTop_toTopOf="@id/iconBg" />
+
+    <TextView
+        android:id="@+id/tvSlotTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="2dp"
+        android:text="12:30 PM"
+        android:textColor="@color/dark_text_muted"
+        android:textSize="13sp"
+        app:drawableStartCompat="@drawable/ic_calendar_clock"
+        app:drawableTint="@color/dark_text_hint"
+        android:drawablePadding="6dp"
+        app:layout_constraintBottom_toBottomOf="@id/iconBg"
+        app:layout_constraintEnd_toStartOf="@id/ivDelete"
+        app:layout_constraintStart_toEndOf="@id/iconBg"
+        app:layout_constraintTop_toBottomOf="@id/tvSlotName" />
+
+    <ImageView
+        android:id="@+id/ivDelete"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_logout"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/dark_error" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

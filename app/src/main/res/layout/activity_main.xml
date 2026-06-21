@@ -24,15 +24,18 @@
     <FrameLayout
         android:id="@+id/adminWheelContainer"
         android:layout_width="match_parent"
-        android:layout_height="260dp"
-        android:layout_marginStart="130dp"
-        android:layout_above="@id/bottomNav"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone">
 
         <com.srtech.messwise.ui.AdminWheelMenuView
             android:id="@+id/adminWheelMenu"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="260dp"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="75dp" />
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

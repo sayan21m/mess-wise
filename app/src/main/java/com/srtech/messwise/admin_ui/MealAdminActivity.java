@@ -6,11 +6,16 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.OvershootInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -19,7 +24,10 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -147,7 +155,9 @@ public class MealAdminActivity extends AppCompatActivity {
                     .child("meal_count_history").child(date).setValue(count)
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(this, "Meal count updated", Toast.LENGTH_SHORT).show();
+                        etMeals.setText("1");
                         etNote.setText("");
+                        hideKeyboard();
                     });
 
             // Save note if not empty
@@ -176,6 +186,84 @@ public class MealAdminActivity extends AppCompatActivity {
             }
         });
 
+        checkPendingLeaves();
+    }
+
+    private void checkPendingLeaves() {
+        if (messId == null) return;
+
+        db.getReference().child(messId).child("member").get().addOnSuccessListener(snapshot -> {
+            ArrayList<String> names = new ArrayList<>();
+            ArrayList<String> slotDetails = new ArrayList<>();
+            ArrayList<String> pendingUids = new ArrayList<>();
+
+            for (DataSnapshot memberSnapshot : snapshot.getChildren()) {
+                Boolean hasLeave = memberSnapshot.child("next_meal_leave").getValue(Boolean.class);
+                if (hasLeave != null && hasLeave) {
+                    names.add(memberSnapshot.child("name").getValue(String.class));
+                    String slot = memberSnapshot.child("pending_leave_slot").getValue(String.class);
+                    slotDetails.add(slot != null ? slot : "Next Meal");
+                    pendingUids.add(memberSnapshot.getKey());
+                }
+            }
+
+            if (!names.isEmpty()) {
+                showLeaveDialog(names, slotDetails, pendingUids);
+            }
+        });
+    }
+
+    private void showLeaveDialog(ArrayList<String> names, ArrayList<String> slotDetails, ArrayList<String> uids) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pending_leaves, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        RecyclerView rvLeaves = dialogView.findViewById(R.id.rvLeaves);
+        rvLeaves.setLayoutManager(new LinearLayoutManager(this));
+        
+        // Simple Adapter for the list
+        rvLeaves.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_pending_leave, parent, false);
+                return new RecyclerView.ViewHolder(v) {};
+            }
+
+            @Override
+            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                ((TextView) holder.itemView.findViewById(R.id.tvName)).setText(names.get(position));
+                ((TextView) holder.itemView.findViewById(R.id.tvReason)).setText(slotDetails.get(position));
+                
+                // For now, date is always Today in this context
+                String today = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Calendar.getInstance().getTime());
+                ((TextView) holder.itemView.findViewById(R.id.tvDate)).setText(today);
+            }
+
+            @Override
+            public int getItemCount() {
+                return names.size();
+            }
+        });
+
+        View.OnClickListener closeListener = v -> {
+            for (String uid : uids) {
+                db.getReference().child(messId).child("member").child(uid).child("next_meal_leave").removeValue();
+                db.getReference().child(messId).child("member").child(uid).child("pending_leave_slot").removeValue();
+            }
+            dialog.dismiss();
+        };
+
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(closeListener);
+        dialogView.findViewById(R.id.btnDialogClose).setOnClickListener(closeListener);
+
+        dialog.show();
     }
 
     private void loadMealData() {
@@ -321,6 +409,16 @@ public class MealAdminActivity extends AppCompatActivity {
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
     }
 
     private static class MemberMeal {

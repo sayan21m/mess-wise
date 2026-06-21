@@ -74,7 +74,7 @@ public class AdminWheelMenuView extends View {
         super.onDraw(canvas);
 
         float cx = getWidth() / 2f;
-        float cy = getHeight() - dp(40);
+        float cy = getHeight(); // Origin at the bottom center
         float radius = dp(130) * revealProgress;
         float itemRadius = dp(34);
 
@@ -136,13 +136,32 @@ public class AdminWheelMenuView extends View {
     }
 
     public void startOpenAnimation() {
-        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        ValueAnimator animator = ValueAnimator.ofFloat(revealProgress, 1f);
         animator.setDuration(350);
         animator.setInterpolator(new OvershootInterpolator(1.15f));
         animator.addUpdateListener(a -> {
             revealProgress = (float) a.getAnimatedValue();
             invalidate();
         });
+        animator.start();
+    }
+
+    public void startCloseAnimation(Runnable endAction) {
+        ValueAnimator animator = ValueAnimator.ofFloat(revealProgress, 0f);
+        animator.setDuration(250);
+        animator.setInterpolator(new OvershootInterpolator(0.8f));
+        animator.addUpdateListener(a -> {
+            revealProgress = (float) a.getAnimatedValue();
+            invalidate();
+        });
+        if (endAction != null) {
+            animator.addListener(new android.animation.AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(android.animation.Animator animation) {
+                    endAction.run();
+                }
+            });
+        }
         animator.start();
     }
 

@@ -1,6 +1,7 @@
 package com.srtech.messwise;
 
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,14 +14,19 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.OvershootInterpolator;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -28,12 +34,17 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
+import com.srtech.messwise.admin_ui.MealSlot;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
@@ -43,6 +54,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -120,12 +132,9 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     startActivity(new Intent(this, MealAdminActivity.class));
                     break;
-//                case 2:
-//                    startActivity(new Intent(this, ReportsActivity.class));
-//                    break;
-//                case 3:
-//                    startActivity(new Intent(this, SettingsActivity.class));
-//                    break;
+                case 2:
+                    showManageSlotsDialog();
+                    break;
             }
         });
 
@@ -169,10 +178,14 @@ public class MainActivity extends AppCompatActivity {
     private void closeAdminWheel() {
         if (!isWheelOpen) return;
         isWheelOpen = false;
+        
+        adminWheelMenu.startCloseAnimation(() -> {
+            adminWheelContainer.setVisibility(View.GONE);
+        });
+
         adminWheelContainer.animate()
                 .alpha(0f)
-                .setDuration(150)
-                .withEndAction(() -> adminWheelContainer.setVisibility(View.GONE))
+                .setDuration(250)
                 .start();
     }
 
@@ -383,5 +396,107 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> Log.e("SGT", "clearOlderEntries failed", e));
+    }
+
+    private void showManageSlotsDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_slots, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        EditText etMealName = dialogView.findViewById(R.id.etMealName);
+        EditText etTime = dialogView.findViewById(R.id.etTime);
+        RecyclerView rvSlots = dialogView.findViewById(R.id.rvSlots);
+        TextView tvSlotCount = dialogView.findViewById(R.id.tvSlotCount);
+
+        ArrayList<MealSlot> slotsList = new ArrayList<>();
+        rvSlots.setLayoutManager(new LinearLayoutManager(this));
+
+        RecyclerView.Adapter adapter = new RecyclerView.Adapter() {
+            @NonNull
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_meal_slot, parent, false);
+                return new RecyclerView.ViewHolder(v) {};
+            }
+
+            @Override
+            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                MealSlot slot = slotsList.get(position);
+                ((TextView) holder.itemView.findViewById(R.id.tvSlotName)).setText(slot.getName());
+                ((TextView) holder.itemView.findViewById(R.id.tvSlotTime)).setText(slot.getTime());
+
+                holder.itemView.findViewById(R.id.ivDelete).setOnClickListener(v -> {
+                    db.getReference().child(messId).child("meal_slots").child(slot.getId()).removeValue();
+                });
+            }
+
+            @Override
+            public int getItemCount() {
+                return slotsList.size();
+            }
+        };
+        rvSlots.setAdapter(adapter);
+
+        // Fetch existing slots
+        db.getReference().child(messId).child("meal_slots").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                slotsList.clear();
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    MealSlot slot = ds.getValue(MealSlot.class);
+                    if (slot != null) {
+                        slot.setId(ds.getKey());
+                        slotsList.add(slot);
+                    }
+                }
+                adapter.notifyDataSetChanged();
+                if (tvSlotCount != null) {
+                    tvSlotCount.setText(slotsList.size() + (slotsList.size() == 1 ? " slot" : " slots"));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        etTime.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                Calendar selectedTime = Calendar.getInstance();
+                selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                selectedTime.set(Calendar.MINUTE, minute);
+                etTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(selectedTime.getTime()));
+            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), false).show();
+        });
+
+        dialogView.findViewById(R.id.btnAddSlot).setOnClickListener(v -> {
+            String name = etMealName.getText().toString().trim();
+            String time = etTime.getText().toString().trim();
+
+            if (name.isEmpty() || time.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String id = db.getReference().child(messId).child("meal_slots").push().getKey();
+            MealSlot newSlot = new MealSlot(id, name, time);
+            db.getReference().child(messId).child("meal_slots").child(id).setValue(newSlot)
+                    .addOnSuccessListener(unused -> {
+                        etMealName.setText("");
+                        etTime.setText("");
+                        Toast.makeText(this, "Slot added", Toast.LENGTH_SHORT).show();
+                    });
+        });
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 }
