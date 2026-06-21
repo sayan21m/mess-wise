@@ -1,6 +1,7 @@
 package com.srtech.messwise.ui;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -29,6 +30,9 @@ import java.util.Objects;
 public class SettingsActivity extends AppCompatActivity {
 
     Button logout;
+    String userId, messId, messName;
+    boolean isAdmin = false;
+    SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +55,21 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         logout = findViewById(R.id.logout_btn);
+
+        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        
+        // Dual Data Retrieval
+        userId = getIntent().getStringExtra("userId");
+        messId = getIntent().getStringExtra("messId");
+        messName = getIntent().getStringExtra("messName");
+        isAdmin = getIntent().getBooleanExtra("isAdmin", false);
+
+        if (userId == null) userId = prefs.getString("userId", null);
+        if (messId == null) messId = prefs.getString("messId", null);
+        if (messName == null) messName = prefs.getString("messName", null);
+        if (!isAdmin) isAdmin = prefs.getBoolean("isAdmin", false);
+
+        android.util.Log.d("SGT", "SettingsActivity Init - userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
 
         logout.setOnClickListener(v -> showLogoutDialog());
 

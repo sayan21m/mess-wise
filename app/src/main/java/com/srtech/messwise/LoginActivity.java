@@ -191,8 +191,6 @@ public class LoginActivity extends AppCompatActivity {
 
         firebaseAuth.signInWithEmailAndPassword(mail, password)
                 .addOnCompleteListener(this, task -> {
-                    loginBtn.setEnabled(true);
-                    loginBtn.setText("Login");
 
                     if (task.isSuccessful()) {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -214,7 +212,7 @@ public class LoginActivity extends AppCompatActivity {
                         return;
                     }
 
-                    String messName = snapshot.child("messName").getValue(String.class);
+                    String messName = snapshot.child("mess_name").getValue(String.class);
                     boolean isAdmin = userId.equals(snapshot.child("admin_uid").getValue(String.class));
                     boolean isMember = snapshot.child("member").child(userId).exists();
 

@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MealAdminActivity extends AppCompatActivity {
 
     String userId, messId, messName;
+    boolean isAdmin = false;
     SharedPreferences prefs;
     FirebaseDatabase db;
 
@@ -79,9 +80,22 @@ public class MealAdminActivity extends AppCompatActivity {
         db = FirebaseDatabase.getInstance();
 
         prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-        userId = prefs.getString("userId", null);
-        messId = prefs.getString("messId", null);
-        messName = prefs.getString("messName", null);
+        
+        // Dual Data Retrieval
+        userId = getIntent().getStringExtra("userId");
+        messId = getIntent().getStringExtra("messId");
+        messName = getIntent().getStringExtra("messName");
+        // For boolean, we should check if extra exists or just rely on SharedPreferences fallback if false
+        if (getIntent().hasExtra("isAdmin")) {
+            isAdmin = getIntent().getBooleanExtra("isAdmin", false);
+        }
+
+        if (userId == null) userId = prefs.getString("userId", null);
+        if (messId == null) messId = prefs.getString("messId", null);
+        if (messName == null) messName = prefs.getString("messName", null);
+        if (!isAdmin) isAdmin = prefs.getBoolean("isAdmin", false);
+        
+        Log.d("SGT", "MealAdminActivity Init - userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
 
         // Initialize Views
         spinnerMember = findViewById(R.id.spinnerMember);
@@ -165,7 +179,12 @@ public class MealAdminActivity extends AppCompatActivity {
     }
 
     private void loadMealData() {
-        if (messId == null) return;
+        Log.d("SGT", "loadMealData: Fetching for messId: " + messId);
+        
+        if (messId == null) {
+            Log.e("SGT", "loadMealData Error: messId is null.");
+            return;
+        }
 
         db.getReference().child(messId).child("member")
                 .addValueEventListener(new ValueEventListener() {
