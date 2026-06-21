@@ -279,16 +279,8 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) dialogView.findViewById(R.id.tvDuckName)).setText(duck);
         ((TextView) dialogView.findViewById(R.id.tvDuckMeals)).setText(minMeals + " Meals");
 
-        ImageView ivDuck = dialogView.findViewById(R.id.ivDuck);
         TextView tvDuckLabel = dialogView.findViewById(R.id.tvDuckLabel);
         
-        // Use the new animated golden duck
-        ivDuck.setImageResource(R.drawable.ic_duck_animated);
-        Drawable drawable = ivDuck.getDrawable();
-        if (drawable instanceof Animatable) {
-            ((Animatable) drawable).start();
-        }
-
         if (minMeals == 0) {
             tvDuckLabel.setText("🦆 GOLDEN DUCK");
             tvDuckLabel.setTextColor(Color.parseColor("#FFD700"));
