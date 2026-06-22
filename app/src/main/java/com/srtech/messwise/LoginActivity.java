@@ -219,9 +219,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (isAdmin || isMember) {
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
 
-                        if (cbRemember.isChecked()) {
-                            saveLoginState(true, userId, messId, messName, isAdmin);
-                        }
+                        // Always save session data for fragments to use, 
+                        // but only set isLoggedIn=true if 'Remember Me' is checked
+                        saveLoginState(cbRemember.isChecked(), userId, messId, messName, isAdmin);
 
                         Intent intent = new Intent(this, MainActivity.class);
                         intent.putExtra("userId", userId);

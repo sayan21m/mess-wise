@@ -11,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private String userId, messId, messName;
     private FirebaseDatabase db;
+    private AlertDialog manageSlotsDialog;
+    private long lastWheelClickTime = 0;
 
 
     @Override
@@ -123,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
         resetMeal();
 
         adminWheelMenu.setOnWheelItemClickListener(index -> {
+            if (SystemClock.elapsedRealtime() - lastWheelClickTime < 500) return;
+            lastWheelClickTime = SystemClock.elapsedRealtime();
+
             closeAdminWheel();
 
             switch (index) {
@@ -399,14 +405,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showManageSlotsDialog() {
+        if (manageSlotsDialog != null && manageSlotsDialog.isShowing()) return;
+        
+        if (messId == null) {
+            Toast.makeText(this, "Session error: Mess ID missing", Toast.LENGTH_SHORT).show();
+            return;
+        }
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_slots, null);
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        manageSlotsDialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setCancelable(true)
                 .create();
 
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        if (manageSlotsDialog.getWindow() != null) {
+            manageSlotsDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
         EditText etMealName = dialogView.findViewById(R.id.etMealName);
@@ -494,9 +506,9 @@ public class MainActivity extends AppCompatActivity {
                     });
         });
 
-        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
-        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> manageSlotsDialog.dismiss());
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> manageSlotsDialog.dismiss());
 
-        dialog.show();
+        manageSlotsDialog.show();
     }
 }

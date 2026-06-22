@@ -190,9 +190,9 @@ public class CreateAccountActivity extends AppCompatActivity {
     }
 
     // Save login state
-    private void saveLoginState(String userId, String messId, String messName, boolean isAdmin) {
+    private void saveLoginState(boolean isLoggedIn, String userId, String messId, String messName, boolean isAdmin) {
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("isLoggedIn", true);
+        editor.putBoolean("isLoggedIn", isLoggedIn);
         editor.putString("userId", userId);
         editor.putString("messId", messId);
         editor.putString("messName", messName);
@@ -280,9 +280,9 @@ public class CreateAccountActivity extends AppCompatActivity {
                     } else {
                         saveToDatabase(messId, user, name, email);
 
-                        if (rememberMe) {
-                            saveLoginState(uid, messId, messName, isAdmin);
-                        }
+                        // Always save session data for fragments, 
+                        // but only set isLoggedIn=true if 'rememberMe' is checked
+                        saveLoginState(rememberMe, uid, messId, messName, isAdmin);
 
                         navigateToMain(uid, messId, messName, isAdmin);
                     }

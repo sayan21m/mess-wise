@@ -50,6 +50,8 @@ public class HomeFragment extends Fragment {
     private String userId, messId;
     FirebaseDatabase db;
     TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc;
+    private ValueEventListener statusListener;
+    private boolean isLeaveDialogShowing = false;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -107,6 +109,7 @@ public class HomeFragment extends Fragment {
         db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
                 List<MealSlot> allSlots = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     MealSlot slot = ds.getValue(MealSlot.class);
@@ -189,12 +192,17 @@ public class HomeFragment extends Fragment {
     }
 
     private void applyForLeave() {
-        if (messId == null || userId == null) return;
+        if (isLeaveDialogShowing || messId == null || userId == null) return;
+        isLeaveDialogShowing = true;
 
         // Fetch meal slots to show options
         db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) {
+                    isLeaveDialogShowing = false;
+                    return;
+                }
                 List<MealSlot> allSlots = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     MealSlot slot = ds.getValue(MealSlot.class);
@@ -206,6 +214,7 @@ public class HomeFragment extends Fragment {
 
                 if (allSlots.isEmpty()) {
                     Toast.makeText(getContext(), "No meal slots defined by admin", Toast.LENGTH_SHORT).show();
+                    isLeaveDialogShowing = false;
                     return;
                 }
 
@@ -213,7 +222,9 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+                isLeaveDialogShowing = false;
+            }
         });
     }
 
@@ -252,6 +263,7 @@ public class HomeFragment extends Fragment {
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setView(dialogView)
                 .setCancelable(true)
+                .setOnDismissListener(d -> isLeaveDialogShowing = false)
                 .create();
 
         if (dialog.getWindow() != null) {
@@ -329,10 +341,14 @@ public class HomeFragment extends Fragment {
 
         db.getReference().child(messId).child("member").child(userId).child("next_meal_leave").setValue(true)
                 .addOnSuccessListener(aVoid -> {
+                    if (!isAdded()) return;
                     db.getReference().child(messId).child("member").child(userId).child("pending_leave_slot").setValue(slotNames.toString());
                     Toast.makeText(getContext(), "Leave applied for " + slotNames.toString(), Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to apply leave", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(), "Failed to apply leave", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setMealStatus() {
@@ -341,30 +357,44 @@ public class HomeFragment extends Fragment {
         String today = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
                 .format(Calendar.getInstance().getTime());
 
-        db.getReference().child(messId).child("member").child(userId)
-                .addValueEventListener(new ValueEventListener() {
+        statusListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
                 Integer count = snapshot.child("meal_count_history").child(today).getValue(Integer.class);
                 if (count == null) count = 0;
 
                 if (count > 0) {
                     tvMealStatus.setText(count + (count == 1 ? " Meal" : " Meals"));
-                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_success));
+                    tvMealStatus.setTextColor(requireContext().getColor(R.color.dark_success));
                     tvMealStatusDesc.setText("Marked for today");
                 } else {
                     tvMealStatus.setText("Pending");
-                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_primary));
+                    tvMealStatus.setTextColor(requireContext().getColor(R.color.dark_primary));
                     tvMealStatusDesc.setText("No meals marked yet");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        };
+
+        db.getReference().child(messId).child("member").child(userId)
+                .addValueEventListener(statusListener);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (statusListener != null && messId != null && userId != null) {
+            db.getReference().child(messId).child("member").child(userId)
+                    .removeEventListener(statusListener);
+        }
     }
 
     private void setTotalMeal() {
+        if (messId == null || userId == null) return;
+
         String currentMonth = new SimpleDateFormat("MMM", Locale.ENGLISH)
                 .format(Calendar.getInstance().getTime());
 
@@ -373,6 +403,7 @@ public class HomeFragment extends Fragment {
 
         db.getReference().child(messId).child("member").child(userId).child("meal_count_history").get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!isAdded()) return;
                     int total = 0;
 
                     for (DataSnapshot item : snapshot.getChildren()) {
