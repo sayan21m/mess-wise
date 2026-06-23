@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mw_bg"
+    android:background="@color/bg_dark"
     tools:context=".fragment_ui.cash_in.CashInFragment">
 
     <androidx.core.widget.NestedScrollView
@@ -104,7 +104,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
                                 android:text="₹"
-                                android:textColor="@color/teal_accent"
+                                android:textColor="@color/bg_dark"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
                         </FrameLayout>
@@ -155,14 +155,14 @@
                                 android:layout_height="10dp"
                                 android:contentDescription="@null"
                                 android:src="@drawable/ic_check_small"
-                                app:tint="@color/teal_accent" />
+                                app:tint="@color/dark_primary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="5dp"
                                 android:text="@string/cash_in_available_balance"
-                                android:textColor="@color/teal_accent"
+                                android:textColor="@color/dark_primary"
                                 android:textSize="10sp"
                                 android:textStyle="bold"
                                 android:letterSpacing="0.02" />
@@ -203,7 +203,7 @@
                         android:letterSpacing="0.1"
                         android:text="@string/cash_in_enter_amount"
                         android:textAllCaps="true"
-                        android:textColor="@color/teal_accent"
+                        android:textColor="@color/dark_primary"
                         android:textSize="10sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -230,7 +230,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:text="₹"
-                            android:textColor="@color/teal_accent"
+                            android:textColor="@color/dark_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
                     </FrameLayout>
@@ -261,7 +261,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="16dp"
                         android:text="@string/cash_in_amount_zero"
-                        android:textColor="@color/teal_accent"
+                        android:textColor="@color/dark_primary"
                         android:textSize="17sp"
                         android:textStyle="bold"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -369,7 +369,7 @@
                         android:letterSpacing="0.1"
                         android:text="@string/cash_in_recent"
                         android:textAllCaps="true"
-                        android:textColor="@color/teal_accent"
+                        android:textColor="@color/dark_primary"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
@@ -390,7 +390,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/cash_in_view_all"
-                            android:textColor="@color/teal_accent"
+                            android:textColor="@color/dark_primary"
                             android:textSize="12sp" />
 
                         <ImageView
@@ -399,7 +399,7 @@
                             android:layout_marginStart="2dp"
                             android:contentDescription="@null"
                             android:src="@drawable/ic_chevron_right"
-                            app:tint="@color/teal_accent" />
+                            app:tint="@color/dark_primary" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -447,7 +447,7 @@
                                 android:alpha="0.5"
                                 android:contentDescription="@null"
                                 android:src="@drawable/ic_receipt"
-                                app:tint="@color/teal_accent" />
+                                app:tint="@color/dark_primary" />
                         </FrameLayout>
 
                         <TextView
@@ -500,16 +500,16 @@
             android:layout_height="56dp"
             android:text="@string/cash_in_add_money"
             android:textAllCaps="false"
-            android:textColor="@color/mw_bg"
+            android:textColor="@color/bg_dark"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:backgroundTint="@color/teal_accent"
+            app:backgroundTint="@color/dark_primary"
             app:cornerRadius="16dp"
             app:icon="@drawable/ic_add_money"
             app:iconGravity="textStart"
             app:iconPadding="10dp"
             app:iconSize="20dp"
-            app:iconTint="@color/mw_bg"
+            app:iconTint="@color/bg_dark"
             app:rippleColor="#33000000" />
 
     </LinearLayout>

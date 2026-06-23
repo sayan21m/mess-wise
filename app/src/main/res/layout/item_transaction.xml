@@ -28,7 +28,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_arrow_up_cash_in"
-                app:tint="@color/teal_accent" />
+                app:tint="@color/dark_primary" />
         </FrameLayout>
 
         <LinearLayout
@@ -65,7 +65,7 @@
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
             android:text="@string/cash_in_status_success"
-            android:textColor="@color/teal_accent"
+            android:textColor="@color/dark_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
