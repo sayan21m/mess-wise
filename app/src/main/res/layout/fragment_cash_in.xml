@@ -15,7 +15,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        app:layout_constraintBottom_toTopOf="@id/cardAddMoney"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -37,46 +37,6 @@
                 android:paddingHorizontal="20dp"
                 android:paddingTop="14dp"
                 android:paddingBottom="32dp">
-
-                <!-- Header bar -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp">
-
-                    <ImageView
-                        android:id="@+id/btnBack"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/cash_in_back"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_arrow_back"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/dark_text_primary" />
-
-                    <FrameLayout
-                        android:id="@+id/btnReceiptHistory"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_receipt_icon"
-                        android:clickable="true"
-                        android:focusable="true"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@string/cash_in_receipt_history"
-                            android:src="@drawable/ic_receipt"
-                            app:tint="@color/teal_accent" />
-                    </FrameLayout>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <!-- Page title -->
                 <TextView
@@ -446,7 +406,8 @@
                 <!-- List / empty state card -->
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="70dp">
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvRecentTransactions"
@@ -454,6 +415,7 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_card_dark"
                         android:clipToPadding="false"
+                        android:padding="10dp"
                         android:nestedScrollingEnabled="false"
                         android:overScrollMode="never"
                         android:paddingVertical="6dp"
@@ -522,11 +484,12 @@
         android:id="@+id/cardAddMoney"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_bottom_bar"
+        android:background="@android:color/transparent"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="12dp"
         android:paddingBottom="20dp"
+        android:layout_marginBottom="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">

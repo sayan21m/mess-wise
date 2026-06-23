@@ -49,8 +49,8 @@ public class HomeFragment extends Fragment {
     private SharedPreferences prefs;
     private String userId, messId;
     FirebaseDatabase db;
-    TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc;
-    private ValueEventListener statusListener;
+    TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn;
+    private ValueEventListener statusListener, totalBalanceListener;
     private boolean isLeaveDialogShowing = false;
 
     public HomeFragment() {
@@ -76,6 +76,7 @@ public class HomeFragment extends Fragment {
         tvNextMealTime = view.findViewById(R.id.tvNextMealTime);
         tvMealStatus = view.findViewById(R.id.tvMealStatus);
         tvMealStatusDesc = view.findViewById(R.id.tvMealStatusDesc);
+        tvTotalCashIn = view.findViewById(R.id.tvTotalCashIn);
         btnApplyLeave = view.findViewById(R.id.btnApplyLeave);
 
         db = FirebaseDatabase.getInstance();
@@ -83,6 +84,7 @@ public class HomeFragment extends Fragment {
         setTotalMeal();
         setNextMeal();
         setMealStatus();
+        setTotalCashIn();
 
         btnApplyLeave.setOnClickListener(v -> applyForLeave());
 
@@ -390,6 +392,38 @@ public class HomeFragment extends Fragment {
             db.getReference().child(messId).child("member").child(userId)
                     .removeEventListener(statusListener);
         }
+        if (totalBalanceListener != null && messId != null) {
+            db.getReference().child(messId).child("member")
+                    .removeEventListener(totalBalanceListener);
+        }
+    }
+
+    private void setTotalCashIn() {
+        if (messId == null) return;
+
+        totalBalanceListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+                long total = 0;
+                for (DataSnapshot memberSnap : snapshot.getChildren()) {
+                    Object balanceObj = memberSnap.child("balance").getValue();
+                    if (balanceObj != null) {
+                        try {
+                            total += Long.parseLong(String.valueOf(balanceObj));
+                        } catch (NumberFormatException e) {
+                            Log.e("SGT", "Error parsing balance: " + e.getMessage());
+                        }
+                    }
+                }
+                tvTotalCashIn.setText("₹" + total);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+
+        db.getReference().child(messId).child("member").addValueEventListener(totalBalanceListener);
     }
 
     private void setTotalMeal() {

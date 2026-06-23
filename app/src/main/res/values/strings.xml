@@ -44,6 +44,7 @@
     <string name="cash_in_enter_amount">Enter Amount</string>
     <string name="cash_in_amount_hint">Enter amount</string>
     <string name="cash_in_amount_zero">₹0</string>
+    <string name="cash_in_amount_format">₹%s</string>
     <string name="cash_in_chip_500">₹500</string>
     <string name="cash_in_chip_1000">₹1,000</string>
     <string name="cash_in_chip_2000">₹2,000</string>
