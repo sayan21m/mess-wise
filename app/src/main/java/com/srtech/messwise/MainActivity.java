@@ -46,6 +46,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
 import com.srtech.messwise.admin_ui.MealSlot;
+import com.srtech.messwise.fragment_ui.cash_in.CashInFragment;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
@@ -156,6 +157,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "You are not an admin!", Toast.LENGTH_SHORT).show();
                 }
+            } else if (id == R.id.cashInFragment) {
+                loadFragment(new CashInFragment());
+                return true;
             } else {
                 closeAdminWheel();
 

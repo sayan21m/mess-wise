@@ -32,4 +32,39 @@
     <string name="logout">Logout</string>
     <string name="logout_desc">Sign out from your account</string>
     <string name="version_text">Version 1.0.0</string>
+
+    <!-- Cash In -->
+    <string name="cash_in_title">Cash In</string>
+    <string name="cash_in_subtitle">Add money to your mess wallet</string>
+    <string name="cash_in_back">Go back</string>
+    <string name="cash_in_receipt_history">Transaction history</string>
+    <string name="cash_in_current_balance_label">Current Wallet Balance</string>
+    <string name="cash_in_sample_balance">₹1,250.00</string>
+    <string name="cash_in_available_balance">Available Balance</string>
+    <string name="cash_in_enter_amount">Enter Amount</string>
+    <string name="cash_in_amount_hint">Enter amount</string>
+    <string name="cash_in_amount_zero">₹0</string>
+    <string name="cash_in_chip_500">₹500</string>
+    <string name="cash_in_chip_1000">₹1,000</string>
+    <string name="cash_in_chip_2000">₹2,000</string>
+    <string name="cash_in_chip_5000">₹5,000</string>
+    <string name="cash_in_recent">Recent Cash In</string>
+    <string name="cash_in_view_all">View All</string>
+    <string name="cash_in_add_money">Add Money</string>
+    <string name="cash_in_status_success">Success</string>
+    <string name="cash_in_invalid_amount">Enter a valid amount greater than zero</string>
+    <string name="cash_in_success">Money added successfully</string>
+    <string name="cash_in_failed">Failed to add money. Please try again.</string>
+    <string name="cash_in_session_error">Session expired. Please log in again.</string>
+    <string name="cash_in_payment_method_title">Select payment method</string>
+    <string name="cash_in_history_title">Transaction History</string>
+    <string name="cash_in_no_history">No transactions yet</string>
+    <string-array name="cash_in_payment_methods">
+        <item>UPI</item>
+        <item>Cash</item>
+        <item>Bank Transfer</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
