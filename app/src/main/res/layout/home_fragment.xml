@@ -174,6 +174,7 @@
                     android:padding="16dp">
 
                     <TextView
+                        android:id="@+id/tvDueLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="PENDING DUE"
@@ -181,6 +182,7 @@
                         android:textSize="11sp" />
 
                     <TextView
+                        android:id="@+id/pendingDue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -190,6 +192,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/dueDeadline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Due in 3 days"
@@ -308,10 +311,11 @@
                         android:textSize="11sp" />
 
                     <TextView
+                        android:id="@+id/tvMealRate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="₹43.35"
+                        android:text="₹0.00"
                         android:textColor="#E2A861"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -342,19 +346,21 @@
                     android:textSize="11sp" />
 
                 <TextView
+                    android:id="@+id/tvTodayMenu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Paneer Masala, Roti, Rice"
+                    android:text="Loading menu..."
                     android:textColor="@color/dark_text_primary"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvMenuDescription"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Special sweet dish added for dinner"
+                    android:text="--"
                     android:textColor="@color/dark_primary"
                     android:textSize="14sp" />
             </LinearLayout>

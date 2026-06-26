@@ -23,7 +23,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.widget.CheckBox;
 
-import com.bumptech.glide.Glide;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -49,9 +48,13 @@ public class HomeFragment extends Fragment {
     private SharedPreferences prefs;
     private String userId, messId;
     FirebaseDatabase db;
-    TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn;
-    private ValueEventListener statusListener, totalBalanceListener;
+    TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn, tvMemberDue, tvMealRate, tvDueLabel, tvDueDeadline, tvTodayMenu, tvMenuDescription;
+    private ValueEventListener statusListener, messDataListener, menuListener;
     private boolean isLeaveDialogShowing = false;
+    private double messTotalExpenses = 0;
+    private long messTotalMeals = 0;
+    private long memberTotalMeals = 0;
+    private double memberTotalContribution = 0;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -77,6 +80,12 @@ public class HomeFragment extends Fragment {
         tvMealStatus = view.findViewById(R.id.tvMealStatus);
         tvMealStatusDesc = view.findViewById(R.id.tvMealStatusDesc);
         tvTotalCashIn = view.findViewById(R.id.tvTotalCashIn);
+        tvMemberDue = view.findViewById(R.id.pendingDue);
+        tvDueLabel = view.findViewById(R.id.tvDueLabel);
+        tvDueDeadline = view.findViewById(R.id.dueDeadline);
+        tvMealRate = view.findViewById(R.id.tvMealRate);
+        tvTodayMenu = view.findViewById(R.id.tvTodayMenu);
+        tvMenuDescription = view.findViewById(R.id.tvMenuDescription);
         btnApplyLeave = view.findViewById(R.id.btnApplyLeave);
 
         db = FirebaseDatabase.getInstance();
@@ -84,7 +93,8 @@ public class HomeFragment extends Fragment {
         setTotalMeal();
         setNextMeal();
         setMealStatus();
-        setTotalCashIn();
+        loadMessData();
+        loadDailyMenu();
 
         btnApplyLeave.setOnClickListener(v -> applyForLeave());
 
@@ -353,6 +363,28 @@ public class HomeFragment extends Fragment {
                 });
     }
 
+    private void loadDailyMenu() {
+        if (messId == null) return;
+        String today = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
+        menuListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+                String menu = snapshot.getValue(String.class);
+                if (menu != null && !menu.isEmpty()) {
+                    tvTodayMenu.setText(menu);
+                    tvMenuDescription.setText("Menu for today");
+                } else {
+                    tvTodayMenu.setText("Regular Menu");
+                    tvMenuDescription.setText("No special menu updated");
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        db.getReference().child(messId).child("daily_menu").child(today).addValueEventListener(menuListener);
+    }
+
     private void setMealStatus() {
         if (messId == null || userId == null) return;
 
@@ -363,6 +395,13 @@ public class HomeFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
+
+                // Update Real-time Total Monthly Meals
+                Integer totalMonthlyMeals = snapshot.child("meal_count").getValue(Integer.class);
+                if (totalMonthlyMeals == null) totalMonthlyMeals = 0;
+                totalMeal.setText(totalMonthlyMeals + " Meals");
+
+                // Update Status for Today
                 Integer count = snapshot.child("meal_count_history").child(today).getValue(Integer.class);
                 if (count == null) count = 0;
 
@@ -373,7 +412,7 @@ public class HomeFragment extends Fragment {
                 } else {
                     tvMealStatus.setText("Pending");
                     tvMealStatus.setTextColor(requireContext().getColor(R.color.dark_primary));
-                    tvMealStatusDesc.setText("No meals marked yet");
+                    tvMealStatusDesc.setText("No meals marked");
                 }
             }
 
@@ -392,73 +431,87 @@ public class HomeFragment extends Fragment {
             db.getReference().child(messId).child("member").child(userId)
                     .removeEventListener(statusListener);
         }
-        if (totalBalanceListener != null && messId != null) {
-            db.getReference().child(messId).child("member")
-                    .removeEventListener(totalBalanceListener);
+        if (messDataListener != null && messId != null) {
+            db.getReference().child(messId).removeEventListener(messDataListener);
+        }
+        if (menuListener != null && messId != null) {
+            String today = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
+            db.getReference().child(messId).child("daily_menu").child(today).removeEventListener(menuListener);
         }
     }
 
-    private void setTotalCashIn() {
-        if (messId == null) return;
+    private void loadMessData() {
+        if (messId == null || userId == null) return;
 
-        totalBalanceListener = new ValueEventListener() {
+        messDataListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
-                long total = 0;
-                for (DataSnapshot memberSnap : snapshot.getChildren()) {
-                    Object balanceObj = memberSnap.child("balance").getValue();
-                    if (balanceObj != null) {
-                        try {
-                            total += Long.parseLong(String.valueOf(balanceObj));
-                        } catch (NumberFormatException e) {
-                            Log.e("SGT", "Error parsing balance: " + e.getMessage());
-                        }
+
+                String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(new Date());
+
+                // Display meal rate from database
+                double dbRate = 0.0;
+                DataSnapshot rateSnap = snapshot.child("meal_rate_history").child(currentMonthKey);
+                if (rateSnap.exists()) {
+                    try {
+                        dbRate = Double.parseDouble(String.valueOf(rateSnap.getValue()));
+                    } catch (Exception ignored) {}
+                }
+                tvMealRate.setText(String.format(Locale.getDefault(), "₹%.2f", dbRate));
+
+                // Calculate and display total all-time pending due from history
+                DataSnapshot memberSnap = snapshot.child("member").child(userId);
+                if (memberSnap.exists() && tvMemberDue != null) {
+                    double totalDue = 0;
+                    DataSnapshot historySnap = memberSnap.child("due_history");
+                    for (DataSnapshot monthSnap : historySnap.getChildren()) {
+                        Double mDue = getDoubleValue(monthSnap);
+                        if (mDue != null) totalDue += mDue;
+                    }
+
+                    tvMemberDue.setText(String.format(Locale.getDefault(), "₹%.2f", Math.abs(totalDue)));
+
+                    if (totalDue > 0) {
+                        tvMemberDue.setTextColor(requireContext().getColor(R.color.dark_error));
+                        if (tvDueLabel != null) tvDueLabel.setText("PENDING DUE");
+                        if (tvDueDeadline != null) tvDueDeadline.setText("Please pay soon");
+                    } else {
+                        tvMemberDue.setTextColor(requireContext().getColor(R.color.dark_success));
+                        if (tvDueLabel != null) tvDueLabel.setText("ADVANCE BALANCE");
+                        if (tvDueDeadline != null) tvDueDeadline.setText("Account in surplus");
                     }
                 }
-                tvTotalCashIn.setText("₹" + total);
+
+                // Show current month total collection for design consistency
+                double totalMonthCash = 0;
+                for (DataSnapshot mSnap : snapshot.child("member").getChildren()) {
+                    Object b = mSnap.child("monthly_balance").child(currentMonthKey).getValue();
+                    if (b != null) {
+                        try { totalMonthCash += Double.parseDouble(String.valueOf(b)); } catch (Exception ignored) {}
+                    }
+                }
+                if (tvTotalCashIn != null) {
+                    tvTotalCashIn.setText(String.format(Locale.getDefault(), "₹%,.0f", totalMonthCash));
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         };
 
-        db.getReference().child(messId).child("member").addValueEventListener(totalBalanceListener);
+        db.getReference().child(messId).addValueEventListener(messDataListener);
     }
 
     private void setTotalMeal() {
-        if (messId == null || userId == null) return;
+        // Now handled in real-time by setMealStatus listener
+    }
 
-        String currentMonth = new SimpleDateFormat("MMM", Locale.ENGLISH)
-                .format(Calendar.getInstance().getTime());
-
-        SimpleDateFormat inputFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MMM", Locale.ENGLISH);
-
-        db.getReference().child(messId).child("member").child(userId).child("meal_count_history").get()
-                .addOnSuccessListener(snapshot -> {
-                    if (!isAdded()) return;
-                    int total = 0;
-
-                    for (DataSnapshot item : snapshot.getChildren()) {
-                        String key = item.getKey();
-                        Integer value = item.getValue(Integer.class);
-
-                        if (key == null || value == null) continue;
-
-                        try {
-                            String monthFromKey = monthFormat.format(inputFormat.parse(key));
-
-                            if (monthFromKey.equals(currentMonth)) {
-                                total += value;
-                            }
-                        } catch (Exception e) {
-                            Log.e("SGT", "Invalid date key: " + key, e);
-                        }
-                    }
-
-                    totalMeal.setText(total + " Meals");
-                })
-                .addOnFailureListener(e -> Log.e("SGT", "setTotalMeal failed", e));
+    private Double getDoubleValue(DataSnapshot snapshot) {
+        Object value = snapshot.getValue();
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        return null;
     }
 }

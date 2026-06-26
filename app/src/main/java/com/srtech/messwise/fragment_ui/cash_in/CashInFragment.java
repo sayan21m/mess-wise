@@ -1,5 +1,6 @@
 package com.srtech.messwise.fragment_ui.cash_in;
 
+import com.srtech.messwise.utils.FinanceUtils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -7,6 +8,7 @@ import android.os.Bundle;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -23,7 +25,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +43,7 @@ import com.srtech.messwise.data_models.CashInModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -63,6 +68,8 @@ public class CashInFragment extends Fragment {
     private RecyclerView rvRecentTransactions;
     private View btnViewAll;
     private FirebaseDatabase db;
+    private double totalCashIn = 0, totalExpenses = 0, settledExpenses = 0;
+    private ValueEventListener balanceListener, expensesListener, settledListener;
 
     public CashInFragment() {
         // Required empty public constructor
@@ -176,37 +183,91 @@ public class CashInFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (balanceListener != null && messId != null) {
+            db.getReference().child(messId).child("member").removeEventListener(balanceListener);
+        }
+        if (expensesListener != null && messId != null) {
+            db.getReference().child(messId).child("expenses").removeEventListener(expensesListener);
+        }
+        if (settledListener != null && messId != null) {
+            db.getReference().child(messId).child("finance").child("settled_expenses").removeEventListener(settledListener);
+        }
+    }
+
     private void loadWalletBalance() {
         if (messId == null) return;
 
-        db.getReference()
-                .child(messId)
-                .child("member")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!isAdded()) return;
-                        
-                        long totalBalance = 0;
-                        for (DataSnapshot memberSnap : snapshot.getChildren()) {
-                            Object balanceObj = memberSnap.child("balance").getValue();
-                            if (balanceObj != null) {
-                                try {
-                                    totalBalance += Long.parseLong(String.valueOf(balanceObj));
-                                } catch (NumberFormatException e) {
-                                    Log.e(TAG, "Error parsing balance for member: " + memberSnap.getKey());
-                                }
-                            }
+        balanceListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+                
+                double cashIn = 0;
+                for (DataSnapshot memberSnap : snapshot.getChildren()) {
+                    DataSnapshot monthlyBalances = memberSnap.child("monthly_balance");
+                    for (DataSnapshot monthSnap : monthlyBalances.getChildren()) {
+                        try {
+                            cashIn += Double.parseDouble(String.valueOf(monthSnap.getValue()));
+                        } catch (NumberFormatException e) {
+                            Log.e(TAG, "Error parsing balance for member: " + memberSnap.getKey());
                         }
-                        
-                        tvWalletBalance.setText(getString(R.string.cash_in_amount_format, String.valueOf(totalBalance)));
                     }
+                }
+                totalCashIn = cashIn;
+                updateBalanceUI();
+            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e(TAG, "Error loading total balance: " + error.getMessage());
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error loading total balance: " + error.getMessage());
+            }
+        };
+
+        expensesListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+                double expenses = 0;
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Double amt = ds.child("amount").getValue(Double.class);
+                    if (amt != null) {
+                        expenses += amt;
                     }
-                });
+                }
+                totalExpenses = expenses;
+                updateBalanceUI();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error loading expenses: " + error.getMessage());
+            }
+        };
+
+        settledListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
+                Double settled = snapshot.getValue(Double.class);
+                settledExpenses = (settled != null) ? settled : 0;
+                updateBalanceUI();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+
+        db.getReference().child(messId).child("member").addValueEventListener(balanceListener);
+        db.getReference().child(messId).child("expenses").addValueEventListener(expensesListener);
+        db.getReference().child(messId).child("finance").child("settled_expenses").addValueEventListener(settledListener);
+    }
+
+    private void updateBalanceUI() {
+        double currentBalance = totalCashIn - (totalExpenses + settledExpenses);
+        tvWalletBalance.setText(getString(R.string.cash_in_amount_format, String.format(Locale.getDefault(), "%,.0f", currentBalance)));
     }
 
     private void loadCashIn() {
@@ -250,7 +311,7 @@ public class CashInFragment extends Fragment {
                         
                         if (isAdmin) {
                             cashInAdapter.setOnLongClickListener(model -> {
-                                showDeleteConfirmationDialog(model);
+                                showCashInOptionsDialog(model);
                             });
                         }
 
@@ -291,7 +352,7 @@ public class CashInFragment extends Fragment {
 
         if (isAdmin) {
             fullAdapter.setOnLongClickListener(model -> {
-                showDeleteConfirmationDialog(model);
+                showCashInOptionsDialog(model);
             });
         }
 
@@ -355,6 +416,7 @@ public class CashInFragment extends Fragment {
         }
 
         long timestampMillis = System.currentTimeMillis();
+        String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date(timestampMillis));
         String timestamp = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
                 .format(new Date(timestampMillis));
 
@@ -362,16 +424,19 @@ public class CashInFragment extends Fragment {
                 .child(messId)
                 .child("member")
                 .child(userId)
-                .child("balance")
+                .child("monthly_balance")
+                .child(currentMonthKey)
                 .runTransaction(new com.google.firebase.database.Transaction.Handler() {
                     @NonNull
                     @Override
                     public com.google.firebase.database.Transaction.Result doTransaction(
                             @NonNull com.google.firebase.database.MutableData currentData) {
 
-                        Integer currentBalance = currentData.getValue(Integer.class);
-                        if (currentBalance == null) {
-                            currentBalance = 0;
+                        double currentBalance = 0;
+                        if (currentData.getValue() != null) {
+                            try {
+                                currentBalance = Double.parseDouble(String.valueOf(currentData.getValue()));
+                            } catch (Exception ignored) {}
                         }
 
                         currentData.setValue(currentBalance + amountToAdd);
@@ -394,9 +459,11 @@ public class CashInFragment extends Fragment {
                             return;
                         }
 
-                        Integer updatedBalance = 0;
-                        if (currentData != null && currentData.getValue(Integer.class) != null) {
-                            updatedBalance = currentData.getValue(Integer.class);
+                        double updatedBalance = 0;
+                        if (currentData != null && currentData.getValue() != null) {
+                            try {
+                                updatedBalance = Double.parseDouble(String.valueOf(currentData.getValue()));
+                            } catch (Exception ignored) {}
                         }
 
                         Map<String, Object> cashInData = new HashMap<>();
@@ -421,6 +488,7 @@ public class CashInFragment extends Fragment {
                                     Toast.makeText(getContext(), "Cash added successfully!", Toast.LENGTH_SHORT).show();
                                     etAmount.setText("");
                                     loadCashIn();
+                                    FinanceUtils.updateAllMemberDues(messId);
                                 })
                                 .addOnFailureListener(e -> {
                                     btnAddMoney.setEnabled(true);
@@ -431,41 +499,146 @@ public class CashInFragment extends Fragment {
                 });
     }
 
-    private void showDeleteConfirmationDialog(CashInModel model) {
+    private void showCashInOptionsDialog(CashInModel model) {
+        String[] options = {"Edit", "Delete"};
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete Transaction")
-                .setMessage("Are you sure you want to delete this cash-in record of ₹" + model.getAmount() + "? This will also deduct the amount from the user's balance.")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    deleteTransaction(model);
+                .setTitle("Transaction Options")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showEditCashInDialog(model);
+                    } else {
+                        showDeleteConfirmationDialog(model);
+                    }
                 })
-                .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showEditCashInDialog(CashInModel model) {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_cash_in, null);
+        EditText etAmount = dialogView.findViewById(R.id.etAmount);
+        TextView tvMemberName = dialogView.findViewById(R.id.tvMemberName);
+        View btnUpdate = dialogView.findViewById(R.id.btnUpdate);
+        View btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        tvMemberName.setText(model.getUserName());
+        etAmount.setText(model.getAmount());
+        etAmount.setSelection(etAmount.getText().length());
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnUpdate.setOnClickListener(v -> {
+            String newAmountStr = etAmount.getText().toString().trim();
+            if (!newAmountStr.isEmpty()) {
+                updateCashIn(model, Integer.parseInt(newAmountStr));
+                dialog.dismiss();
+            } else {
+                etAmount.setError("Required");
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void updateCashIn(CashInModel model, double newAmount) {
+        double oldAmount = Double.parseDouble(model.getAmount());
+        double diff = newAmount - oldAmount;
+        String monthKey = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date(model.getTimestampMillis()));
+
+        // 1. Update member balance
+        db.getReference().child(messId).child("member").child(model.getUserId()).child("monthly_balance").child(monthKey)
+                .runTransaction(new com.google.firebase.database.Transaction.Handler() {
+                    @NonNull
+                    @Override
+                    public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
+                        double current = 0;
+                        if (currentData.getValue() != null) {
+                            try {
+                                current = Double.parseDouble(String.valueOf(currentData.getValue()));
+                            } catch (Exception ignored) {}
+                        }
+                        currentData.setValue(current + diff);
+                        return com.google.firebase.database.Transaction.success(currentData);
+                    }
+
+                    @Override
+                    public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                        if (committed) {
+                            // 2. Update cash_in record
+                            model.setAmount(newAmount);
+                            db.getReference().child(messId).child("cash_in").child(model.getTransactionId()).setValue(model)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
+                                        FinanceUtils.updateAllMemberDues(messId);
+                                    });
+                        }
+                    }
+                });
+    }
+
+    private void showDeleteConfirmationDialog(CashInModel model) {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_delete, null);
+        TextView tvMsg = dialogView.findViewById(R.id.tvDeleteMessage);
+        View btnDelete = dialogView.findViewById(R.id.btnDelete);
+        View btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        tvMsg.setText("Delete payment of ₹" + model.getAmount() + " from " + model.getUserName() + "? This will also deduct the amount from their balance.");
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnDelete.setOnClickListener(v -> {
+            deleteTransaction(model);
+            dialog.dismiss();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void deleteTransaction(CashInModel model) {
         if (messId == null || model.getTransactionId() == null || model.getUserId() == null) return;
 
-        int amountToDeduct;
+        double amountToDeduct;
         try {
-            amountToDeduct = Integer.parseInt(model.getAmount());
+            amountToDeduct = Double.parseDouble(model.getAmount());
         } catch (NumberFormatException e) {
             amountToDeduct = 0;
         }
 
-        final int finalAmount = amountToDeduct;
+        final double finalAmount = amountToDeduct;
+        String transactionMonthKey = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date(model.getTimestampMillis()));
 
         // 1. Deduct from balance
         db.getReference()
                 .child(messId)
                 .child("member")
                 .child(model.getUserId())
-                .child("balance")
+                .child("monthly_balance")
+                .child(transactionMonthKey)
                 .runTransaction(new com.google.firebase.database.Transaction.Handler() {
                     @NonNull
                     @Override
                     public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
-                        Integer currentBalance = currentData.getValue(Integer.class);
-                        if (currentBalance == null) currentBalance = 0;
+                        double currentBalance = 0;
+                        if (currentData.getValue() != null) {
+                            try {
+                                currentBalance = Double.parseDouble(String.valueOf(currentData.getValue()));
+                            } catch (Exception ignored) {}
+                        }
                         currentData.setValue(currentBalance - finalAmount);
                         return com.google.firebase.database.Transaction.success(currentData);
                     }
@@ -482,6 +655,7 @@ public class CashInFragment extends Fragment {
                                     .removeValue()
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(getContext(), "Transaction deleted and balance adjusted", Toast.LENGTH_SHORT).show();
+                                        FinanceUtils.updateAllMemberDues(messId);
                                     })
                                     .addOnFailureListener(e -> {
                                         Toast.makeText(getContext(), "Failed to delete record", Toast.LENGTH_SHORT).show();

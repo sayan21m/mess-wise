@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -46,8 +47,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
 import com.srtech.messwise.admin_ui.MealSlot;
+import com.srtech.messwise.admin_ui.MemberAdminActivity;
 import com.srtech.messwise.fragment_ui.cash_in.CashInFragment;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
+import com.srtech.messwise.fragment_ui.expenses.ExpensesFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
 import android.view.animation.AccelerateInterpolator;
@@ -56,8 +59,10 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import com.srtech.messwise.utils.FinanceUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -124,7 +129,10 @@ public class MainActivity extends AppCompatActivity {
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);
 
+        due_add_update();
+        addMealRateHistory();
         resetMeal();
+        resetFinance();
 
         adminWheelMenu.setOnWheelItemClickListener(index -> {
             if (SystemClock.elapsedRealtime() - lastWheelClickTime < 500) return;
@@ -133,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
             closeAdminWheel();
 
             switch (index) {
-//                case 0:
-//                    startActivity(new Intent(this, ManageMembersActivity.class));
-//                    break;
+                case 0:
+                    startActivity(new Intent(this, MemberAdminActivity.class));
+                    break;
                 case 1:
                     startActivity(new Intent(this, MealAdminActivity.class));
                     break;
@@ -159,6 +167,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else if (id == R.id.cashInFragment) {
                 loadFragment(new CashInFragment());
+                return true;
+            } else if (id == R.id.expensesFragment) {
+                loadFragment(new ExpensesFragment());
                 return true;
             } else {
                 closeAdminWheel();
@@ -202,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
@@ -222,16 +234,21 @@ public class MainActivity extends AppCompatActivity {
         prevMonth.add(Calendar.MONTH, -1);
         int targetMonth = prevMonth.get(Calendar.MONTH);
         int targetYear = prevMonth.get(Calendar.YEAR);
+        String historyKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(prevMonth.getTime());
 
         SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
 
-        db.getReference().child(messId).child("member").get().addOnSuccessListener(snapshot -> {
+        db.getReference().child(messId).get().addOnSuccessListener(snapshot -> {
+            DataSnapshot membersSnapshot = snapshot.child("member");
+            DataSnapshot expensesSnapshot = snapshot.child("expenses");
+
             java.util.List<String> winners = new java.util.ArrayList<>();
             java.util.List<String> ducks = new java.util.ArrayList<>();
             int maxMeals = -1, minMeals = Integer.MAX_VALUE;
+            long grandTotalMeals = 0;
             boolean dataFound = false;
 
-            for (DataSnapshot memberSnapshot : snapshot.getChildren()) {
+            for (DataSnapshot memberSnapshot : membersSnapshot.getChildren()) {
                 String name = memberSnapshot.child("name").getValue(String.class);
                 if (name == null) continue;
                 
@@ -257,6 +274,8 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception ignored) {}
                 }
 
+                grandTotalMeals += totalMeals;
+
                 if (totalMeals > maxMeals) {
                     maxMeals = totalMeals;
                     winners.clear();
@@ -275,6 +294,27 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (dataFound) {
+                // Calculate total expenses for the same month
+                double totalExpensesForMonth = 0;
+                for (DataSnapshot expDs : expensesSnapshot.getChildren()) {
+                    Long timestamp = expDs.child("timestampMillis").getValue(Long.class);
+                    Double amount = expDs.child("amount").getValue(Double.class);
+                    if (timestamp != null && amount != null) {
+                        Calendar expCal = Calendar.getInstance();
+                        expCal.setTimeInMillis(timestamp);
+                        if (expCal.get(Calendar.MONTH) == targetMonth && expCal.get(Calendar.YEAR) == targetYear) {
+                            totalExpensesForMonth += amount;
+                        }
+                    }
+                }
+
+                // Store meal rate for tracking
+                if (grandTotalMeals > 0) {
+                    double rate = totalExpensesForMonth / grandTotalMeals;
+                    db.getReference().child(messId).child("meal_rate_history")
+                            .child(historyKey).setValue(Double.parseDouble(String.format(Locale.ENGLISH, "%.2f", rate)));
+                }
+
                 String winnersStr = String.join(", ", winners);
                 String ducksStr = String.join(", ", ducks);
                 showAwardDialog(winnersStr, maxMeals, ducksStr, minMeals, prevMonth);
@@ -408,6 +448,72 @@ public class MainActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("SGT", "clearOlderEntries failed", e));
     }
 
+    private void resetFinance() {
+        if (messId == null) return;
+
+        Calendar cutoff = Calendar.getInstance();
+        cutoff.add(Calendar.MONTH, -1); // Keep current and previous month
+
+        // 1. Cleanup Expenses
+        db.getReference().child(messId).child("expenses").get().addOnSuccessListener(snapshot -> {
+            double amountToSettle = 0;
+            java.util.List<com.google.firebase.database.DatabaseReference> toDelete = new java.util.ArrayList<>();
+
+            for (DataSnapshot ds : snapshot.getChildren()) {
+                Long ts = ds.child("timestampMillis").getValue(Long.class);
+                Double amt = ds.child("amount").getValue(Double.class);
+                if (ts != null && amt != null) {
+                    Calendar expCal = Calendar.getInstance();
+                    expCal.setTimeInMillis(ts);
+                    if (isOlderThanCutoff(expCal, cutoff)) {
+                        amountToSettle += amt;
+                        toDelete.add(ds.getRef());
+                    }
+                }
+            }
+
+            if (!toDelete.isEmpty()) {
+                final double finalAmt = amountToSettle;
+                db.getReference().child(messId).child("finance").child("settled_expenses")
+                        .runTransaction(new com.google.firebase.database.Transaction.Handler() {
+                            @NonNull
+                            @Override
+                            public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
+                                Double current = currentData.getValue(Double.class);
+                                if (current == null) current = 0.0;
+                                currentData.setValue(current + finalAmt);
+                                return com.google.firebase.database.Transaction.success(currentData);
+                            }
+
+                            @Override
+                            public void onComplete(@Nullable com.google.firebase.database.DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                                if (committed) {
+                                    for (com.google.firebase.database.DatabaseReference ref : toDelete) ref.removeValue();
+                                }
+                            }
+                        });
+            }
+        });
+
+        // 2. Cleanup Cash In Records (Aggregation is already handled in member/monthly_balance)
+        db.getReference().child(messId).child("cash_in").get().addOnSuccessListener(snapshot -> {
+            for (DataSnapshot ds : snapshot.getChildren()) {
+                Long ts = ds.child("timestampMillis").getValue(Long.class);
+                if (ts != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTimeInMillis(ts);
+                    if (isOlderThanCutoff(cal, cutoff)) ds.getRef().removeValue();
+                }
+            }
+        });
+    }
+
+    private boolean isOlderThanCutoff(Calendar target, Calendar cutoff) {
+        if (target.get(Calendar.YEAR) < cutoff.get(Calendar.YEAR)) return true;
+        return target.get(Calendar.YEAR) == cutoff.get(Calendar.YEAR) &&
+                target.get(Calendar.MONTH) < cutoff.get(Calendar.MONTH);
+    }
+
     private void showManageSlotsDialog() {
         if (manageSlotsDialog != null && manageSlotsDialog.isShowing()) return;
         
@@ -514,5 +620,94 @@ public class MainActivity extends AppCompatActivity {
         dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> manageSlotsDialog.dismiss());
 
         manageSlotsDialog.show();
+    }
+
+    private void addMealRateHistory() {
+        if (messId == null) return;
+        
+        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Calendar now = Calendar.getInstance();
+                int currentMonth = now.get(Calendar.MONTH);
+                int currentYear = now.get(Calendar.YEAR);
+                String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(now.getTime());
+
+                long totalMeals = 0;
+                SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
+
+                for (DataSnapshot memberSnap : snapshot.child("member").getChildren()) {
+                    for (DataSnapshot entry : memberSnap.child("meal_count_history").getChildren()) {
+                        try {
+                            Date d = entryFormat.parse(entry.getKey());
+                            if (d != null) {
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(d);
+                                if (c.get(Calendar.MONTH) == currentMonth && c.get(Calendar.YEAR) == currentYear) {
+                                    Integer val = entry.getValue(Integer.class);
+                                    if (val != null) totalMeals += val;
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+
+                double totalExpenses = 0;
+                for (DataSnapshot expDs : snapshot.child("expenses").getChildren()) {
+                    Long ts = expDs.child("timestampMillis").getValue(Long.class);
+                    Double amt = expDs.child("amount").getValue(Double.class);
+                    if (ts != null && amt != null) {
+                        Calendar expCal = Calendar.getInstance();
+                        expCal.setTimeInMillis(ts);
+                        if (expCal.get(Calendar.MONTH) == currentMonth && expCal.get(Calendar.YEAR) == currentYear) {
+                            totalExpenses += amt;
+                        }
+                    }
+                }
+
+                for (DataSnapshot memberSnap : snapshot.child("member").getChildren()) {
+                    long userMeals = 0;
+                    for (DataSnapshot entry : memberSnap.child("meal_count_history").getChildren()) {
+                        try {
+                            Date d = entryFormat.parse(entry.getKey());
+                            if (d != null) {
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(d);
+                                if (c.get(Calendar.MONTH) == currentMonth && c.get(Calendar.YEAR) == currentYear) {
+                                    Integer val = entry.getValue(Integer.class);
+                                    if (val != null) userMeals += val;
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                    }
+
+                    Integer storedCount = memberSnap.child("meal_count").getValue(Integer.class);
+                    if (storedCount == null || storedCount != (int) userMeals) {
+                        memberSnap.getRef().child("meal_count").setValue(userMeals);
+                    }
+                }
+
+                if (totalMeals > 0) {
+                    double rate = (double) totalExpenses / totalMeals;
+                    db.getReference().child(messId).child("meal_rate_history")
+                            .child(currentMonthKey).setValue(Double.parseDouble(String.format(Locale.ENGLISH, "%.2f", rate)));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    public void due_add_update() {
+        FinanceUtils.updateAllMemberDues(messId);
+    }
+
+    private Double getDoubleValue(DataSnapshot snapshot) {
+        Object value = snapshot.getValue();
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        return null;
     }
 }

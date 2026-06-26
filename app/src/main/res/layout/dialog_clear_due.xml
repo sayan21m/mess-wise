@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/card_background"
+    android:backgroundTint="@color/mw_bg"
+    android:padding="24dp"
+    android:layout_margin="16dp">
+
+    <TextView
+        android:id="@+id/tvClearDueTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear Due"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvMemberNameDisplay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Rahul Sharma"
+        android:textColor="@color/mw_secondary"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvClearDueTitle" />
+
+    <TextView
+        android:id="@+id/tvBreakdownTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Due Breakdown"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvMemberNameDisplay" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDueBreakdown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:maxHeight="200dp"
+        app:layout_constraintTop_toBottomOf="@id/tvBreakdownTitle" />
+
+    <LinearLayout
+        android:id="@+id/llTotalDue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/card_background"
+        android:backgroundTint="@color/mw_surface"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@id/rvDueBreakdown">
+
+        <TextView
+            android:id="@+id/tvTotalDueLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Total All-Time Due"
+            android:textColor="@color/mw_secondary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvCurrentMonthlyDue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="₹1,200"
+            android:textColor="@color/dark_error"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilAmount"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:hint="Amount to Clear"
+        android:textColorHint="@color/dark_text_hint"
+        app:boxStrokeColor="@color/teal_accent"
+        app:hintTextColor="@color/teal_accent"
+        app:layout_constraintTop_toBottomOf="@id/llTotalDue"
+        app:prefixText="₹"
+        app:prefixTextColor="@color/white">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etClearAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:textColor="@color/white" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/tilAmount">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelClear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textColor="@color/mw_secondary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSubmitClear"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="Clear Amount"
+            app:backgroundTint="@color/teal_accent"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

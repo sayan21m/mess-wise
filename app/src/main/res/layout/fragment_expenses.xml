@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    tools:context=".fragment_ui.expenses.ExpensesFragment">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingBottom="80dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="28dp">
+
+            <!-- ══════════════════════════════════════
+                 TOP HERO SECTION (Header + Total)
+                 ══════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_tinted"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="32dp">
+
+                <!-- Header Section -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="24dp">
+
+                    <ImageView
+                        android:id="@+id/ivExpenseIllustration"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/vector_wallet_illustration"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/btnFilter"
+                        app:layout_constraintStart_toEndOf="@id/ivExpenseIllustration"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Expenses"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="30sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="-0.01" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Track and manage mess expenses"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/btnFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_amount_input"
+                        android:backgroundTint="@color/color_surface"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_summary"
+                            app:tint="@color/dark_primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="Filter"
+                            android:textColor="@color/dark_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Total Expense Card (matches balance card style) -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_balance_card"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:id="@+id/iconContainer"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_amount_input"
+                        android:backgroundTint="#1052A3B0"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_receipt"
+                            app:tint="@color/dark_primary" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/iconContainer"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.05"
+                            android:text="TOTAL EXPENSE"
+                            android:textAllCaps="true"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvTotalExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="₹1,42,300"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="-0.02" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="All time expenses"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </LinearLayout>
+
+            <!-- ══════════════════════════════════════
+                 ADD NEW EXPENSE SECTION
+                 ══════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="28dp">
+
+                <!-- Section label -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="13dp"
+                        android:background="@drawable/bg_accent_bar" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="9dp"
+                        android:letterSpacing="0.1"
+                        android:text="Add New Expense"
+                        android:textAllCaps="true"
+                        android:textColor="@color/dark_primary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card_dark"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:text="Category"
+                                android:textColor="@color/dark_text_primary"
+                                android:textSize="14sp" />
+
+                            <LinearLayout
+                                android:id="@+id/btnSelectCategory"
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:background="@drawable/bg_amount_input"
+                                android:backgroundTint="#0AFFFFFF"
+                                android:gravity="center_vertical"
+                                android:paddingHorizontal="12dp">
+
+                                <ImageView
+                                    android:id="@+id/ivCategoryIcon"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:background="@drawable/bg_available_badge"
+                                    android:backgroundTint="@color/dark_primary_dim"
+                                    android:padding="4dp"
+                                    android:src="@drawable/ic_meal"
+                                    app:tint="@color/dark_text_primary" />
+
+                                <TextView
+                                    android:id="@+id/tvCategoryName"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_weight="1"
+                                    android:text="Food"
+                                    android:textColor="@color/dark_text_primary"
+                                    android:textSize="15sp" />
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    android:rotation="90"
+                                    app:tint="@color/dark_text_muted" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="8dp"
+                                android:text="Amount (₹)"
+                                android:textColor="@color/dark_text_primary"
+                                android:textSize="14sp" />
+
+                            <EditText
+                                android:id="@+id/etExpenseAmount"
+                                android:layout_width="match_parent"
+                                android:layout_height="56dp"
+                                android:background="@drawable/bg_amount_input"
+                                android:backgroundTint="#0AFFFFFF"
+                                android:hint="0.00"
+                                android:inputType="numberDecimal"
+                                android:paddingHorizontal="16dp"
+                                android:textColor="@color/dark_text_primary"
+                                android:textColorHint="@color/dark_text_hint"
+                                android:textSize="15sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Description"
+                        android:textColor="@color/dark_text_primary"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/etExpenseDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_amount_input"
+                        android:backgroundTint="#0AFFFFFF"
+                        android:hint="Enter description"
+                        android:inputType="text"
+                        android:paddingHorizontal="16dp"
+                        android:textColor="@color/dark_text_primary"
+                        android:textColorHint="@color/dark_text_hint"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Date"
+                        android:textColor="@color/dark_text_primary"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:id="@+id/btnSelectDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_amount_input"
+                        android:backgroundTint="#0AFFFFFF"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_summary"
+                            app:tint="@color/dark_text_muted" />
+
+                        <TextView
+                            android:id="@+id/tvExpenseDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="13 Jun 2025"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="15sp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_chevron_right"
+                            android:rotation="90"
+                            app:tint="@color/dark_text_muted" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddExpense"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="24dp"
+                        android:text="Add Expense"
+                        android:textAllCaps="false"
+                        android:textColor="@color/bg_dark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/dark_primary"
+                        app:cornerRadius="16dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ══════════════════════════════════════
+                 RECENT TRANSACTIONS SECTION
+                 ══════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="30dp">
+
+                <!-- Section header row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="13dp"
+                        android:background="@drawable/bg_accent_bar" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="9dp"
+                        android:layout_weight="1"
+                        android:letterSpacing="0.1"
+                        android:text="Recent Expenses"
+                        android:textAllCaps="true"
+                        android:textColor="@color/dark_primary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/btnViewAllExpenses"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="2dp"
+                        android:paddingVertical="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="View All"
+                            android:textColor="@color/dark_primary"
+                            android:textSize="12sp" />
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_marginStart="2dp"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/dark_primary" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Recent Expenses List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRecentExpenses"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="10dp"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
+                    tools:listitem="@layout/item_expense" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

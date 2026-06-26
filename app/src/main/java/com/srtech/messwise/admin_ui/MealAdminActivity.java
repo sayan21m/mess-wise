@@ -38,6 +38,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.R;
 import com.srtech.messwise.data_models.Member;
 
@@ -56,7 +57,7 @@ public class MealAdminActivity extends AppCompatActivity {
 
     Spinner spinnerMember;
     EditText etMeals, etNote;
-    TextView tvDate, tvMealsTaken, tvParticipating, show_date, show_date_2;
+    TextView tvDate, tvMealsTaken, tvParticipating, show_date, show_date_2, tvTotalDueCount, tvUpcomingDueCount;
     ArrayList<Member> memberList = new ArrayList<>();
     ArrayAdapter<Member> memberAdapter;
     Calendar selectedCalendar = Calendar.getInstance();
@@ -116,6 +117,8 @@ public class MealAdminActivity extends AppCompatActivity {
         tvParticipating = findViewById(R.id.tvParticipating);
         show_date = findViewById(R.id.show_date);
         show_date_2 = findViewById(R.id.show_date_2);
+        tvTotalDueCount = findViewById(R.id.tvTotalDueCount);
+        tvUpcomingDueCount = findViewById(R.id.tvUpcomingDueCount);
         distributionList = findViewById(R.id.distributionList);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
@@ -158,12 +161,12 @@ public class MealAdminActivity extends AppCompatActivity {
                         etMeals.setText("1");
                         etNote.setText("");
                         hideKeyboard();
+                        FinanceUtils.updateAllMemberDues(messId);
                     });
 
-            // Save note if not empty
+            // Save daily menu if etNote has text
             if (!note.isEmpty()) {
-                db.getReference().child(messId).child("member").child(selectedMember.getUid())
-                        .child("meal_notes").child(date).setValue(note);
+                db.getReference().child(messId).child("daily_menu").child(date).setValue(note);
             }
         });
 
@@ -178,7 +181,10 @@ public class MealAdminActivity extends AppCompatActivity {
 
                             db.getReference().child(messId).child("member").child(selectedMember.getUid())
                                     .child("meal_count_history").child(date).setValue(nextCount)
-                                    .addOnSuccessListener(aVoid -> Toast.makeText(this, "Marked present (+1)", Toast.LENGTH_SHORT).show());
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(this, "Marked present (+1)", Toast.LENGTH_SHORT).show();
+                                        FinanceUtils.updateAllMemberDues(messId);
+                                    });
                         })
                         .addOnFailureListener(e -> Log.e("MealAdminActivity", "Error fetching meal count", e));
             } else {
@@ -274,6 +280,8 @@ public class MealAdminActivity extends AppCompatActivity {
             return;
         }
 
+        loadFinancialStats();
+
         db.getReference().child(messId).child("member")
                 .addValueEventListener(new ValueEventListener() {
                     @Override
@@ -325,6 +333,42 @@ public class MealAdminActivity extends AppCompatActivity {
                         Log.e("MealAdminActivity", "Database error", error.toException());
                     }
                 });
+    }
+
+    private void loadFinancialStats() {
+        db.getReference().child(messId).child("member").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                double totalDues = 0;
+                int upcomingCount = 0;
+
+                for (DataSnapshot memberSnap : snapshot.getChildren()) {
+                    double memberTotalDue = 0;
+                    DataSnapshot dueHistory = memberSnap.child("due_history");
+                    for (DataSnapshot month : dueHistory.getChildren()) {
+                        Object val = month.getValue();
+                        if (val instanceof Number) {
+                            memberTotalDue += ((Number) val).doubleValue();
+                        }
+                    }
+
+                    if (memberTotalDue > 0) {
+                        totalDues += memberTotalDue;
+                        upcomingCount++;
+                    }
+                }
+
+                if (tvTotalDueCount != null) {
+                    tvTotalDueCount.setText("₹" + String.format(Locale.getDefault(), "%,.0f", totalDues));
+                }
+                if (tvUpcomingDueCount != null) {
+                    tvUpcomingDueCount.setText(String.valueOf(upcomingCount));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     private void updateDistributionUI(ArrayList<MemberMeal> memberMeals, int maxMeal) {

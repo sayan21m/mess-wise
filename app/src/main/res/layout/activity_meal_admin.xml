@@ -312,7 +312,129 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Stats Row -->
+            <!-- Stats Row 1: Finance -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/card_background"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:id="@+id/iconTotalDue"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_profile_circle"
+                        android:backgroundTint="#1AD55467"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_receipt"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/dark_error" />
+
+                    <TextView
+                        android:id="@+id/labelTotalDue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="TOTAL DUE"
+                        android:textColor="@color/dark_error"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toEndOf="@id/iconTotalDue"
+                        app:layout_constraintTop_toTopOf="@id/iconTotalDue" />
+
+                    <TextView
+                        android:id="@+id/tvTotalDueCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="₹0"
+                        android:textColor="@color/white"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toEndOf="@id/iconTotalDue"
+                        app:layout_constraintTop_toBottomOf="@id/labelTotalDue"
+                        android:layout_marginStart="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/mtDueDesc"
+                        android:text="All time"
+                        android:textColor="@color/dark_text_muted"
+                        android:textSize="10sp"
+                        app:layout_constraintStart_toStartOf="@id/tvTotalDueCount"
+                        app:layout_constraintTop_toBottomOf="@id/tvTotalDueCount"
+                        />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/card_background"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:id="@+id/iconUpcoming"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_profile_circle"
+                        android:backgroundTint="#1AF59E0B"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_summary"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="#F59E0B" />
+
+                    <TextView
+                        android:id="@+id/labelUpcoming"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="UPCOMING"
+                        android:textColor="#F59E0B"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toEndOf="@id/iconUpcoming"
+                        app:layout_constraintTop_toTopOf="@id/iconUpcoming" />
+
+                    <TextView
+                        android:id="@+id/tvUpcomingDueCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/white"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toEndOf="@id/iconUpcoming"
+                        app:layout_constraintTop_toBottomOf="@id/labelUpcoming"
+                        android:layout_marginStart="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/mtUpcomingDesc"
+                        android:text="Pending Dues"
+                        android:textColor="@color/dark_text_muted"
+                        android:textSize="10sp"
+                        app:layout_constraintStart_toStartOf="@id/tvUpcomingDueCount"
+                        app:layout_constraintTop_toBottomOf="@id/tvUpcomingDueCount" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
+            <!-- Stats Row 2: Attendance -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

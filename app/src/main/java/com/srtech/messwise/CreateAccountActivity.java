@@ -269,9 +269,8 @@ public class CreateAccountActivity extends AppCompatActivity {
         String uid = user.getUid();
 
         db.getReference()
-                .child("messes")
                 .child(messId)
-                .child("members")
+                .child("member")
                 .child(uid)
                 .get()
                 .addOnSuccessListener(snapshot -> {
