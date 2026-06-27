@@ -41,7 +41,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
         holder.tvMemberName.setText(transaction.getUserName());
         
-        String meta = "₹" + transaction.getAmount() + " • " + transaction.getTimestamp();
+        String meta = holder.itemView.getContext().getString(R.string.cash_in_amount_format, transaction.getAmount()) + " • " + transaction.getTimestamp();
         holder.tvTransactionMeta.setText(meta);
         
         holder.tvTransactionStatus.setText(transaction.getStatus());
@@ -56,22 +56,22 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
     private void showDeleteDialog(Context context, Transaction transaction, int position) {
         new AlertDialog.Builder(context)
-                .setTitle("Delete Transaction")
-                .setMessage("Are you sure you want to delete this transaction?")
-                .setPositiveButton("Delete", (dialog, which) -> {
+                .setTitle(R.string.dialog_delete_member)
+                .setMessage(R.string.dialog_delete_generic_confirm)
+                .setPositiveButton(R.string.common_delete, (dialog, which) -> {
                     FirebaseDatabase.getInstance().getReference()
                             .child(messId)
                             .child("cash_in")
                             .child(transaction.getTransactionId())
                             .removeValue()
                             .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, R.string.common_deleted, Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
-                                Toast.makeText(context, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, context.getString(R.string.common_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                             });
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 

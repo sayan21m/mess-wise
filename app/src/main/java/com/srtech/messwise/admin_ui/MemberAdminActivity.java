@@ -19,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import com.srtech.messwise.BaseActivity;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -47,7 +48,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MemberAdminActivity extends AppCompatActivity {
+public class MemberAdminActivity extends BaseActivity {
 
     private String messId, mainAdminUid;
     private FirebaseDatabase db;
@@ -93,11 +94,11 @@ public class MemberAdminActivity extends AppCompatActivity {
 
         findViewById(R.id.btnInviteMember).setOnClickListener(v -> {
             if (messId != null) {
-                String shareMsg = "Join our Mess on MessWise!\n\nMess ID: " + messId + "\n\nDownload the app and create an account as a Member using this ID.";
+                String shareMsg = getString(R.string.dialog_invite_msg, messId);
                 android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
                 intent.setType("text/plain");
                 intent.putExtra(android.content.Intent.EXTRA_TEXT, shareMsg);
-                startActivity(android.content.Intent.createChooser(intent, "Invite Member via"));
+                startActivity(android.content.Intent.createChooser(intent, getString(R.string.dialog_invite_title)));
             }
         });
 
@@ -123,7 +124,7 @@ public class MemberAdminActivity extends AppCompatActivity {
             setGlobalStats();
             loadMembersList();
         } else {
-            Toast.makeText(this, "Session error: Mess ID missing", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.dialog_session_error, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -295,7 +296,12 @@ public class MemberAdminActivity extends AppCompatActivity {
 
                         ((TextView) dialogView.findViewById(R.id.tvTotalContribution)).setText(String.format(Locale.getDefault(), "₹%,.0f", totalContribution));
                         ((TextView) dialogView.findViewById(R.id.tvTotalDue)).setText(String.format(Locale.getDefault(), "₹%,.0f", Math.abs(totalDue)));
-                        ((TextView) dialogView.findViewById(R.id.tvStatus)).setText(snapshot.child("is_admin").getValue(Boolean.class) != null && snapshot.child("is_admin").getValue(Boolean.class) ? "Admin" : "Member");
+                        
+                        Boolean isAdminNode = snapshot.child("is_admin").getValue(Boolean.class);
+                        String role = snapshot.child("role").getValue(String.class);
+                        String roleDisplay = (isAdminNode != null && isAdminNode) ? getString(R.string.common_admin) : getString(R.string.common_member);
+                        if (role != null && !role.equals("Admin") && !role.equals("Member")) roleDisplay = role;
+                        ((TextView) dialogView.findViewById(R.id.tvStatus)).setText(roleDisplay);
                         
                         ((TextView) dialogView.findViewById(R.id.tvSummaryContribution)).setText(String.format(Locale.getDefault(), "₹%,.0f", totalContribution));
                         ((TextView) dialogView.findViewById(R.id.tvSummaryPaid)).setText(String.format(Locale.getDefault(), "₹%,.0f", totalPaid));
@@ -377,7 +383,7 @@ public class MemberAdminActivity extends AppCompatActivity {
             else newRole = etCustom.getText().toString().trim();
 
             if (newRole.isEmpty()) {
-                etCustom.setError("Enter role name");
+                etCustom.setError(getString(R.string.dialog_enter_role_name));
                 return;
             }
 
@@ -401,7 +407,7 @@ public class MemberAdminActivity extends AppCompatActivity {
         db.getReference().child(messId).child("member").child(member.getUid()).child("role").setValue(newRole);
         db.getReference().child(messId).child("member").child(member.getUid()).child("is_admin").setValue(isAdminRole)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Role updated to " + newRole, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.dialog_role_updated, newRole), Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                     
                     // Set default permissions if not exists
@@ -435,7 +441,7 @@ public class MemberAdminActivity extends AppCompatActivity {
 
         setupBottomSheetDialog(dialog);
 
-        ((TextView) dialogView.findViewById(R.id.tvRoleSub)).setText("Role: " + roleName);
+        ((TextView) dialogView.findViewById(R.id.tvRoleSub)).setText(getString(R.string.dialog_role_label, roleName));
         
         com.google.android.material.materialswitch.MaterialSwitch sMembers = dialogView.findViewById(R.id.switchMembers);
         com.google.android.material.materialswitch.MaterialSwitch sMeals = dialogView.findViewById(R.id.switchMeals);
@@ -481,7 +487,7 @@ public class MemberAdminActivity extends AppCompatActivity {
             db.getReference().child(messId).child("config").child("role_permissions").child(roleName)
                     .setValue(perms)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Permissions updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.dialog_permissions_updated, Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     });
         });
@@ -522,12 +528,12 @@ public class MemberAdminActivity extends AppCompatActivity {
                             slider.setVisibility(View.GONE);
                             etCustom.setVisibility(View.VISIBLE);
                             etCustom.setText(String.valueOf(interval));
-                            tvDesc.setText("Every " + interval + " hours");
-                            btnToggleCustom.setText("Use slider");
+                            tvDesc.setText(getString(R.string.dialog_every_hours, interval));
+                            btnToggleCustom.setText(R.string.dialog_use_slider);
                         } else {
                             // Multiple of 24 -> show as days on slider
                             slider.setValue(interval.floatValue() / 24.0f);
-                            tvDesc.setText("Every " + (interval / 24) + " days");
+                            tvDesc.setText(getString(R.string.dialog_every_days, (interval / 24)));
                         }
                     }
                 }
@@ -542,7 +548,7 @@ public class MemberAdminActivity extends AppCompatActivity {
 
         slider.addOnChangeListener((s, value, fromUser) -> {
             int val = (int) value;
-            tvDesc.setText("Every " + val + " days");
+            tvDesc.setText(getString(R.string.dialog_every_days, val));
         });
 
         etCustom.addTextChangedListener(new android.text.TextWatcher() {
@@ -550,7 +556,10 @@ public class MemberAdminActivity extends AppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override public void afterTextChanged(android.text.Editable s) {
                 if (slider.getVisibility() != View.VISIBLE) {
-                    tvDesc.setText("Every " + s.toString() + " hours");
+                    try {
+                        int h = Integer.parseInt(s.toString());
+                        tvDesc.setText(getString(R.string.dialog_every_hours, h));
+                    } catch (Exception ignored) {}
                 }
             }
         });
@@ -560,13 +569,16 @@ public class MemberAdminActivity extends AppCompatActivity {
             if (slider.getVisibility() == View.VISIBLE) {
                 slider.setVisibility(View.GONE);
                 etCustom.setVisibility(View.VISIBLE);
-                tvDesc.setText("Every " + etCustom.getText().toString() + " hours");
-                btnToggleCustom.setText("Use slider");
+                try {
+                    int h = Integer.parseInt(etCustom.getText().toString());
+                    tvDesc.setText(getString(R.string.dialog_every_hours, h));
+                } catch (Exception ignored) {}
+                btnToggleCustom.setText(R.string.dialog_use_slider);
             } else {
                 slider.setVisibility(View.VISIBLE);
                 etCustom.setVisibility(View.GONE);
-                tvDesc.setText("Every " + (int)slider.getValue() + " days");
-                btnToggleCustom.setText("Set custom interval");
+                tvDesc.setText(getString(R.string.dialog_every_days, (int)slider.getValue()));
+                btnToggleCustom.setText(R.string.dialog_set_custom_interval);
             }
         });
 
@@ -596,7 +608,7 @@ public class MemberAdminActivity extends AppCompatActivity {
 
             db.getReference().child(messId).child("config").child("reminders").setValue(config)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Reminder settings saved", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.dialog_reminder_saved, Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     });
         });
@@ -606,13 +618,13 @@ public class MemberAdminActivity extends AppCompatActivity {
 
     private void deleteMemberConfirm(Member member) {
         new AlertDialog.Builder(MemberAdminActivity.this)
-                .setTitle("Delete Member")
-                .setMessage("Are you sure you want to delete " + member.getName() + "?")
-                .setPositiveButton("Delete", (dialog, which) -> {
+                .setTitle(R.string.dialog_delete_member)
+                .setMessage(getString(R.string.dialog_delete_confirm, member.getName()))
+                .setPositiveButton(R.string.common_delete, (dialog, which) -> {
                     db.getReference().child(messId).child("member").child(member.getUid()).removeValue()
-                            .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, "Member deleted", Toast.LENGTH_SHORT).show());
+                            .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, R.string.dialog_member_deleted, Toast.LENGTH_SHORT).show());
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -704,13 +716,13 @@ public class MemberAdminActivity extends AppCompatActivity {
         dialogView.findViewById(R.id.btnSubmitClear).setOnClickListener(v -> {
             String amountStr = etClearAmount.getText().toString().trim();
             if (amountStr.isEmpty()) {
-                Toast.makeText(this, "Enter amount", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.dialog_enter_amount, Toast.LENGTH_SHORT).show();
                 return;
             }
 
             final double amountToClear = Double.parseDouble(amountStr);
             if (amountToClear <= 0) {
-                Toast.makeText(this, "Enter valid amount", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.dialog_enter_valid_amount, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -812,11 +824,11 @@ public class MemberAdminActivity extends AppCompatActivity {
                             if (committed) {
                                 // If due is cleared, remove associated notifications
                                 clearMemberDueNotifications(member.getUid());
-                                Toast.makeText(MemberAdminActivity.this, "Balance updated successfully", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MemberAdminActivity.this, R.string.dialog_balance_updated, Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
                             } else {
                                 Log.e("MemberAdminActivity", "Transaction failed: " + (error != null ? error.getMessage() : "Unknown error"));
-                                Toast.makeText(MemberAdminActivity.this, "Failed to update balance", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MemberAdminActivity.this, R.string.dialog_balance_failed, Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -826,20 +838,9 @@ public class MemberAdminActivity extends AppCompatActivity {
     }
 
     private void clearMemberDueNotifications(String memberUid) {
-        db.getReference().child(messId).child("notifications").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot ds : snapshot.getChildren()) {
-                    String type = ds.child("type").getValue(String.class);
-                    String target = ds.child("targetUid").getValue(String.class);
-                    if ("DUE_REMINDER".equals(type) && memberUid.equals(target)) {
-                        ds.getRef().removeValue();
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        if (messId == null || memberUid == null) return;
+        String notiId = "DUE_REMINDER_" + memberUid;
+        db.getReference().child(messId).child("notifications").child(notiId).removeValue();
     }
 
     private class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberViewHolder> {
@@ -890,13 +891,13 @@ public class MemberAdminActivity extends AppCompatActivity {
 
             holder.btnDelete.setOnClickListener(v -> {
                 new AlertDialog.Builder(MemberAdminActivity.this)
-                        .setTitle("Delete Member")
-                        .setMessage("Are you sure you want to delete " + member.getName() + "?")
-                        .setPositiveButton("Delete", (dialog, which) -> {
+                        .setTitle(R.string.dialog_delete_member)
+                        .setMessage(getString(R.string.dialog_delete_confirm, member.getName()))
+                        .setPositiveButton(R.string.common_delete, (dialog, which) -> {
                             db.getReference().child(messId).child("member").child(member.getUid()).removeValue()
-                                    .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, "Member deleted", Toast.LENGTH_SHORT).show());
+                                    .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, R.string.dialog_member_deleted, Toast.LENGTH_SHORT).show());
                         })
-                        .setNegativeButton("Cancel", null)
+                        .setNegativeButton(R.string.common_cancel, null)
                         .show();
             });
         }

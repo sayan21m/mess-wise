@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
+import java.util.Objects;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -30,7 +31,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.utils.FormUtils;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
     TextView createAccount;
     EditText etMessId, etUserMail, etPassword;
     CheckBox cbRemember;
@@ -93,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
 
         loginBtn.setOnClickListener(v -> {
             if (!isNetworkAvailable()) {
-                Toast.makeText(this, "No internet connection. Please check your network.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_no_internet, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -187,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void login(String mail, String password, String messId) {
         loginBtn.setEnabled(false);
-        loginBtn.setText("Logging in...");
+        loginBtn.setText(R.string.label_logging_in);
 
         firebaseAuth.signInWithEmailAndPassword(mail, password)
                 .addOnCompleteListener(this, task -> {
@@ -198,7 +199,7 @@ public class LoginActivity extends AppCompatActivity {
 
                         checkMember(userId, messId);
                     } else {
-                        Toast.makeText(this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -208,7 +209,7 @@ public class LoginActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (!snapshot.exists()) {
-                        Toast.makeText(this, "Mess not found!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.toast_mess_not_found, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -217,7 +218,7 @@ public class LoginActivity extends AppCompatActivity {
                     boolean isMember = snapshot.child("member").child(userId).exists();
 
                     if (isAdmin || isMember) {
-                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.toast_login_success, Toast.LENGTH_SHORT).show();
 
                         // Always save session data for fragments to use, 
                         // but only set isLoggedIn=true if 'Remember Me' is checked
@@ -231,11 +232,11 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(intent);
                         finish();
                     } else {
-                        Toast.makeText(this, "You are not a member of this mess!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(error -> {
-                    Toast.makeText(this, "Error checking mess: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 }

@@ -24,9 +24,9 @@ public class AdminWheelMenuView extends View {
     private float revealProgress = 0f;
 
     private final String[] labels = {
-            "Members",
-            "Meals",
-            "Meal Slot"
+            getContext().getString(R.string.common_members),
+            getContext().getString(R.string.common_meals),
+            getContext().getString(R.string.common_slots)
     };
 
     private final int[] icons = {

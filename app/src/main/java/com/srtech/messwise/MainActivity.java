@@ -46,6 +46,7 @@ import com.srtech.messwise.admin_ui.MemberAdminActivity;
 import com.srtech.messwise.fragment_ui.cash_in.CashInFragment;
 import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
 import com.srtech.messwise.fragment_ui.expenses.ExpensesFragment;
+import com.srtech.messwise.fragment_ui.summary.SummaryFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
 import android.view.animation.DecelerateInterpolator;
@@ -64,7 +65,7 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import com.srtech.messwise.workers.DueReminderWorker;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private FrameLayout adminWheelContainer;
     private AdminWheelMenuView adminWheelMenu;
@@ -149,21 +150,21 @@ public class MainActivity extends AppCompatActivity {
                     if (isAdmin || prefs.getBoolean("perm_manage_members", false)) {
                         startActivity(new Intent(this, MemberAdminActivity.class));
                     } else {
-                        Toast.makeText(this, "No permission to manage members", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.common_no_permission, getString(R.string.section_account).toLowerCase()), Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case 1:
                     if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
                         startActivity(new Intent(this, MealAdminActivity.class));
                     } else {
-                        Toast.makeText(this, "No permission to manage meals", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.common_no_permission, getString(R.string.setting_update_menu).toLowerCase()), Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case 2:
                     if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
                         showManageSlotsDialog();
                     } else {
-                        Toast.makeText(this, "No permission to manage slots", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.common_no_permission, getString(R.string.dialog_slot_plural).toLowerCase()), Toast.LENGTH_SHORT).show();
                     }
                     break;
             }
@@ -190,6 +191,9 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             } else if (id == R.id.expensesFragment) {
                 loadFragment(new ExpensesFragment());
+                return true;
+            } else if (id == R.id.SummaryFragment) {
+                loadFragment(new SummaryFragment());
                 return true;
             } else {
                 closeAdminWheel();
@@ -355,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
         tvMonth.setText(sdf.format(month.getTime()).toUpperCase());
 
         ((TextView) dialogView.findViewById(R.id.tvWinnerName)).setText(winner);
-        ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(maxMeals + " Meals tracked");
+        ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(getString(R.string.award_meals_tracked, maxMeals));
         ((TextView) dialogView.findViewById(R.id.tvDuckName)).setText(duck);
         ((TextView) dialogView.findViewById(R.id.tvDuckMeals)).setText(String.valueOf(minMeals));
 
@@ -363,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
         ImageView ivDuck = dialogView.findViewById(R.id.ivDuck);
         
         if (minMeals == 0) {
-            tvDuckLabel.setText("GOLDEN DUCK");
+            tvDuckLabel.setText(R.string.award_golden_duck);
             tvDuckLabel.setTextColor(Color.parseColor("#FFD700"));
             if (ivDuck != null) ivDuck.setImageResource(R.drawable.ic_golden_duck);
         }
@@ -749,18 +753,18 @@ public class MainActivity extends AppCompatActivity {
         Runnable updateEmpty = () -> {
             if (currentList.isEmpty()) {
                 rv.setVisibility(View.GONE); empty.setVisibility(View.VISIBLE);
-                tvEmptyMsg.setText(tvListTitle.getText().toString().contains("LEAVE") ? "All members are eating today!" : "No one is taking meals?");
+                tvEmptyMsg.setText(tvListTitle.getText().toString().contains(getString(R.string.status_on_leave).toUpperCase()) ? getString(R.string.dialog_empty_leaves) : getString(R.string.dialog_empty_takings));
             } else { rv.setVisibility(View.VISIBLE); empty.setVisibility(View.GONE); }
         };
         updateEmpty.run();
 
         dv.findViewById(R.id.btnShowTaking).setOnClickListener(v -> {
-            currentList.clear(); currentList.addAll(takingNames); tvListTitle.setText("MEMBERS TAKING MEAL");
+            currentList.clear(); currentList.addAll(takingNames); tvListTitle.setText(R.string.dialog_members_taking);
             adapter.notifyDataSetChanged(); tvTotalTaking.setTextColor(Color.WHITE); tvTotalLeave.setTextColor(Color.parseColor("#9C9790")); updateEmpty.run();
         });
 
         dv.findViewById(R.id.btnShowLeave).setOnClickListener(v -> {
-            currentList.clear(); currentList.addAll(leaveNames); tvListTitle.setText("MEMBERS ON LEAVE");
+            currentList.clear(); currentList.addAll(leaveNames); tvListTitle.setText(R.string.dialog_members_leave);
             adapter.notifyDataSetChanged(); tvTotalLeave.setTextColor(Color.parseColor("#FF5A5A")); tvTotalTaking.setTextColor(Color.parseColor("#9C9790")); updateEmpty.run();
         });
 
@@ -804,24 +808,27 @@ public class MainActivity extends AppCompatActivity {
                         Object val = m.getValue();
                         if (val instanceof Number) totalDue += ((Number) val).doubleValue();
                     }
+                    String memberUid = ms.getKey();
+                    String notiId = "DUE_REMINDER_" + memberUid;
+                    
                     if (totalDue > 0) {
-                        String memberUid = ms.getKey();
-                        String id = db.getReference().child(messId).child("notifications").push().getKey();
-                        String title = "Pending Due Reminder";
-                        String message = "Hi " + ms.child("name").getValue(String.class) + ", you have a pending due of ₹" + String.format(Locale.getDefault(), "%.2f", totalDue) + ". Please clear it soon.";
+                        String title = getString(R.string.noti_pending_due_title);
+                        String name = ms.child("name").getValue(String.class);
+                        String message = getString(R.string.noti_pending_due_msg, name, totalDue);
                         
                         com.srtech.messwise.data_models.NotificationModel n = new com.srtech.messwise.data_models.NotificationModel(
-                                id, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis()
+                                notiId, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis()
                         );
                         
-                        if (id != null) {
-                            db.getReference().child(messId).child("notifications").child(id).setValue(n);
-                            
-                            // If this is the current user, show a system notification too
-                            if (memberUid != null && memberUid.equals(userId)) {
-                                showSystemNotification(title, message);
-                            }
+                        db.getReference().child(messId).child("notifications").child(notiId).setValue(n);
+                        
+                        // If this is the current user, show a system notification too
+                        if (memberUid != null && memberUid.equals(userId)) {
+                            showSystemNotification(title, message);
                         }
+                    } else {
+                        // If due is cleared, remove any existing reminder
+                        db.getReference().child(messId).child("notifications").child(notiId).removeValue();
                     }
                 }
             }
@@ -834,7 +841,7 @@ public class MainActivity extends AppCompatActivity {
         android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            android.app.NotificationChannel channel = new android.app.NotificationChannel(channelId, "MessWise Alerts", android.app.NotificationManager.IMPORTANCE_HIGH);
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(channelId, getString(R.string.noti_channel_name), android.app.NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(channel);
         }
 

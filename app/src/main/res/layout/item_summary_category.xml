@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivCatIcon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="#111111"
+            android:padding="8dp"
+            android:src="@drawable/ic_meal_plate"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:tint="@color/teal_accent" />
+
+        <TextView
+            android:id="@+id/tvCatName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:layout_toEndOf="@id/ivCatIcon"
+            android:text="Food"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvCatAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₹82,200"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCatPercent"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="65%"
+                android:textColor="@color/dark_text_muted"
+                android:textSize="12sp"
+                android:gravity="end"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressCat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:progress="65"
+        app:trackColor="#1A1A1A"
+        app:indicatorColor="@color/teal_accent"
+        app:trackThickness="4dp"
+        app:trackCornerRadius="2dp"/>
+
+</LinearLayout>

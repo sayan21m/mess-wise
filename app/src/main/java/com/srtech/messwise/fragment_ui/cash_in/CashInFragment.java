@@ -132,11 +132,11 @@ public class CashInFragment extends Fragment {
         db.getReference().child(messId).child("member").child(userId).child("name").get()
                 .addOnSuccessListener(v -> {
                     userName = v.getValue(String.class);
-                    if (userName == null) userName = "Unknown";
+                    if (userName == null) userName = getString(R.string.common_unknown);
                     Log.d(TAG, "Fetched userName: " + userName);
                 })
                 .addOnFailureListener(e -> {
-                    userName = "Unknown";
+                    userName = getString(R.string.common_unknown);
                     Log.e(TAG, "Error fetching name: " + e.getMessage());
                 });
 
@@ -374,14 +374,14 @@ public class CashInFragment extends Fragment {
 
     private void addCashIn() {
         if (messId == null || userId == null) {
-            Toast.makeText(getContext(), "User or mess not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.toast_user_mess_not_found, Toast.LENGTH_SHORT).show();
             return;
         }
 
         String tempAmt = etAmount.getText().toString().trim();
 
         if (tempAmt.isEmpty()) {
-            etAmount.setError("Enter amount");
+            etAmount.setError(getString(R.string.dialog_enter_amount));
             etAmount.requestFocus();
             return;
         }
@@ -390,13 +390,13 @@ public class CashInFragment extends Fragment {
         try {
             amountToAdd = Integer.parseInt(tempAmt);
         } catch (NumberFormatException e) {
-            etAmount.setError("Invalid amount");
+            etAmount.setError(getString(R.string.cash_in_invalid_amount));
             etAmount.requestFocus();
             return;
         }
 
         if (amountToAdd <= 0) {
-            etAmount.setError("Amount must be greater than 0");
+            etAmount.setError(getString(R.string.cash_in_invalid_amount));
             etAmount.requestFocus();
             return;
         }
@@ -411,7 +411,7 @@ public class CashInFragment extends Fragment {
 
         if (transactionId == null) {
             btnAddMoney.setEnabled(true);
-            Toast.makeText(getContext(), "Failed to generate transaction ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.toast_id_gen_failed, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -452,7 +452,7 @@ public class CashInFragment extends Fragment {
                         if (!isAdded()) return;
                         if (!committed || error != null) {
                             btnAddMoney.setEnabled(true);
-                            Toast.makeText(getContext(), "Balance update failed", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), R.string.toast_balance_update_failed, Toast.LENGTH_SHORT).show();
                             if (error != null) {
                                 Log.e(TAG, "Balance transaction failed: " + error.getMessage());
                             }
@@ -484,15 +484,16 @@ public class CashInFragment extends Fragment {
                                 .child(transactionId)
                                 .setValue(cashInData)
                                 .addOnSuccessListener(aVoid -> {
+                                    btnAddMoney.setEnabled(false); // Should stay disabled while cleaning up or just re-enable? Original was true.
                                     btnAddMoney.setEnabled(true);
-                                    Toast.makeText(getContext(), "Cash added successfully!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), R.string.toast_cash_added, Toast.LENGTH_SHORT).show();
                                     etAmount.setText("");
                                     loadCashIn();
                                     FinanceUtils.updateAllMemberDues(messId);
                                 })
                                 .addOnFailureListener(e -> {
                                     btnAddMoney.setEnabled(true);
-                                    Toast.makeText(getContext(), "Transaction saved failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), getString(R.string.toast_trans_save_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                                     Log.e(TAG, "cash_in save error: " + e.getMessage());
                                 });
                     }
@@ -500,9 +501,9 @@ public class CashInFragment extends Fragment {
     }
 
     private void showCashInOptionsDialog(CashInModel model) {
-        String[] options = {"Edit", "Delete"};
+        String[] options = {getString(R.string.common_edit), getString(R.string.common_delete)};
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Transaction Options")
+                .setTitle(R.string.dialog_trans_options_title)
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
                         showEditCashInDialog(model);
@@ -539,7 +540,7 @@ public class CashInFragment extends Fragment {
                 updateCashIn(model, Integer.parseInt(newAmountStr));
                 dialog.dismiss();
             } else {
-                etAmount.setError("Required");
+                etAmount.setError(getString(R.string.common_required));
             }
         });
 
@@ -575,7 +576,7 @@ public class CashInFragment extends Fragment {
                             model.setAmount(newAmount);
                             db.getReference().child(messId).child("cash_in").child(model.getTransactionId()).setValue(model)
                                     .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), R.string.common_updated, Toast.LENGTH_SHORT).show();
                                         FinanceUtils.updateAllMemberDues(messId);
                                     });
                         }
@@ -589,7 +590,7 @@ public class CashInFragment extends Fragment {
         View btnDelete = dialogView.findViewById(R.id.btnDelete);
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
 
-        tvMsg.setText("Delete payment of ₹" + model.getAmount() + " from " + model.getUserName() + "? This will also deduct the amount from their balance.");
+        tvMsg.setText(getString(R.string.dialog_delete_cash_in_msg, model.getAmount(), model.getUserName()));
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -654,14 +655,14 @@ public class CashInFragment extends Fragment {
                                     .child(model.getTransactionId())
                                     .removeValue()
                                     .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(getContext(), "Transaction deleted and balance adjusted", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), R.string.toast_trans_deleted, Toast.LENGTH_SHORT).show();
                                         FinanceUtils.updateAllMemberDues(messId);
                                     })
                                     .addOnFailureListener(e -> {
-                                        Toast.makeText(getContext(), "Failed to delete record", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), R.string.toast_delete_failed, Toast.LENGTH_SHORT).show();
                                     });
                         } else {
-                            Toast.makeText(getContext(), "Failed to adjust balance", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), R.string.toast_adjust_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

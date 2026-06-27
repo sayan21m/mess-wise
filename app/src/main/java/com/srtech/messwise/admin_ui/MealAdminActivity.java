@@ -46,9 +46,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import com.srtech.messwise.BaseActivity;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MealAdminActivity extends AppCompatActivity {
+public class MealAdminActivity extends BaseActivity {
 
     String userId, messId, messName;
     boolean isAdmin = false;
@@ -141,12 +142,12 @@ public class MealAdminActivity extends AppCompatActivity {
             String mealCountStr = etMeals.getText().toString().trim();
 
             if (selectedMember == null) {
-                Toast.makeText(this, "Please select a member", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.dialog_select_member, Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (mealCountStr.isEmpty()) {
-                etMeals.setError("Enter count");
+                etMeals.setError(getString(R.string.dialog_enter_count));
                 return;
             }
 
@@ -157,7 +158,7 @@ public class MealAdminActivity extends AppCompatActivity {
             db.getReference().child(messId).child("member").child(selectedMember.getUid())
                     .child("meal_count_history").child(date).setValue(count)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Meal count updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.dialog_meal_updated, Toast.LENGTH_SHORT).show();
                         etMeals.setText("1");
                         etNote.setText("");
                         hideKeyboard();
@@ -182,13 +183,13 @@ public class MealAdminActivity extends AppCompatActivity {
                             db.getReference().child(messId).child("member").child(selectedMember.getUid())
                                     .child("meal_count_history").child(date).setValue(nextCount)
                                     .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(this, "Marked present (+1)", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(this, R.string.dialog_marked_present, Toast.LENGTH_SHORT).show();
                                         FinanceUtils.updateAllMemberDues(messId);
                                     });
                         })
                         .addOnFailureListener(e -> Log.e("MealAdminActivity", "Error fetching meal count", e));
             } else {
-                Toast.makeText(this, "Please select a member", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.dialog_select_member, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -208,7 +209,7 @@ public class MealAdminActivity extends AppCompatActivity {
                 if (hasLeave != null && hasLeave) {
                     names.add(memberSnapshot.child("name").getValue(String.class));
                     String slot = memberSnapshot.child("pending_leave_slot").getValue(String.class);
-                    slotDetails.add(slot != null ? slot : "Next Meal");
+                    slotDetails.add(slot != null ? slot : getString(R.string.noti_upcoming_meal));
                     pendingUids.add(memberSnapshot.getKey());
                 }
             }
@@ -423,7 +424,7 @@ public class MealAdminActivity extends AppCompatActivity {
     private void showDatePicker() {
         MaterialDatePicker<Long> datePicker =
                 MaterialDatePicker.Builder.datePicker()
-                        .setTitleText("Select Date")
+                        .setTitleText(R.string.dialog_select_date)
                         .setTheme(R.style.CustomDatePickerTheme)
                         .build();
 

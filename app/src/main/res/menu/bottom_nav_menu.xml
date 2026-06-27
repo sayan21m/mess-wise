@@ -11,14 +11,14 @@
         android:title="Cash In" />
 
     <item
-        android:id="@+id/expensesFragment"
-        android:icon="@drawable/ic_expenses"
-        android:title="Expenses" />
-
-    <item
         android:id="@+id/adminFragment"
         android:icon="@drawable/ic_privacy"
         android:title="Admin" />
+
+    <item
+        android:id="@+id/expensesFragment"
+        android:icon="@drawable/ic_expenses"
+        android:title="Expenses" />
 
     <item
         android:id="@+id/SummaryFragment"

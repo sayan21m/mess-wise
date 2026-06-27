@@ -36,7 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class NotificationsActivity extends AppCompatActivity {
+public class NotificationsActivity extends BaseActivity {
 
     private Toolbar toolbar;
     private View emptyState;
@@ -144,19 +144,19 @@ public class NotificationsActivity extends AppCompatActivity {
 
                     // Always show for managers so they can access the "Taking Meal" list,
                     // but mention if there are no leaves.
-                    String slotName = "Upcoming Meal";
+                    String slotName = getString(R.string.noti_upcoming_meal);
                     DataSnapshot slotsSnap = snapshot.child("meal_slots");
                     if (slotsSnap.exists()) {
                         slotName = getUpcomingSlotName(slotsSnap);
                     }
 
                     String summaryMsg = leaveCount > 0 
-                        ? leaveCount + " members are on leave for " + slotName + "."
-                        : "All members are taking " + slotName + " today!";
+                        ? getString(R.string.noti_members_on_leave, leaveCount, slotName)
+                        : getString(R.string.noti_all_taking_meal, slotName);
 
                     notificationList.add(new NotificationModel(
                             "meal_summary",
-                            slotName + " Summary",
+                            getString(R.string.noti_summary_title, slotName),
                             summaryMsg,
                             "MEAL_SUMMARY",
                             System.currentTimeMillis()
@@ -312,7 +312,7 @@ public class NotificationsActivity extends AppCompatActivity {
             if (current.isEmpty()) {
                 rv.setVisibility(View.GONE);
                 empty.setVisibility(View.VISIBLE);
-                tvEmpty.setText(tvListTitle.getText().toString().contains("LEAVE") ? "No one is on leave!" : "No one is eating?");
+                tvEmpty.setText(tvListTitle.getText().toString().contains(getString(R.string.status_on_leave).toUpperCase()) ? getString(R.string.dialog_empty_leaves) : getString(R.string.dialog_empty_takings));
             } else {
                 rv.setVisibility(View.VISIBLE);
                 empty.setVisibility(View.GONE);
@@ -322,14 +322,14 @@ public class NotificationsActivity extends AppCompatActivity {
 
         btnTaking.setOnClickListener(v -> {
             current.clear(); current.addAll(takingNames);
-            tvListTitle.setText("MEMBERS TAKING MEAL");
+            tvListTitle.setText(R.string.dialog_members_taking);
             adapter.notifyDataSetChanged();
             updateEmpty.run();
         });
 
         btnLeave.setOnClickListener(v -> {
             current.clear(); current.addAll(leaveNames);
-            tvListTitle.setText("MEMBERS ON LEAVE");
+            tvListTitle.setText(R.string.dialog_members_leave);
             adapter.notifyDataSetChanged();
             updateEmpty.run();
         });
@@ -363,7 +363,12 @@ public class NotificationsActivity extends AppCompatActivity {
             holder.tvMessage.setText(model.getMessage());
             
             long diff = System.currentTimeMillis() - model.getTimestamp();
-            String timeStr = diff < 3600000 ? (diff / 60000 + "m ago") : (diff / 3600000 + "h ago");
+            String timeStr;
+            if (diff < 3600000) {
+                timeStr = getString(R.string.common_ago, (int)(diff / 60000), getString(R.string.common_minute));
+            } else {
+                timeStr = getString(R.string.common_ago, (int)(diff / 3600000), getString(R.string.common_hour));
+            }
             holder.tvTime.setText(timeStr);
 
             if (model.getType().equals("MEAL_SUMMARY")) {

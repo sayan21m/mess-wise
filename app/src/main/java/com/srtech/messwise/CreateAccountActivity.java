@@ -31,7 +31,7 @@ import com.srtech.messwise.utils.FormUtils;
 
 import java.util.UUID;
 
-public class CreateAccountActivity extends AppCompatActivity {
+public class CreateAccountActivity extends BaseActivity {
     Button typeAdmin, typeMember, createAccountBtn;
     EditText etManagerName, etManagerMail, etMessName, etCreatePassword, etConfirmPassword;
     TextView messNameText, loginActivity;
@@ -92,7 +92,7 @@ public class CreateAccountActivity extends AppCompatActivity {
             typeMember.setBackgroundTintList(ContextCompat.getColorStateList(this, android.R.color.transparent));
             typeAdmin.setTextColor(ContextCompat.getColorStateList(this, R.color.white));
             typeMember.setTextColor(ContextCompat.getColorStateList(this, R.color.dark_text_muted));
-            messNameText.setText("Mess Name");
+            messNameText.setText(R.string.label_mess_name);
             etMessName.setHint("Chatra Niwas");
             isAdmin = true;
         });
@@ -102,7 +102,7 @@ public class CreateAccountActivity extends AppCompatActivity {
             typeAdmin.setBackgroundTintList(ContextCompat.getColorStateList(this, android.R.color.transparent));
             typeMember.setTextColor(ContextCompat.getColorStateList(this, R.color.white));
             typeAdmin.setTextColor(ContextCompat.getColorStateList(this, R.color.dark_text_muted));
-            messNameText.setText("Mess Id");
+            messNameText.setText(R.string.label_mess_id);
             etMessName.setHint("chatraniwas123");
             isAdmin = false;
         });
@@ -115,7 +115,7 @@ public class CreateAccountActivity extends AppCompatActivity {
 
         createAccountBtn.setOnClickListener(v -> {
             if (!isNetworkAvailable()) {
-                Toast.makeText(this, "No internet connection. Please check your network.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_no_internet, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -157,7 +157,7 @@ public class CreateAccountActivity extends AppCompatActivity {
             }
 
             if (!cbAgree.isChecked()) {
-                Toast.makeText(this, "Please agree to the terms", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_agree_terms, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -165,8 +165,8 @@ public class CreateAccountActivity extends AppCompatActivity {
             if (isAdmin) {
                 messIdExistance(messID, exist -> {
                     if (exist) {
-                        Toast.makeText(this, "Creation failed: Mess ID already exists", Toast.LENGTH_SHORT).show();
-                        etMessName.setError("Mess Id already exist");
+                        Toast.makeText(this, R.string.toast_id_exists, Toast.LENGTH_SHORT).show();
+                        etMessName.setError(getString(R.string.toast_id_exists));
                     } else {
                         createAccount(managerMail, password, messID, managerName, messName, cbRemember());
                     }
@@ -174,8 +174,8 @@ public class CreateAccountActivity extends AppCompatActivity {
             } else {
                 messIdExistance(messName, exist -> {
                     if (!exist) {
-                        Toast.makeText(this, "Creation failed: Mess ID not exists", Toast.LENGTH_SHORT).show();
-                        etMessName.setError("Mess Id doesn't exist");
+                        Toast.makeText(this, R.string.toast_id_not_exists, Toast.LENGTH_SHORT).show();
+                        etMessName.setError(getString(R.string.toast_id_not_exists));
                     } else {
                         createAccount(managerMail, password, messName, managerName, messName, cbRemember());
                     }
@@ -230,12 +230,12 @@ public class CreateAccountActivity extends AppCompatActivity {
 
     private void createAccount(String email, String password, String messId, String name, String messName, boolean rememberMe) {
         createAccountBtn.setEnabled(false);
-        createAccountBtn.setText("Creating...");
+        createAccountBtn.setText(R.string.label_creating);
 
         firebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     createAccountBtn.setEnabled(true);
-                    createAccountBtn.setText("Create Account");
+                    createAccountBtn.setText(R.string.label_create_account);
 
                     if (task.isSuccessful()) {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -250,11 +250,11 @@ public class CreateAccountActivity extends AppCompatActivity {
                                             FirebaseUser user = firebaseAuth.getCurrentUser();
                                             handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
                                         } else {
-                                            Toast.makeText(this, "Email exists, but login failed. Check password.", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, R.string.toast_login_failed, Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         } else {
-                            Toast.makeText(this, "Creation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.toast_update_failed) + ": " + (e != null ? e.getMessage() : ""), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -262,7 +262,7 @@ public class CreateAccountActivity extends AppCompatActivity {
 
     private void handleMessJoinAfterAuth(FirebaseUser user, String messId, String name, String email, String messName, boolean rememberMe) {
         if (user == null) {
-            Toast.makeText(this, "User is null", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_user_null, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -275,7 +275,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()) {
-                        Toast.makeText(this, "You are already a member of this mess", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.toast_already_member, Toast.LENGTH_SHORT).show();
                     } else {
                         saveToDatabase(messId, user, name, email);
 
@@ -287,7 +287,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(error -> {
-                    Toast.makeText(this, "Failed to check mess membership", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
                 });
     }
 

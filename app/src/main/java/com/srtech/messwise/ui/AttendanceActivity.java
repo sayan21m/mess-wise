@@ -29,7 +29,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class AttendanceActivity extends AppCompatActivity {
+import com.srtech.messwise.BaseActivity;
+
+public class AttendanceActivity extends BaseActivity {
 
     private String userId, messId;
     private TextView tvMonthYear;

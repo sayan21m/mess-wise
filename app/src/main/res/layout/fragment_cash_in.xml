@@ -454,7 +454,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="No transactions yet"
+                            android:text="@string/cash_in_no_history"
                             android:textColor="@color/dark_text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -465,7 +465,7 @@
                             android:layout_marginTop="6dp"
                             android:gravity="center"
                             android:lineSpacingMultiplier="1.4"
-                            android:text="Your recent cash in history\nwill appear here"
+                            android:text="@string/cash_in_no_history_desc"
                             android:textColor="@color/dark_text_muted"
                             android:textSize="12sp" />
                     </LinearLayout>

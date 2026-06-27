@@ -276,11 +276,11 @@ public class HomeFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> {
                     if (!isAdded()) return;
                     db.getReference().child(messId).child("member").child(userId).child("pending_leave_slot").setValue(slotNames.toString());
-                    Toast.makeText(getContext(), "Leave applied for " + slotNames.toString(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.dialog_leave_applied_for, slotNames.toString()), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    Toast.makeText(getContext(), "Failed to apply leave", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.dialog_leave_failed, Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -297,14 +297,14 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 Boolean onLeave = snapshot.child("next_meal_leave").getValue(Boolean.class);
                 if (onLeave != null && onLeave) {
-                    tvMealStatus.setText("On Leave");
+                    tvMealStatus.setText(R.string.status_on_leave);
                     tvMealStatus.setTextColor(getResources().getColor(R.color.dark_error));
                     String slot = snapshot.child("pending_leave_slot").getValue(String.class);
-                    tvMealStatusDesc.setText(slot != null ? slot : "Leave applied");
+                    tvMealStatusDesc.setText(slot != null ? slot : getString(R.string.status_leave_applied));
                 } else {
-                    tvMealStatus.setText("Booked");
+                    tvMealStatus.setText(R.string.status_booked);
                     tvMealStatus.setTextColor(getResources().getColor(R.color.dark_success));
-                    tvMealStatusDesc.setText("For today");
+                    tvMealStatusDesc.setText(R.string.status_for_today);
                 }
             }
 
@@ -394,8 +394,8 @@ public class HomeFragment extends Fragment {
                         String detail = (menuDesc != null ? menuDesc : "") + (cost != null ? " • ₹" + cost : "");
                         tvMenuDescription.setText(detail);
                     } else {
-                        tvTodayMenu.setText("Regular Menu");
-                        tvMenuDescription.setText("Add items to Menu Bank to see them here.");
+                        tvTodayMenu.setText(R.string.menu_regular);
+                        tvMenuDescription.setText(R.string.menu_bank_empty);
                     }
                 }
 
@@ -423,12 +423,12 @@ public class HomeFragment extends Fragment {
 
                     if (totalDue > 0) {
                         tvMemberDue.setTextColor(requireContext().getColor(R.color.dark_error));
-                        if (tvDueLabel != null) tvDueLabel.setText("PENDING DUE");
-                        if (tvDueDeadline != null) tvDueDeadline.setText("Please pay soon");
+                        if (tvDueLabel != null) tvDueLabel.setText(R.string.due_pending);
+                        if (tvDueDeadline != null) tvDueDeadline.setText(R.string.due_pay_soon);
                     } else {
                         tvMemberDue.setTextColor(requireContext().getColor(R.color.dark_success));
-                        if (tvDueLabel != null) tvDueLabel.setText("ADVANCE BALANCE");
-                        if (tvDueDeadline != null) tvDueDeadline.setText("Account in surplus");
+                        if (tvDueLabel != null) tvDueLabel.setText(R.string.due_advance);
+                        if (tvDueDeadline != null) tvDueDeadline.setText(R.string.due_surplus);
                     }
                 }
 

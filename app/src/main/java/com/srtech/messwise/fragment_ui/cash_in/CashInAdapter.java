@@ -47,14 +47,14 @@ public class CashInAdapter extends RecyclerView.Adapter<CashInAdapter.CashInView
     public void onBindViewHolder(@NonNull CashInViewHolder holder, int position) {
         CashInModel item = list.get(position);
 
-        String name = item.getUserName() != null ? item.getUserName() : "Unknown";
+        String name = item.getUserName() != null ? item.getUserName() : holder.itemView.getContext().getString(R.string.common_unknown);
         String amount = item.getAmount() != null ? item.getAmount() : "0";
         String time = item.getTimestamp() != null ? item.getTimestamp() : "--";
         String status = item.getStatus() != null ? item.getStatus() : "success";
 
         holder.tvMemberName.setText(name);
-        holder.tvTransactionMeta.setText("₹" + amount + " • " + time);
-        holder.tvTransactionStatus.setText(capitalize(status));
+        holder.tvTransactionMeta.setText(holder.itemView.getContext().getString(R.string.cash_in_amount_format, amount) + " • " + time);
+        holder.tvTransactionStatus.setText(status);
 
         holder.itemView.setOnLongClickListener(v -> {
             if (onLongClickListener != null) {
@@ -68,11 +68,6 @@ public class CashInAdapter extends RecyclerView.Adapter<CashInAdapter.CashInView
     @Override
     public int getItemCount() {
         return list.size();
-    }
-
-    private String capitalize(String value) {
-        if (value == null || value.isEmpty()) return "";
-        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
     }
 
     static class CashInViewHolder extends RecyclerView.ViewHolder {

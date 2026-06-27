@@ -22,7 +22,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Mess Wise"
+                android:text="@string/app_name"
                 android:textColor="@color/dark_text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -60,7 +60,7 @@
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_profile_circle"
                 android:padding="6dp"
-                android:contentDescription="Profile"
+                android:contentDescription="@string/setting_profile"
                 android:scaleType="centerInside"
                 android:src="@drawable/anim_profile_pulse" />
         </LinearLayout>
@@ -69,7 +69,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="TODAY IN MESS"
+            android:text="@string/dashboard_today"
             android:textAllCaps="true"
             android:textColor="@color/dark_text_muted"
             android:textSize="11sp" />
@@ -77,7 +77,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dashboard"
+            android:text="@string/dashboard_title"
             android:textColor="@color/dark_text_primary"
             android:textSize="30sp"
             android:textStyle="bold" />
@@ -108,7 +108,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="NEXT MEAL"
+                        android:text="@string/dashboard_next_meal"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -151,7 +151,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MEAL STATUS"
+                        android:text="@string/dashboard_meal_status"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -160,7 +160,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Booked"
+                        android:text="@string/status_booked"
                         android:textColor="@color/dark_success"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -169,7 +169,7 @@
                         android:id="@+id/tvMealStatusDesc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="For today"
+                        android:text="@string/status_for_today"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -203,7 +203,7 @@
                         android:id="@+id/tvDueLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="PENDING DUE"
+                        android:text="@string/due_pending"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -221,7 +221,7 @@
                         android:id="@+id/dueDeadline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Due in 3 days"
+                        android:text="@string/due_pay_soon"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -247,7 +247,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="THIS MONTH"
+                        android:text="@string/dashboard_this_month"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -264,7 +264,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Attendance tracked"
+                        android:text="@string/due_attendance_tracked"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -297,7 +297,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="TOTAL CASH IN"
+                        android:text="@string/summary_total_cash_in"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -332,7 +332,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MEAL RATE"
+                        android:text="@string/dashboard_meal_rate"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
@@ -369,7 +369,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TODAY'S MENU"
+                    android:text="@string/dashboard_today_menu"
                     android:textColor="@color/dark_text_muted"
                     android:textSize="11sp" />
 

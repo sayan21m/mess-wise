@@ -29,15 +29,16 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.BaseActivity;
 import com.srtech.messwise.LoginActivity;
 import com.srtech.messwise.R;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends BaseActivity {
 
     private Button logout;
     private ImageView btnBack, imgProfile;
@@ -154,26 +155,24 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Preferences Section
         setupItem(findViewById(R.id.itemNotification), R.drawable.ic_notifications, "Notifications", "Alerts and reminders");
-        setupItem(findViewById(R.id.itemTheme), R.drawable.ic_theme, "Theme", "Dark mode settings");
-        setupItem(findViewById(R.id.itemLanguage), R.drawable.ic_language, "Language", "English");
         
         View itemMenu = findViewById(R.id.itemFood);
-        setupItem(itemMenu, R.drawable.ic_meal_plate, "Update Daily Menu", "Set items and per-plate cost");
+        setupItem(itemMenu, R.drawable.ic_meal_plate, getString(R.string.setting_update_menu), getString(R.string.setting_update_menu_desc));
         itemMenu.setOnClickListener(v -> {
             if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
                 showUpdateMenuDialog();
             } else {
-                Toast.makeText(this, "Only administrators or meal managers can update the menu", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_only_admins, Toast.LENGTH_SHORT).show();
             }
         });
 
         View itemGoalRate = findViewById(R.id.itemGoalRate);
-        setupItem(itemGoalRate, R.drawable.bar_chart, "Goal Meal Rate", "Set monthly target rate");
+        setupItem(itemGoalRate, R.drawable.bar_chart, getString(R.string.setting_goal_rate), getString(R.string.setting_goal_rate_desc));
         itemGoalRate.setOnClickListener(v -> {
             if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
                 showSetGoalRateDialog();
             } else {
-                Toast.makeText(this, "Access denied!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -225,7 +224,7 @@ public class SettingsActivity extends AppCompatActivity {
                         .setValue(menuMap)
                         .addOnSuccessListener(aVoid -> {
                             dialog.dismiss();
-                            Toast.makeText(this, "Added to Menu Bank", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, R.string.toast_menu_added, Toast.LENGTH_SHORT).show();
                         });
             }
         });
@@ -274,7 +273,7 @@ public class SettingsActivity extends AppCompatActivity {
                             .setValue(rate)
                             .addOnSuccessListener(aVoid -> {
                                 dialog.dismiss();
-                                Toast.makeText(this, "Goal rate updated", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, R.string.toast_goal_updated, Toast.LENGTH_SHORT).show();
                             });
                 }
             } catch (Exception e) {
@@ -324,9 +323,9 @@ public class SettingsActivity extends AppCompatActivity {
                 .addOnSuccessListener(aVoid -> {
                     tvName.setText(newName);
                     dialog.dismiss();
-                    Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.toast_profile_updated, Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
     }
 
     private void showChangePasswordDialog() {
@@ -344,7 +343,7 @@ public class SettingsActivity extends AppCompatActivity {
             String oldPass = etOld.getText().toString();
             String newPass = etNew.getText().toString();
             if (oldPass.isEmpty() || newPass.length() < 6) {
-                Toast.makeText(this, "Invalid password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_invalid_password, Toast.LENGTH_SHORT).show();
                 return;
             }
             updatePassword(oldPass, newPass, dialog);
@@ -365,13 +364,13 @@ public class SettingsActivity extends AppCompatActivity {
                 user.updatePassword(newPass).addOnCompleteListener(updateTask -> {
                     if (updateTask.isSuccessful()) {
                         dialog.dismiss();
-                        Toast.makeText(this, "Password updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.toast_password_updated, Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(this, "Failed to update password", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
-                Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -405,9 +404,9 @@ public class SettingsActivity extends AppCompatActivity {
                 .setValue(mobile)
                 .addOnSuccessListener(aVoid -> {
                     dialog.dismiss();
-                    Toast.makeText(this, "Mobile updated", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.toast_mobile_updated, Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to update mobile", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
     }
 
     private void showUpdateEmailDialog() {
@@ -496,7 +495,7 @@ public class SettingsActivity extends AppCompatActivity {
         editor.clear();
         editor.apply();
 
-        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.toast_logout_success, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(SettingsActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

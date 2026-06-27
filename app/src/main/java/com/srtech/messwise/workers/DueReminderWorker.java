@@ -16,7 +16,6 @@ import androidx.work.WorkerParameters;
 
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.NotificationsActivity;
 import com.srtech.messwise.R;
@@ -83,24 +82,25 @@ public class DueReminderWorker extends Worker {
                     if (val instanceof Number) totalDue += ((Number) val).doubleValue();
                 }
 
+                String memberUid = memberSnap.getKey();
+                String notiId = "DUE_REMINDER_" + memberUid;
+
                 if (totalDue > 0) {
-                    String memberUid = memberSnap.getKey();
                     String name = memberSnap.child("name").getValue(String.class);
                     String title = "Pending Due Reminder";
                     String message = "Hi " + name + ", you have a pending due of ₹" + String.format(Locale.getDefault(), "%.2f", totalDue) + ". Please clear it soon.";
 
-                    // Push to Firebase for in-app record
-                    DatabaseReference notiRef = FirebaseDatabase.getInstance().getReference().child(messId).child("notifications").push();
-                    String id = notiRef.getKey();
-                    NotificationModel n = new NotificationModel(id, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis());
-                    if (id != null) {
-                        notiRef.setValue(n);
-                    }
+                    // Use a consistent ID to avoid redundant records
+                    NotificationModel n = new NotificationModel(notiId, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis());
+                    FirebaseDatabase.getInstance().getReference().child(messId).child("notifications").child(notiId).setValue(n);
 
                     // Show system notification ONLY for the current logged-in user
                     if (memberUid != null && memberUid.equals(currentUserId)) {
                         showNotification(title, message);
                     }
+                } else {
+                    // If due is cleared, remove the reminder record
+                    FirebaseDatabase.getInstance().getReference().child(messId).child("notifications").child(notiId).removeValue();
                 }
             }
         } catch (ExecutionException | InterruptedException e) {
