@@ -193,6 +193,14 @@
     <string name="label_logging_in">Logging in...</string>
     <string name="label_creating">Creating...</string>
     <string name="label_create_account">Create Account</string>
+    <string name="error_email_required">Email is required</string>
+    <string name="error_invalid_email">Invalid email format</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_mess_name_required">Mess Name is required</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_confirm_password_required">Confirm password is required</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
 
     <!-- Dynamic Keywords Map -->
     <string name="keyword_breakfast">Breakfast</string>
@@ -257,4 +265,9 @@
         <item>Cash</item>
         <item>Bank Transfer</item>
     </string-array>
+
+    <string name="forgot_password_title">Forgot Password?</string>
+    <string name="forgot_password_desc">Enter your email address to receive a password reset link.</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="reset_link_sent">Password reset link sent to your email.</string>
 </resources>

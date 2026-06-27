@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
 import java.util.Objects;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -20,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -32,7 +35,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.utils.FormUtils;
 
 public class LoginActivity extends BaseActivity {
-    TextView createAccount;
+    TextView createAccount, tvForgotPassword;
     EditText etMessId, etUserMail, etPassword;
     CheckBox cbRemember;
     Button loginBtn;
@@ -71,6 +74,7 @@ public class LoginActivity extends BaseActivity {
         prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
         createAccount = findViewById(R.id.tvCreateAccount);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
         etMessId = findViewById(R.id.etMessId);
         etUserMail = findViewById(R.id.etUserMail);
         etPassword = findViewById(R.id.etPassword);
@@ -91,6 +95,8 @@ public class LoginActivity extends BaseActivity {
             startActivity(intent);
             finish();
         });
+
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
 
         loginBtn.setOnClickListener(v -> {
             if (!isNetworkAvailable()) {
@@ -238,5 +244,56 @@ public class LoginActivity extends BaseActivity {
                 .addOnFailureListener(error -> {
                     Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void showForgotPasswordDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_forgot_password, null);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        EditText etEmail = dialogView.findViewById(R.id.etResetEmail);
+        Button btnSend = dialogView.findViewById(R.id.btnSend);
+        Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        AlertDialog dialog = builder.setView(dialogView).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setGravity(android.view.Gravity.BOTTOM);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        }
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSend.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            if (email.isEmpty()) {
+                etEmail.setError(getString(R.string.error_email_required));
+                return;
+            }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                etEmail.setError(getString(R.string.error_invalid_email));
+                return;
+            }
+
+            if (!isNetworkAvailable()) {
+                Toast.makeText(this, R.string.toast_no_internet, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            btnSend.setEnabled(false);
+            btnSend.setText(R.string.common_loading);
+
+            firebaseAuth.sendPasswordResetEmail(email).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(this, R.string.reset_link_sent, Toast.LENGTH_LONG).show();
+                    dialog.dismiss();
+                } else {
+                    btnSend.setEnabled(true);
+                    btnSend.setText(R.string.send_reset_link);
+                    String errorMsg = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                    Toast.makeText(this, "Failed: " + errorMsg, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        dialog.show();
     }
 }
