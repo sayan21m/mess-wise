@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MessWise | Modern Mess Management Simplified</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/scrollreveal"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B1120;
+            color: #F8FAFC;
+        }
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #00BFA5 0%, #4F8CFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-glow {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(0, 191, 165, 0.15) 0%, rgba(11, 17, 32, 0) 70%);
+            z-index: -1;
+        }
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Hero Glow -->
+    <div class="hero-glow"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-utensils text-white text-sm"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight">Mess<span class="text-teal-400">Wise</span></span>
+            </div>
+            <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-300">
+                <a href="#features" class="hover:text-teal-400 transition underline-offset-8 decoration-2 hover:underline decoration-teal-500">Features</a>
+                <a href="#dashboard" class="hover:text-teal-400 transition underline-offset-8 decoration-2 hover:underline decoration-teal-500">Dashboard</a>
+                <a href="#management" class="hover:text-teal-400 transition underline-offset-8 decoration-2 hover:underline decoration-teal-500">Management</a>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button onclick="downloadApk()" class="hidden sm:block bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-teal-500/20 transition-all hover:-translate-y-0.5 active:scale-95">
+                    Download APK
+                </button>
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-slate-300 hover:text-white p-2">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[60] flex flex-col items-center justify-center space-y-8 text-2xl font-bold opacity-0 pointer-events-none transition-all duration-300">
+            <button id="mobile-menu-close" class="absolute top-8 right-8 text-slate-400 hover:text-white">
+                <i class="fas fa-times text-3xl"></i>
+            </button>
+            <a href="#features" class="mobile-link hover:text-teal-400">Features</a>
+            <a href="#dashboard" class="mobile-link hover:text-teal-400">Dashboard</a>
+            <a href="#management" class="mobile-link hover:text-teal-400">Management</a>
+            <button onclick="downloadApk()" class="bg-teal-500 text-white px-8 py-3 rounded-2xl text-lg active:scale-95">Download APK</button>
+        </div>
+    </nav>
+
+    <!-- Scroll Progress -->
+    <div class="fixed top-0 left-0 w-full h-1 z-[100]">
+        <div id="scroll-progress" class="h-full bg-gradient-to-r from-teal-500 to-blue-500 w-0 transition-all duration-100"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="reveal text-5xl md:text-7xl font-800 mb-6 leading-tight">
+                Manage your mess <br>
+                <span class="gradient-text">effortlessly.</span>
+            </h1>
+            <p class="reveal text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                MessWise is a high-performance management companion for students and residents. Automate your tracking, budgeting, and awards in one immersive platform.
+            </p>
+            <div class="reveal flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
+                <button onclick="downloadApk()" class="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition active:scale-95">
+                    Get Started Free
+                </button>
+                <button class="glass px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 transition">
+                    <i class="fab fa-github mr-2"></i> View Source
+                </button>
+            </div>
+
+            <!-- App Mockup Placeholder -->
+            <div class="reveal mt-20 relative inline-block">
+                <div class="absolute -inset-4 bg-teal-500/20 blur-3xl rounded-full"></div>
+                <div class="relative glass p-4 rounded-[3rem] border-slate-700 shadow-2xl floating">
+                    <div class="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800">
+                        <!-- Simulated App Screen -->
+                        <div class="w-[300px] h-[600px] p-6 flex flex-col text-left">
+                            <!-- Simulated App Content -->
+                            <div class="flex justify-between items-center mb-8">
+                                <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
+                                    <i class="fas fa-user text-slate-500 text-sm"></i>
+                                </div>
+                                <div class="relative">
+                                    <div class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
+                                        <i class="fas fa-bell text-teal-400 text-xs"></i>
+                                    </div>
+                                    <div id="mock-noti-badge" class="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-slate-900 hidden animate-pulse"></div>
+                                </div>
+                            </div>
+
+                            <div class="h-2 w-20 bg-slate-800 rounded-full mb-2"></div>
+                            <div class="h-8 w-40 bg-slate-100/10 rounded-lg mb-8 flex items-center px-3">
+                                <span class="text-xs font-bold text-slate-300">₹<span id="mock-balance">1,250</span>.00</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="h-24 glass rounded-2xl p-4 border-slate-700 relative overflow-hidden group">
+                                    <div class="h-2 w-12 bg-slate-700 rounded mb-4"></div>
+                                    <div class="text-xs font-bold text-teal-400">NEXT MEAL</div>
+                                    <div id="mock-meal" class="text-[10px] text-slate-400 mt-1">Lunch</div>
+                                </div>
+                                <div class="h-24 glass rounded-2xl p-4 border-slate-700">
+                                    <div class="h-2 w-12 bg-slate-700 rounded mb-4"></div>
+                                    <div class="text-xs font-bold text-rose-400">DUE</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">₹0.00</div>
+                                </div>
+                            </div>
+
+                            <div class="h-32 glass rounded-2xl p-4 border-slate-700 mb-4 flex flex-col justify-between">
+                                <div class="flex justify-between items-center">
+                                    <div class="h-2 w-20 bg-slate-700 rounded"></div>
+                                    <div class="h-2 w-8 bg-teal-500/30 rounded"></div>
+                                </div>
+                                <div class="h-12 w-full bg-slate-800 rounded-xl flex items-center px-4 space-x-3">
+                                    <i class="fas fa-utensils text-teal-400 text-xs"></i>
+                                    <div id="mock-menu-text" class="text-[10px] text-slate-300 truncate">Chicken Curry & Rice</div>
+                                </div>
+                            </div>
+
+                            <!-- Live Notification Toast -->
+                            <div id="mock-toast" class="absolute left-6 right-6 bottom-24 glass p-3 rounded-xl border-teal-500/30 shadow-2xl translate-y-10 opacity-0 transition-all duration-500 z-10">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
+                                        <i class="fas fa-check text-white text-[10px]"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] font-bold">Attendance Logged</div>
+                                        <div class="text-[8px] text-slate-400">Meal status: Booked</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto flex justify-around py-4 border-t border-slate-800">
+                                <i class="fas fa-home text-teal-400"></i>
+                                <i class="fas fa-wallet text-slate-600"></i>
+                                <i class="fas fa-chart-pie text-slate-600"></i>
+                                <i class="fas fa-cog text-slate-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats/Features Grid -->
+    <section id="features" class="py-20 px-6 bg-slate-900/50">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="reveal glass p-8 rounded-3xl hover:border-teal-500/50 transition group">
+                    <div class="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition duration-500">
+                        <i class="fas fa-bolt text-teal-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Real-time Tracking</h3>
+                    <p class="text-slate-400 leading-relaxed">
+                        Track meal attendance and financial contributions with zero latency using Firebase Realtime Database.
+                    </p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="reveal glass p-8 rounded-3xl hover:border-blue-500/50 transition group" style="transition-delay: 100ms;">
+                    <div class="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition duration-500">
+                        <i class="fas fa-chart-line text-blue-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Smart Budgeting</h3>
+                    <p class="text-slate-400 leading-relaxed">
+                        Automatic menu rotation based on your Goal Meal Rate. Always stay within budget with intelligent selection.
+                    </p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="reveal glass p-8 rounded-3xl hover:border-purple-500/50 transition group" style="transition-delay: 200ms;">
+                    <div class="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition duration-500">
+                        <i class="fas fa-bell text-purple-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Autonomous Alerts</h3>
+                    <p class="text-slate-400 leading-relaxed">
+                        Background reminders for pending dues powered by Android WorkManager. Never miss a payment again.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary Preview -->
+    <section id="dashboard" class="py-24 px-6 overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+            <div class="reveal flex-1">
+                <span class="text-teal-400 font-semibold tracking-widest text-xs uppercase mb-4 block">Visual Analytics</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">Insightful financial <br> overview.</h2>
+                <p class="text-slate-400 text-lg leading-relaxed mb-8">
+                    MessWise provides a professional dashboard with MPAndroidChart integration. Visualize your monthly cash flow, category expenses, and top contributors at a glance.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center text-slate-300">
+                        <div class="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-check text-[10px] text-teal-400"></i>
+                        </div>
+                        Interactive Line Charts
+                    </li>
+                    <li class="flex items-center text-slate-300">
+                        <div class="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-check text-[10px] text-teal-400"></i>
+                        </div>
+                        Category-wise Expense Progress
+                    </li>
+                    <li class="flex items-center text-slate-300">
+                        <div class="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-check text-[10px] text-teal-400"></i>
+                        </div>
+                        Instant PDF/CSV Export
+                    </li>
+                </ul>
+            </div>
+            <div class="reveal flex-1 relative">
+                <div class="absolute -inset-10 bg-blue-500/10 blur-3xl rounded-full"></div>
+                <div class="relative glass rounded-[2.5rem] p-8 border-slate-700 shadow-2xl">
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="h-4 w-32 bg-slate-800 rounded"></div>
+                        <div class="h-8 w-24 bg-teal-500/10 rounded-xl border border-teal-500/20"></div>
+                    </div>
+                    <div class="h-40 w-full bg-gradient-to-t from-slate-900 to-slate-800 rounded-2xl relative mb-6">
+                        <svg class="absolute bottom-0 w-full h-full p-4" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M0 80 Q 25 20, 50 60 T 100 30" fill="none" stroke="#2DD4BF" stroke-width="2" />
+                            <path d="M0 90 Q 25 50, 50 80 T 100 60" fill="none" stroke="#4F8CFF" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="h-4 w-full bg-slate-800 rounded"></div>
+                        <div class="h-4 w-2/3 bg-slate-800 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Powerful Management -->
+    <section id="management" class="py-24 px-6 bg-slate-900/30">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row-reverse items-center gap-16">
+            <div class="reveal flex-1">
+                <span class="text-blue-400 font-semibold tracking-widest text-xs uppercase mb-4 block">Admin Controls</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">Total control in <br> your hands.</h2>
+                <p class="text-slate-400 text-lg leading-relaxed mb-8">
+                    Mess managers can oversee the entire community from a central hub. From role-based permissions to automated due alerts, management has never been this streamlined.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="glass p-6 rounded-2xl border-slate-700">
+                        <i class="fas fa-users-cog text-teal-400 mb-3 block text-xl"></i>
+                        <h5 class="font-bold mb-1 text-sm">Role Management</h5>
+                        <p class="text-xs text-slate-500">Assign specific permissions to managers and members.</p>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border-slate-700">
+                        <i class="fas fa-calendar-check text-blue-400 mb-3 block text-xl"></i>
+                        <h5 class="font-bold mb-1 text-sm">Slot Customization</h5>
+                        <p class="text-xs text-slate-500">Create custom meal timings and attendance rules.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal flex-1">
+                <div class="relative glass rounded-[2.5rem] p-4 border-slate-700 shadow-2xl">
+                    <div class="bg-slate-950 rounded-[2rem] p-6 h-[400px] overflow-hidden">
+                        <div class="flex items-center space-x-4 mb-8">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-blue-400"></i>
+                            </div>
+                            <div>
+                                <div class="h-3 w-24 bg-slate-800 rounded-full mb-2"></div>
+                                <div class="h-2 w-16 bg-slate-800/50 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-center p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                <div class="h-3 w-32 bg-slate-800 rounded"></div>
+                                <div class="w-8 h-4 bg-teal-500 rounded-full"></div>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                <div class="h-3 w-24 bg-slate-800 rounded"></div>
+                                <div class="w-8 h-4 bg-slate-800 rounded-full"></div>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                <div class="h-3 w-40 bg-slate-800 rounded"></div>
+                                <div class="w-8 h-4 bg-teal-500 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Awards Section -->
+    <section class="py-20 px-6 bg-gradient-to-b from-slate-900/50 to-slate-950">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="reveal inline-block p-4 bg-yellow-500/10 rounded-full mb-6">
+                <i class="fas fa-trophy text-yellow-500 text-3xl"></i>
+            </div>
+            <h2 class="reveal text-4xl font-bold mb-6">Celebrate your community</h2>
+            <p class="reveal text-slate-400 max-w-2xl mx-auto mb-16">
+                MessWise isn't just about data; it's about fun. Our unique "Monthly Awards" system features animated icons and celebrates the best and least active eaters in your mess.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="reveal glass p-10 rounded-[3rem] text-left border-yellow-500/20">
+                    <i class="fas fa-crown text-yellow-500 text-2xl mb-4"></i>
+                    <h4 class="text-2xl font-bold mb-2">Meal Champion</h4>
+                    <p class="text-slate-400">The member with the highest tracking consistency for the month.</p>
+                </div>
+                <div class="reveal glass p-10 rounded-[3rem] text-left border-teal-500/20">
+                    <i class="fas fa-duck text-teal-400 text-2xl mb-4"></i>
+                    <h4 class="text-2xl font-bold mb-2">Golden Duck</h4>
+                    <p class="text-slate-400">A fun recognition for those who skipped the most meals!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-8 md:mb-0">
+                <div class="flex items-center space-x-2 mb-4">
+                    <div class="w-6 h-6 bg-teal-500 rounded flex items-center justify-center">
+                        <i class="fas fa-utensils text-white text-[10px]"></i>
+                    </div>
+                    <span class="text-lg font-bold">MessWise</span>
+                </div>
+                <p class="text-slate-500 text-sm">© 2026 SR Tech. Built for students, with students.</p>
+            </div>
+            <div class="flex space-x-6 text-slate-400">
+                <a href="#" class="hover:text-teal-400 transition"><i class="fab fa-github"></i></a>
+                <a href="#" class="hover:text-teal-400 transition"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="hover:text-teal-400 transition"><i class="fab fa-discord"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 bg-teal-500 text-white rounded-full shadow-2xl opacity-0 translate-y-10 pointer-events-none transition-all duration-300 z-50 hover:bg-teal-600 hover:-translate-y-1">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Scroll Reveal Configuration
+        ScrollReveal().reveal('.reveal', {
+            delay: 200,
+            distance: '30px',
+            duration: 800,
+            easing: 'cubic-bezier(0.5, 0, 0, 1)',
+            interval: 100,
+            origin: 'bottom'
+        });
+
+        // Mobile Menu Logic
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileClose = document.getElementById('mobile-menu-close');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        const toggleMenu = (show) => {
+            mobileMenu.style.opacity = show ? '1' : '0';
+            mobileMenu.style.pointerEvents = show ? 'all' : 'none';
+            document.body.style.overflow = show ? 'hidden' : 'auto';
+        };
+
+        if (mobileBtn) mobileBtn.addEventListener('click', () => toggleMenu(true));
+        if (mobileClose) mobileClose.addEventListener('click', () => toggleMenu(false));
+        mobileLinks.forEach(link => link.addEventListener('click', () => toggleMenu(false)));
+
+        // Scroll Logic
+        const backToTop = document.getElementById('back-to-top');
+        const scrollProgress = document.getElementById('scroll-progress');
+        const nav = document.querySelector('nav');
+
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+
+            // Progress bar
+            if (scrollProgress) scrollProgress.style.width = scrolled + "%";
+
+            // Header effect
+            if (winScroll > 50) {
+                nav.style.paddingTop = '1rem';
+                nav.style.paddingBottom = '1rem';
+                nav.querySelector('.glass').style.background = 'rgba(11, 17, 32, 0.8)';
+            } else {
+                nav.style.paddingTop = '1.5rem';
+                nav.style.paddingBottom = '1.5rem';
+                nav.querySelector('.glass').style.background = 'rgba(17, 24, 39, 0.7)';
+            }
+
+            // Back to top visibility
+            if (winScroll > 400) {
+                backToTop.style.opacity = '1';
+                backToTop.style.pointerEvents = 'all';
+                backToTop.style.transform = 'translateY(0)';
+            } else {
+                backToTop.style.opacity = '0';
+                backToTop.style.pointerEvents = 'none';
+                backToTop.style.transform = 'translateY(40px)';
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // App Mockup Simulation
+        const mockBalance = document.getElementById('mock-balance');
+        const mockMeal = document.getElementById('mock-meal');
+        const mockMenuText = document.getElementById('mock-menu-text');
+        const mockToast = document.getElementById('mock-toast');
+        const mockNotiBadge = document.getElementById('mock-noti-badge');
+
+        const simulationData = [
+            { balance: '1,250', meal: 'Lunch', menu: 'Chicken Curry & Rice' },
+            { balance: '1,400', meal: 'Evening Snacks', menu: 'Veg Pakora & Tea' },
+            { balance: '1,350', meal: 'Dinner', menu: 'Dal Makhani & Roti' },
+            { balance: '1,800', meal: 'Breakfast', menu: 'Masala Dosa' }
+        ];
+
+        let currentIndex = 0;
+
+        const runSimulation = () => {
+            if (!mockToast) return;
+            // Show toast
+            mockToast.style.opacity = '1';
+            mockToast.style.transform = 'translateY(0)';
+            if (mockNotiBadge) mockNotiBadge.classList.remove('hidden');
+
+            setTimeout(() => {
+                // Change data
+                currentIndex = (currentIndex + 1) % simulationData.length;
+                const data = simulationData[currentIndex];
+
+                if (mockBalance) mockBalance.innerText = data.balance;
+                if (mockMeal) mockMeal.innerText = data.meal;
+                if (mockMenuText) mockMenuText.innerText = data.menu;
+
+                // Hide toast
+                setTimeout(() => {
+                    mockToast.style.opacity = '0';
+                    mockToast.style.transform = 'translateY(10px)';
+                    if (mockNotiBadge) mockNotiBadge.classList.add('hidden');
+                }, 3000);
+            }, 500);
+        };
+
+        setInterval(runSimulation, 8000);
+        setTimeout(runSimulation, 4000);
+
+        // Smooth Scroll for Nav Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const target = document.querySelector(targetId);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Download APK Functionality
+        function downloadApk() {
+            // Firebase Hosting (Spark Plan) forbids hosting APKs directly.
+            // Using the RAW GitHub link for direct download.
+            const apkUrl = 'https://github.com/sayan21m/mess-wise/raw/main/app/release/app-release.apk';
+
+            // Opening in a new window/tab is the most reliable way to trigger
+            // a cross-origin download from GitHub Raw without leaving the page.
+            window.open(apkUrl, '_blank');
+
+            // Optional: Show a "Download Started" feedback
+            const toast = document.getElementById('mock-toast');
+            if (toast) {
+                const originalContent = toast.innerHTML;
+                toast.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <i class="fas fa-download text-white text-[10px]"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold">Download Started</div>
+                            <div class="text-[8px] text-slate-400">MessWise.apk is being downloaded...</div>
+                        </div>
+                    </div>
+                `;
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(10px)';
+                    setTimeout(() => { toast.innerHTML = originalContent; }, 500);
+                }, 4000);
+            }
+        }
+    </script>
+</body>
+</html>
