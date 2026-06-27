@@ -256,7 +256,7 @@
                     <TextView
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
-                        android:text="Built with ❤ for students"
+                        android:text="Built with ❤ for students by SR Tech"
                         android:textColor="#9E9E9E"
                         android:layout_marginTop="4dp"/>
 
