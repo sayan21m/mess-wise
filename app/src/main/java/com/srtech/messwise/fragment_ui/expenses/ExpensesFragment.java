@@ -166,6 +166,9 @@ public class ExpensesFragment extends Fragment {
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setGravity(android.view.Gravity.BOTTOM);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         }
 
         btnUpdate.setOnClickListener(v -> {
@@ -179,7 +182,7 @@ public class ExpensesFragment extends Fragment {
                         .addOnSuccessListener(aVoid -> {
                             if (isAdded()) {
                                 Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
-                                FinanceUtils.updateAllMemberDues(messId);
+                                com.srtech.messwise.utils.FinanceUtils.updateAllMemberDues(messId);
                             }
                         });
                 dialog.dismiss();

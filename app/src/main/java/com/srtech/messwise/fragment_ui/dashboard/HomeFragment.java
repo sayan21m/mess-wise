@@ -3,25 +3,23 @@ package com.srtech.messwise.fragment_ui.dashboard;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.widget.CheckBox;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -32,7 +30,6 @@ import com.srtech.messwise.admin_ui.MealSlot;
 import com.srtech.messwise.ui.AttendanceActivity;
 import com.srtech.messwise.ui.SettingsActivity;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -47,20 +44,21 @@ public class HomeFragment extends Fragment {
     private Button btnApplyLeave;
     private SharedPreferences prefs;
     private String userId, messId;
-    FirebaseDatabase db;
-    TextView totalMeal, tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn, tvMemberDue, tvMealRate, tvDueLabel, tvDueDeadline, tvTodayMenu, tvMenuDescription;
+    private FirebaseDatabase db;
+    private TextView tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn, tvMemberDue, tvMealRate, tvDueLabel, tvDueDeadline, tvTodayMenu, tvMenuDescription;
+    private CardView cardTodayMenu;
     private ValueEventListener statusListener, messDataListener, menuListener;
     private boolean isLeaveDialogShowing = false;
     private double messTotalExpenses = 0;
     private long messTotalMeals = 0;
     private long memberTotalMeals = 0;
     private double memberTotalContribution = 0;
+    private boolean isAdmin = false;
 
     public HomeFragment() {
         // Required empty public constructor
     }
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -71,10 +69,10 @@ public class HomeFragment extends Fragment {
         prefs = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);
+        isAdmin = prefs.getBoolean("isAdmin", false);
 
         profile = view.findViewById(R.id.profile);
         mealAttendance = view.findViewById(R.id.mealAttendance);
-        totalMeal = view.findViewById(R.id.totalMeal);
         tvNextMealName = view.findViewById(R.id.tvNextMealName);
         tvNextMealTime = view.findViewById(R.id.tvNextMealTime);
         tvMealStatus = view.findViewById(R.id.tvMealStatus);
@@ -86,11 +84,12 @@ public class HomeFragment extends Fragment {
         tvMealRate = view.findViewById(R.id.tvMealRate);
         tvTodayMenu = view.findViewById(R.id.tvTodayMenu);
         tvMenuDescription = view.findViewById(R.id.tvMenuDescription);
+        cardTodayMenu = view.findViewById(R.id.cardTodayMenu);
         btnApplyLeave = view.findViewById(R.id.btnApplyLeave);
 
         db = FirebaseDatabase.getInstance();
 
-        setTotalMeal();
+        setupNotificationButton(view);
         setNextMeal();
         setMealStatus();
         loadMessData();
@@ -117,26 +116,19 @@ public class HomeFragment extends Fragment {
 
     private void setNextMeal() {
         if (messId == null) return;
-
         db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
-                List<MealSlot> allSlots = new ArrayList<>();
+                List<MealSlot> slots = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     MealSlot slot = ds.getValue(MealSlot.class);
                     if (slot != null) {
-                        allSlots.add(slot);
+                        slot.setId(ds.getKey());
+                        slots.add(slot);
                     }
                 }
-
-                if (allSlots.isEmpty()) {
-                    tvNextMealName.setText("No Slots");
-                    tvNextMealTime.setText("--:--");
-                    return;
-                }
-
-                updateNextMealUI(allSlots);
+                updateNextMealUI(slots);
             }
 
             @Override
@@ -144,135 +136,77 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void updateNextMealUI(List<MealSlot> allSlots) {
+    private void updateNextMealUI(List<MealSlot> slots) {
+        if (slots.isEmpty()) {
+            tvNextMealName.setText("No slots set");
+            tvNextMealTime.setText("--:--");
+            return;
+        }
+
         Calendar now = Calendar.getInstance();
-        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        
+        int currentHour = now.get(Calendar.HOUR_OF_DAY);
+        int currentMinute = now.get(Calendar.MINUTE);
+        int currentTimeInMins = currentHour * 60 + currentMinute;
+
         MealSlot nextSlot = null;
-        long minDiff = Long.MAX_VALUE;
+        int minDiff = Integer.MAX_VALUE;
 
-        for (MealSlot slot : allSlots) {
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
+        for (MealSlot slot : slots) {
             try {
-                Date slotDate = timeFormat.parse(slot.getTime());
-                if (slotDate != null) {
-                    Calendar slotCal = Calendar.getInstance();
-                    Calendar tempCal = Calendar.getInstance();
-                    tempCal.setTime(slotDate);
-                    
-                    slotCal.set(Calendar.HOUR_OF_DAY, tempCal.get(Calendar.HOUR_OF_DAY));
-                    slotCal.set(Calendar.MINUTE, tempCal.get(Calendar.MINUTE));
-                    slotCal.set(Calendar.SECOND, 0);
+                Date date = sdf.parse(slot.getTime());
+                if (date != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(date);
+                    int slotTimeInMins = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+                    int diff = slotTimeInMins - currentTimeInMins;
 
-                    long diff = slotCal.getTimeInMillis() - now.getTimeInMillis();
-                    
-                    // If the meal is in the future today
                     if (diff > 0 && diff < minDiff) {
                         minDiff = diff;
                         nextSlot = slot;
                     }
                 }
-            } catch (ParseException e) {
-                Log.e("SGT", "Error parsing time: " + slot.getTime());
-            }
+            } catch (Exception ignored) {}
         }
 
-        // If no more meals today, find the first meal of tomorrow
         if (nextSlot == null) {
-            long minTimeFromStartOfDay = Long.MAX_VALUE;
-            for (MealSlot slot : allSlots) {
-                try {
-                    Date slotDate = timeFormat.parse(slot.getTime());
-                    if (slotDate != null) {
-                        Calendar tempCal = Calendar.getInstance();
-                        tempCal.setTime(slotDate);
-                        long timeFromStart = tempCal.get(Calendar.HOUR_OF_DAY) * 60 + tempCal.get(Calendar.MINUTE);
-                        if (timeFromStart < minTimeFromStartOfDay) {
-                            minTimeFromStartOfDay = timeFromStart;
-                            nextSlot = slot;
-                        }
-                    }
-                } catch (ParseException e) {
-                    Log.e("SGT", "Error parsing time: " + slot.getTime());
-                }
-            }
+            // All slots for today are passed, show first slot of tomorrow
+            nextSlot = slots.get(0);
         }
 
-        if (nextSlot != null) {
-            tvNextMealName.setText(nextSlot.getName());
-            tvNextMealTime.setText(nextSlot.getTime());
-        }
+        tvNextMealName.setText(nextSlot.getName());
+        tvNextMealTime.setText(nextSlot.getTime());
     }
 
     private void applyForLeave() {
-        if (isLeaveDialogShowing || messId == null || userId == null) return;
-        isLeaveDialogShowing = true;
-
-        // Fetch meal slots to show options
+        if (messId == null) return;
         db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!isAdded()) {
-                    isLeaveDialogShowing = false;
-                    return;
-                }
-                List<MealSlot> allSlots = new ArrayList<>();
+                if (!isAdded()) return;
+                List<MealSlot> slots = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     MealSlot slot = ds.getValue(MealSlot.class);
                     if (slot != null) {
                         slot.setId(ds.getKey());
-                        allSlots.add(slot);
+                        slots.add(slot);
                     }
                 }
-
-                if (allSlots.isEmpty()) {
-                    Toast.makeText(getContext(), "No meal slots defined by admin", Toast.LENGTH_SHORT).show();
-                    isLeaveDialogShowing = false;
-                    return;
-                }
-
-                filterAndShowLeaveDialog(allSlots);
+                filterAndShowLeaveDialog(slots);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                isLeaveDialogShowing = false;
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
     private void filterAndShowLeaveDialog(List<MealSlot> allSlots) {
-        Calendar now = Calendar.getInstance();
-        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        List<MealSlot> availableSlots = new ArrayList<>();
-
-        for (MealSlot slot : allSlots) {
-            try {
-                Date slotTime = timeFormat.parse(slot.getTime());
-                if (slotTime != null) {
-                    Calendar slotCal = Calendar.getInstance();
-                    Calendar tempCal = Calendar.getInstance();
-                    tempCal.setTime(slotTime);
-                    
-                    slotCal.set(Calendar.HOUR_OF_DAY, tempCal.get(Calendar.HOUR_OF_DAY));
-                    slotCal.set(Calendar.MINUTE, tempCal.get(Calendar.MINUTE));
-
-                    // Only show slots that are at least 30 minutes in the future
-                    if (slotCal.after(now)) {
-                        availableSlots.add(slot);
-                    }
-                }
-            } catch (ParseException e) {
-                Log.e("SGT", "Error parsing slot time: " + slot.getTime(), e);
-            }
-        }
-
-        if (availableSlots.isEmpty()) {
-            Toast.makeText(getContext(), "No upcoming meals for today", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (allSlots.isEmpty() || isLeaveDialogShowing) return;
+        isLeaveDialogShowing = true;
 
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_leave_selection, null);
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setView(dialogView)
                 .setCancelable(true)
                 .setOnDismissListener(d -> isLeaveDialogShowing = false)
@@ -282,12 +216,11 @@ public class HomeFragment extends Fragment {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
-        RecyclerView rvMealSlots = dialogView.findViewById(R.id.rvMealSlots);
-        rvMealSlots.setLayoutManager(new LinearLayoutManager(getContext()));
-        
+        RecyclerView rvSlots = dialogView.findViewById(R.id.rvMealSlots);
+        rvSlots.setLayoutManager(new LinearLayoutManager(getContext()));
         List<MealSlot> selectedSlots = new ArrayList<>();
-        
-        rvMealSlots.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+        rvSlots.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @NonNull
             @Override
             public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -297,54 +230,42 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-                MealSlot slot = availableSlots.get(position);
-                TextView tvName = holder.itemView.findViewById(R.id.tvMealName);
-                TextView tvTime = holder.itemView.findViewById(R.id.tvMealTime);
-                CheckBox checkBox = holder.itemView.findViewById(R.id.cbSelected);
+                MealSlot slot = allSlots.get(position);
+                TextView name = holder.itemView.findViewById(R.id.tvMealName);
+                TextView time = holder.itemView.findViewById(R.id.tvMealTime);
+                CheckBox cb = holder.itemView.findViewById(R.id.cbSelected);
 
-                tvName.setText(slot.getName());
-                tvTime.setText(slot.getTime());
-                
-                // Reset checkbox state
-                checkBox.setOnCheckedChangeListener(null);
-                checkBox.setChecked(selectedSlots.contains(slot));
-                
-                checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (isChecked) {
-                        if (!selectedSlots.contains(slot)) selectedSlots.add(slot);
-                    } else {
-                        selectedSlots.remove(slot);
-                    }
+                name.setText(slot.getName());
+                time.setText(slot.getTime());
+
+                holder.itemView.setOnClickListener(v -> cb.setChecked(!cb.isChecked()));
+                cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    if (isChecked) selectedSlots.add(slot);
+                    else selectedSlots.remove(slot);
                 });
-
-                holder.itemView.setOnClickListener(v -> checkBox.toggle());
             }
 
             @Override
             public int getItemCount() {
-                return availableSlots.size();
+                return allSlots.size();
             }
         });
 
-        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btnSubmit).setOnClickListener(v -> {
             if (selectedSlots.isEmpty()) {
-                Toast.makeText(getContext(), "Please select at least one meal", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Select at least one slot", Toast.LENGTH_SHORT).show();
                 return;
             }
             submitLeaveRequests(selectedSlots);
             dialog.dismiss();
         });
 
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+
         dialog.show();
     }
 
     private void submitLeaveRequests(List<MealSlot> slots) {
-        // Since the current Firebase structure seems to support only one pending leave at a time
-        // in 'pending_leave_slot' and 'next_meal_leave' flag, we might need to adjust.
-        // For now, I'll join the names if multiple are selected or just handle the first one 
-        // if that's what the current logic expects, but let's try to store them as a list if possible.
-        
         StringBuilder slotNames = new StringBuilder();
         for (int i = 0; i < slots.size(); i++) {
             slotNames.append(slots.get(i).getName());
@@ -364,78 +285,46 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadDailyMenu() {
-        if (messId == null) return;
-        String today = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
-        menuListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!isAdded()) return;
-                String menu = snapshot.getValue(String.class);
-                if (menu != null && !menu.isEmpty()) {
-                    tvTodayMenu.setText(menu);
-                    tvMenuDescription.setText("Menu for today");
-                } else {
-                    tvTodayMenu.setText("Regular Menu");
-                    tvMenuDescription.setText("No special menu updated");
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        };
-        db.getReference().child(messId).child("daily_menu").child(today).addValueEventListener(menuListener);
+        // Removed as we no longer store or read persistent daily menus.
+        // Menu logic is now dynamic in loadMessData().
     }
 
     private void setMealStatus() {
         if (messId == null || userId == null) return;
-
-        String today = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
-                .format(Calendar.getInstance().getTime());
-
         statusListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
-
-                // Update Real-time Total Monthly Meals
-                Integer totalMonthlyMeals = snapshot.child("meal_count").getValue(Integer.class);
-                if (totalMonthlyMeals == null) totalMonthlyMeals = 0;
-                totalMeal.setText(totalMonthlyMeals + " Meals");
-
-                // Update Status for Today
-                Integer count = snapshot.child("meal_count_history").child(today).getValue(Integer.class);
-                if (count == null) count = 0;
-
-                if (count > 0) {
-                    tvMealStatus.setText(count + (count == 1 ? " Meal" : " Meals"));
-                    tvMealStatus.setTextColor(requireContext().getColor(R.color.dark_success));
-                    tvMealStatusDesc.setText("Marked for today");
+                Boolean onLeave = snapshot.child("next_meal_leave").getValue(Boolean.class);
+                if (onLeave != null && onLeave) {
+                    tvMealStatus.setText("On Leave");
+                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_error));
+                    String slot = snapshot.child("pending_leave_slot").getValue(String.class);
+                    tvMealStatusDesc.setText(slot != null ? slot : "Leave applied");
                 } else {
-                    tvMealStatus.setText("Pending");
-                    tvMealStatus.setTextColor(requireContext().getColor(R.color.dark_primary));
-                    tvMealStatusDesc.setText("No meals marked");
+                    tvMealStatus.setText("Booked");
+                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_success));
+                    tvMealStatusDesc.setText("For today");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         };
-
-        db.getReference().child(messId).child("member").child(userId)
-                .addValueEventListener(statusListener);
+        db.getReference().child(messId).child("member").child(userId).addValueEventListener(statusListener);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (statusListener != null && messId != null && userId != null) {
-            db.getReference().child(messId).child("member").child(userId)
-                    .removeEventListener(statusListener);
+        if (statusListener != null) {
+            db.getReference().child(messId).child("member").child(userId).removeEventListener(statusListener);
         }
-        if (messDataListener != null && messId != null) {
+        if (messDataListener != null) {
             db.getReference().child(messId).removeEventListener(messDataListener);
         }
-        if (menuListener != null && messId != null) {
-            String today = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date());
+        if (menuListener != null) {
+            String today = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH).format(new Date());
             db.getReference().child(messId).child("daily_menu").child(today).removeEventListener(menuListener);
         }
     }
@@ -459,6 +348,66 @@ public class HomeFragment extends Fragment {
                     } catch (Exception ignored) {}
                 }
                 tvMealRate.setText(String.format(Locale.getDefault(), "₹%.2f", dbRate));
+
+                // Check against goal rate and update color
+                Double goalRate = snapshot.child("config").child("goal_meal_rate").getValue(Double.class);
+                
+                // Smart Menu Logic - Always visible
+                cardTodayMenu.setVisibility(View.VISIBLE);
+                
+                int takingCount = 0;
+                for (DataSnapshot m : snapshot.child("member").getChildren()) {
+                    Boolean onLeave = m.child("next_meal_leave").getValue(Boolean.class);
+                    if (onLeave == null || !onLeave) takingCount++;
+                }
+
+                if (takingCount > 0) {
+                    DataSnapshot bankNode = snapshot.child("menu_bank");
+                    List<DataSnapshot> affordable = new ArrayList<>();
+                    List<DataSnapshot> allBank = new ArrayList<>();
+
+                    for (DataSnapshot ms : bankNode.getChildren()) {
+                        Object val = ms.getValue();
+                        if (val instanceof java.util.Map) {
+                            allBank.add(ms);
+                            Double totalCost = ms.child("cost").getValue(Double.class);
+                            if (totalCost != null && (totalCost / takingCount) <= (goalRate != null ? goalRate : Double.MAX_VALUE)) {
+                                affordable.add(ms);
+                            }
+                        }
+                    }
+
+                    // If rate > goal, use affordable. Otherwise use full bank.
+                    List<DataSnapshot> pool = (goalRate != null && dbRate > goalRate && !affordable.isEmpty()) ? affordable : allBank;
+                    
+                    if (!pool.isEmpty()) {
+                        // Deterministic random selection based on date string
+                        String dateStr = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).format(new Date());
+                        int seed = dateStr.hashCode();
+                        DataSnapshot selected = pool.get(new java.util.Random(seed).nextInt(pool.size()));
+                        
+                        String menuName = selected.child("menuName").getValue(String.class);
+                        String menuDesc = selected.child("description").getValue(String.class);
+                        Double cost = selected.child("cost").getValue(Double.class);
+                        
+                        tvTodayMenu.setText(menuName);
+                        String detail = (menuDesc != null ? menuDesc : "") + (cost != null ? " • ₹" + cost : "");
+                        tvMenuDescription.setText(detail);
+                    } else {
+                        tvTodayMenu.setText("Regular Menu");
+                        tvMenuDescription.setText("Add items to Menu Bank to see them here.");
+                    }
+                }
+
+                if (goalRate != null && goalRate > 0) {
+                    if (dbRate > goalRate) {
+                        tvMealRate.setTextColor(requireContext().getColor(R.color.dark_error));
+                    } else {
+                        tvMealRate.setTextColor(requireContext().getColor(R.color.dark_success));
+                    }
+                } else {
+                    tvMealRate.setTextColor(requireContext().getColor(R.color.white)); // Default color
+                }
 
                 // Calculate and display total all-time pending due from history
                 DataSnapshot memberSnap = snapshot.child("member").child(userId);
@@ -503,15 +452,87 @@ public class HomeFragment extends Fragment {
         db.getReference().child(messId).addValueEventListener(messDataListener);
     }
 
-    private void setTotalMeal() {
-        // Now handled in real-time by setMealStatus listener
-    }
-
     private Double getDoubleValue(DataSnapshot snapshot) {
         Object value = snapshot.getValue();
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         }
         return null;
+    }
+
+    private void setupNotificationButton(View view) {
+        View btnNotification = view.findViewById(R.id.btnNotification);
+        View ivNotification = view.findViewById(R.id.ivNotification);
+        View vNotiBadge = view.findViewById(R.id.vNotiBadge);
+
+        if (messId == null || userId == null) return;
+
+        // Unified permission & data listener
+        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot messSnapshot) {
+                if (!isAdded()) return;
+
+                // 1. Determine Permissions
+                DataSnapshot membersNode = messSnapshot.child("member");
+                DataSnapshot userSnap = membersNode.child(userId);
+                
+                String role = userSnap.child("role").getValue(String.class);
+                boolean isMainAdmin = userId.equals(messSnapshot.child("admin_uid").getValue(String.class));
+                
+                boolean canViewSummary = isMainAdmin;
+                if (!isMainAdmin && role != null) {
+                    DataSnapshot permSnap = messSnapshot.child("config").child("role_permissions").child(role);
+                    Boolean summaryPerm = permSnap.child("view_meal_summary").getValue(Boolean.class);
+                    if (summaryPerm != null && summaryPerm) {
+                        canViewSummary = true;
+                    }
+                }
+
+                if (!canViewSummary) {
+                    btnNotification.setVisibility(View.GONE);
+                    return;
+                }
+
+                btnNotification.setVisibility(View.VISIBLE);
+
+                // 2. Check for Leaves to show pulse/badge
+                ArrayList<String> leaveNames = new ArrayList<>();
+                for (DataSnapshot memberSnap : membersNode.getChildren()) {
+                    Boolean onLeave = memberSnap.child("next_meal_leave").getValue(Boolean.class);
+                    if (onLeave != null && onLeave) {
+                        String name = memberSnap.child("name").getValue(String.class);
+                        if (name != null) leaveNames.add(name);
+                    }
+                }
+
+                if (!leaveNames.isEmpty()) {
+                    vNotiBadge.setVisibility(View.VISIBLE);
+                    startPulseAnimation(ivNotification);
+                } else {
+                    vNotiBadge.setVisibility(View.GONE);
+                    ivNotification.clearAnimation();
+                }
+
+                btnNotification.setOnClickListener(v -> {
+                    Intent intent = new Intent(getActivity(), com.srtech.messwise.NotificationsActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void startPulseAnimation(View view) {
+        android.view.animation.ScaleAnimation pulse = new android.view.animation.ScaleAnimation(
+                1f, 1.15f, 1f, 1.15f,
+                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f,
+                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f);
+        pulse.setDuration(1000);
+        pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
+        pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+        view.startAnimation(pulse);
     }
 }

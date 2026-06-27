@@ -23,105 +23,91 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="#1E2A2E"
+            android:background="#1E293B"
             android:padding="16dp"
-            android:src="@drawable/ic_cash_in"
+            android:src="@drawable/ic_admin"
             app:shapeAppearanceOverlay="@style/CircleImage"
-            app:tint="@color/teal_accent" />
+            app:tint="@color/nav_selected" />
 
         <TextView
-            android:id="@+id/tvClearDueTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Clear Member Due"
+            android:text="Assign Role"
             android:textColor="@color/white"
             android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tvMemberNameDisplay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Member Name"
-            android:textColor="@color/teal_accent"
+            android:text="Set a specific position for this member"
+            android:textColor="@color/dark_text_muted"
             android:textSize="14sp" />
 
-        <LinearLayout
+        <RadioGroup
+            android:id="@+id/rgRoles"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:orientation="vertical">
+            android:layout_marginTop="24dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BREAKDOWN"
-                android:textColor="@color/dark_text_muted"
-                android:textSize="10sp"
-                android:letterSpacing="0.1"
-                android:textStyle="bold" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvDueBreakdown"
+            <RadioButton
+                android:id="@+id/rbAdmin"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:maxHeight="160dp" />
+                android:layout_height="56dp"
+                android:text="Admin"
+                android:textColor="@color/white"
+                android:buttonTint="@color/nav_selected" />
 
-        </LinearLayout>
+            <RadioButton
+                android:id="@+id/rbMealManager"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Meal Manager"
+                android:textColor="@color/white"
+                android:buttonTint="@color/nav_selected" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_amount_input"
-            android:orientation="horizontal"
-            android:padding="16dp">
+            <RadioButton
+                android:id="@+id/rbMember"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Normal Member"
+                android:textColor="@color/white"
+                android:buttonTint="@color/nav_selected" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Total Outstanding"
-                android:textColor="@color/dark_text_muted"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvCurrentMonthlyDue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="₹0.00"
-                android:textColor="@color/dark_error"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+            <RadioButton
+                android:id="@+id/rbCustom"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Custom Position"
+                android:textColor="@color/white"
+                android:buttonTint="@color/nav_selected" />
+        </RadioGroup>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilCustomRole"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
             app:boxBackgroundColor="#111111"
             app:boxCornerRadiusBottomEnd="16dp"
             app:boxCornerRadiusBottomStart="16dp"
             app:boxCornerRadiusTopEnd="16dp"
             app:boxCornerRadiusTopStart="16dp"
-            app:boxStrokeColor="@color/teal_accent"
-            app:hintTextColor="@color/teal_accent"
-            android:hint="Amount to Clear"
-            app:prefixText="₹ "
-            app:prefixTextColor="@color/white">
+            app:boxStrokeColor="@color/nav_selected"
+            app:hintTextColor="@color/nav_selected"
+            android:hint="Role Name (e.g. Secretary)">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etClearAmount"
+                android:id="@+id/etCustomRole"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
+                android:inputType="textCapWords"
                 android:textColor="@color/white"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="16sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -132,7 +118,7 @@
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCancelClear"
+                android:id="@+id/btnCancel"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
@@ -143,15 +129,15 @@
                 app:cornerRadius="16dp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSubmitClear"
+                android:id="@+id/btnSaveRole"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="16dp"
                 android:layout_weight="1.2"
-                android:text="Clear Amount"
+                android:text="Save Role"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
-                app:backgroundTint="@color/teal_accent"
+                app:backgroundTint="@color/white"
                 app:cornerRadius="16dp"
                 android:textStyle="bold" />
         </LinearLayout>

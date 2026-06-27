@@ -13,6 +13,8 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,11 +25,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.slider.Slider;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -44,7 +49,7 @@ import java.util.Locale;
 
 public class MemberAdminActivity extends AppCompatActivity {
 
-    private String messId;
+    private String messId, mainAdminUid;
     private FirebaseDatabase db;
     private SharedPreferences prefs;
     private TextView tvTotalMembersCount, tvTotalContributionCount, tvTotalDueCount, tvUpcomingDueCount;
@@ -52,6 +57,7 @@ public class MemberAdminActivity extends AppCompatActivity {
     private RecyclerView rvAdminMembers;
     private MemberAdapter memberAdapter;
     private ArrayList<Member> membersList = new ArrayList<>();
+    private boolean isAdmin = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +65,18 @@ public class MemberAdminActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_member_admin);
         
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
@@ -93,6 +108,17 @@ public class MemberAdminActivity extends AppCompatActivity {
         setupSearch();
 
         if (messId != null) {
+            isAdmin = prefs.getBoolean("isAdmin", false);
+
+            db.getReference().child(messId).child("admin_uid").get().addOnSuccessListener(snapshot -> {
+                mainAdminUid = snapshot.getValue(String.class);
+            });
+            
+            boolean canManageReminders = isAdmin || prefs.getBoolean("perm_manage_members", false);
+            View btnReminders = findViewById(R.id.btnReminderSettings);
+            btnReminders.setVisibility(canManageReminders ? View.VISIBLE : View.GONE);
+            btnReminders.setOnClickListener(v -> showReminderSettingsDialog());
+
             setTotalMemberCount();
             setGlobalStats();
             loadMembersList();
@@ -298,9 +324,281 @@ public class MemberAdminActivity extends AppCompatActivity {
             showClearDuePopup(member);
         });
         
-        dialogView.findViewById(R.id.btnDelete).setOnClickListener(v -> {
-            dialog.dismiss();
-            deleteMemberConfirm(member);
+        View btnManageRole = dialogView.findViewById(R.id.btnManageRole);
+        if (mainAdminUid != null && member.getUid().equals(mainAdminUid)) {
+            // Can't manage role of the main admin (owner)
+            btnManageRole.setVisibility(View.GONE);
+        } else {
+            btnManageRole.setOnClickListener(v -> {
+                dialog.dismiss();
+                showManageRoleDialog(member);
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void showManageRoleDialog(Member member) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_role, null);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        setupBottomSheetDialog(dialog);
+
+        RadioGroup rgRoles = dialogView.findViewById(R.id.rgRoles);
+        com.google.android.material.textfield.TextInputLayout tilCustom = dialogView.findViewById(R.id.tilCustomRole);
+        EditText etCustom = dialogView.findViewById(R.id.etCustomRole);
+        MaterialButton btnSave = dialogView.findViewById(R.id.btnSaveRole);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        String currentRole = member.getRole();
+        if (currentRole.equals("Admin")) rgRoles.check(R.id.rbAdmin);
+        else if (currentRole.equals("Meal Manager")) rgRoles.check(R.id.rbMealManager);
+        else if (currentRole.equals("Member")) rgRoles.check(R.id.rbMember);
+        else {
+            rgRoles.check(R.id.rbCustom);
+            tilCustom.setVisibility(View.VISIBLE);
+            etCustom.setText(currentRole);
+        }
+
+        rgRoles.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rbCustom) tilCustom.setVisibility(View.VISIBLE);
+            else tilCustom.setVisibility(View.GONE);
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSave.setOnClickListener(v -> {
+            String newRole;
+            int checkedId = rgRoles.getCheckedRadioButtonId();
+            if (checkedId == R.id.rbAdmin) newRole = "Admin";
+            else if (checkedId == R.id.rbMealManager) newRole = "Meal Manager";
+            else if (checkedId == R.id.rbMember) newRole = "Member";
+            else newRole = etCustom.getText().toString().trim();
+
+            if (newRole.isEmpty()) {
+                etCustom.setError("Enter role name");
+                return;
+            }
+
+            updateMemberRole(member, newRole, dialog);
+        });
+
+        dialog.show();
+    }
+
+    private void setupBottomSheetDialog(AlertDialog dialog) {
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setGravity(android.view.Gravity.BOTTOM);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        }
+    }
+
+    private void updateMemberRole(Member member, String newRole, AlertDialog dialog) {
+        boolean isAdminRole = newRole.equals("Admin");
+        db.getReference().child(messId).child("member").child(member.getUid()).child("role").setValue(newRole);
+        db.getReference().child(messId).child("member").child(member.getUid()).child("is_admin").setValue(isAdminRole)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Role updated to " + newRole, Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                    
+                    // Set default permissions if not exists
+                    if (!newRole.equals("Member")) {
+                        db.getReference().child(messId).child("config").child("role_permissions").child(newRole).get()
+                                .addOnSuccessListener(snapshot -> {
+                                    if (!snapshot.exists()) {
+                                        java.util.Map<String, Object> perms = new java.util.HashMap<>();
+                                        if (newRole.equals("Meal Manager")) {
+                                            perms.put("manage_meals", true);
+                                            perms.put("view_meal_summary", true);
+                                        } else if (newRole.equals("Admin")) {
+                                            perms.put("manage_members", true);
+                                            perms.put("manage_meals", true);
+                                            perms.put("manage_finances", true);
+                                            perms.put("view_meal_summary", true);
+                                        }
+                                        db.getReference().child(messId).child("config").child("role_permissions").child(newRole).setValue(perms);
+                                    }
+                                    showRolePermissionsDialog(newRole);
+                                });
+                    }
+                });
+    }
+
+    private void showRolePermissionsDialog(String roleName) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_permissions, null);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        setupBottomSheetDialog(dialog);
+
+        ((TextView) dialogView.findViewById(R.id.tvRoleSub)).setText("Role: " + roleName);
+        
+        com.google.android.material.materialswitch.MaterialSwitch sMembers = dialogView.findViewById(R.id.switchMembers);
+        com.google.android.material.materialswitch.MaterialSwitch sMeals = dialogView.findViewById(R.id.switchMeals);
+        com.google.android.material.materialswitch.MaterialSwitch sFinances = dialogView.findViewById(R.id.switchFinances);
+        com.google.android.material.materialswitch.MaterialSwitch sSummary = dialogView.findViewById(R.id.switchSummary);
+
+        // Fetch existing permissions
+        db.getReference().child(messId).child("config").child("role_permissions").child(roleName)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            sMembers.setChecked(snapshot.child("manage_members").getValue(Boolean.class) != null && snapshot.child("manage_members").getValue(Boolean.class));
+                            sMeals.setChecked(snapshot.child("manage_meals").getValue(Boolean.class) != null && snapshot.child("manage_meals").getValue(Boolean.class));
+                            sFinances.setChecked(snapshot.child("manage_finances").getValue(Boolean.class) != null && snapshot.child("manage_finances").getValue(Boolean.class));
+                            sSummary.setChecked(snapshot.child("view_meal_summary").getValue(Boolean.class) != null && snapshot.child("view_meal_summary").getValue(Boolean.class));
+                        } else {
+                            // Default for Meal Manager
+                            if (roleName.equals("Meal Manager")) {
+                                sMeals.setChecked(true);
+                                sSummary.setChecked(true);
+                            } else if (roleName.equals("Admin")) {
+                                sMembers.setChecked(true);
+                                sMeals.setChecked(true);
+                                sFinances.setChecked(true);
+                                sSummary.setChecked(true);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnSavePermissions).setOnClickListener(v -> {
+            java.util.Map<String, Object> perms = new java.util.HashMap<>();
+            perms.put("manage_members", sMembers.isChecked());
+            perms.put("manage_meals", sMeals.isChecked());
+            perms.put("manage_finances", sFinances.isChecked());
+            perms.put("view_meal_summary", sSummary.isChecked());
+
+            db.getReference().child(messId).child("config").child("role_permissions").child(roleName)
+                    .setValue(perms)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Permissions updated", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    });
+        });
+
+        dialog.show();
+    }
+
+    private void showReminderSettingsDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_due_reminder_settings, null);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        setupBottomSheetDialog(dialog);
+
+        com.google.android.material.materialswitch.MaterialSwitch sEnable = dialogView.findViewById(R.id.switchEnableReminders);
+        Slider slider = dialogView.findViewById(R.id.sliderInterval);
+        TextView tvDesc = dialogView.findViewById(R.id.tvIntervalDesc);
+        View intervalContainer = dialogView.findViewById(R.id.intervalContainer);
+        EditText etCustom = dialogView.findViewById(R.id.etCustomInterval);
+        TextView btnToggleCustom = dialogView.findViewById(R.id.btnToggleCustom);
+
+        // Fetch current settings
+        db.getReference().child(messId).child("config").child("reminders").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Boolean enabled = snapshot.child("enabled").getValue(Boolean.class);
+                    Integer interval = snapshot.child("interval").getValue(Integer.class); // In hours
+                    
+                    if (enabled != null) {
+                        sEnable.setChecked(enabled);
+                        intervalContainer.setVisibility(enabled ? View.VISIBLE : View.GONE);
+                    }
+                    if (interval != null) {
+                        if (interval % 24 != 0 || interval > 30 * 24) {
+                            // Non-day interval or too long for slider -> show custom (hours)
+                            slider.setVisibility(View.GONE);
+                            etCustom.setVisibility(View.VISIBLE);
+                            etCustom.setText(String.valueOf(interval));
+                            tvDesc.setText("Every " + interval + " hours");
+                            btnToggleCustom.setText("Use slider");
+                        } else {
+                            // Multiple of 24 -> show as days on slider
+                            slider.setValue(interval.floatValue() / 24.0f);
+                            tvDesc.setText("Every " + (interval / 24) + " days");
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        sEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            intervalContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        slider.addOnChangeListener((s, value, fromUser) -> {
+            int val = (int) value;
+            tvDesc.setText("Every " + val + " days");
+        });
+
+        etCustom.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (slider.getVisibility() != View.VISIBLE) {
+                    tvDesc.setText("Every " + s.toString() + " hours");
+                }
+            }
+        });
+
+        btnToggleCustom.setOnClickListener(v -> {
+            android.transition.TransitionManager.beginDelayedTransition((ViewGroup) dialogView);
+            if (slider.getVisibility() == View.VISIBLE) {
+                slider.setVisibility(View.GONE);
+                etCustom.setVisibility(View.VISIBLE);
+                tvDesc.setText("Every " + etCustom.getText().toString() + " hours");
+                btnToggleCustom.setText("Use slider");
+            } else {
+                slider.setVisibility(View.VISIBLE);
+                etCustom.setVisibility(View.GONE);
+                tvDesc.setText("Every " + (int)slider.getValue() + " days");
+                btnToggleCustom.setText("Set custom interval");
+            }
+        });
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            int intervalHours;
+            if (slider.getVisibility() == View.VISIBLE) {
+                intervalHours = (int) slider.getValue() * 24;
+            } else {
+                String input = etCustom.getText().toString().trim();
+                if (input.isEmpty()) {
+                    etCustom.setError("Required");
+                    return;
+                }
+                try {
+                    intervalHours = Integer.parseInt(input);
+                } catch (NumberFormatException e) {
+                    etCustom.setError("Invalid number");
+                    return;
+                }
+            }
+
+            java.util.Map<String, Object> config = new java.util.HashMap<>();
+            config.put("enabled", sEnable.isChecked());
+            config.put("interval", intervalHours);
+            config.put("last_sent", System.currentTimeMillis());
+
+            db.getReference().child(messId).child("config").child("reminders").setValue(config)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Reminder settings saved", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    });
         });
 
         dialog.show();
@@ -326,11 +624,13 @@ public class MemberAdminActivity extends AppCompatActivity {
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setGravity(android.view.Gravity.BOTTOM);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         }
 
         TextView tvMemberName = dialogView.findViewById(R.id.tvMemberNameDisplay);
         TextView tvCurrentMonthlyDue = dialogView.findViewById(R.id.tvCurrentMonthlyDue);
-        TextView tvTotalDueLabel = dialogView.findViewById(R.id.tvTotalDueLabel);
         EditText etClearAmount = dialogView.findViewById(R.id.etClearAmount);
         RecyclerView rvDueBreakdown = dialogView.findViewById(R.id.rvDueBreakdown);
 
@@ -358,10 +658,8 @@ public class MemberAdminActivity extends AppCompatActivity {
                 }
 
                 if (totalAllTimeDue < 0) {
-                    if (tvTotalDueLabel != null) tvTotalDueLabel.setText("Total Advance Balance");
                     tvCurrentMonthlyDue.setTextColor(getColor(R.color.dark_success));
                 } else {
-                    if (tvTotalDueLabel != null) tvTotalDueLabel.setText("Total All-Time Due");
                     tvCurrentMonthlyDue.setTextColor(getColor(R.color.dark_error));
                 }
 
@@ -512,6 +810,8 @@ public class MemberAdminActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
                             if (committed) {
+                                // If due is cleared, remove associated notifications
+                                clearMemberDueNotifications(member.getUid());
                                 Toast.makeText(MemberAdminActivity.this, "Balance updated successfully", Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
                             } else {
@@ -523,6 +823,23 @@ public class MemberAdminActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void clearMemberDueNotifications(String memberUid) {
+        db.getReference().child(messId).child("notifications").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    String type = ds.child("type").getValue(String.class);
+                    String target = ds.child("targetUid").getValue(String.class);
+                    if ("DUE_REMINDER".equals(type) && memberUid.equals(target)) {
+                        ds.getRef().removeValue();
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     private class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberViewHolder> {

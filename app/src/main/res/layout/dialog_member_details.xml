@@ -220,16 +220,37 @@
             <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_terms" app:tint="@color/teal_accent" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Note" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold" android:layout_marginStart="8dp"/>
         </LinearLayout>
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="You can update member details or clear due amount." android:textColor="@color/mw_secondary" android:textSize="12sp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Update member role or financial records below." android:textColor="@color/mw_secondary" android:textSize="12sp" />
     </LinearLayout>
 
     <!-- 3 Action Buttons Footer -->
     <LinearLayout
+        android:id="@+id/footerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/noteBox">
+        app:layout_constraintTop_toBottomOf="@id/noteBox"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnManageRole"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Role"
+            android:textColor="#F59E0B"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:strokeColor="#F59E0B"
+            app:cornerRadius="10dp"
+            app:icon="@drawable/ic_admin"
+            app:iconTint="#F59E0B"
+            app:iconSize="14dp"
+            app:iconGravity="textStart"
+            android:paddingHorizontal="4dp"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearDue"
@@ -237,7 +258,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginHorizontal="3dp"
             android:text="Clear Due"
             android:textColor="@color/teal_accent"
             android:textSize="11sp"
@@ -254,17 +275,14 @@
             android:id="@+id/btnDelete"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_weight="1"
+            android:layout_weight="0.8"
+            android:layout_marginStart="6dp"
             android:text="Remove"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"
             app:backgroundTint="@color/dark_error"
             app:cornerRadius="10dp"
-            app:icon="@drawable/ic_logout"
-            app:iconTint="@color/white"
-            app:iconSize="14dp"
-            app:iconGravity="textStart"
             android:paddingHorizontal="4dp"/>
     </LinearLayout>
 

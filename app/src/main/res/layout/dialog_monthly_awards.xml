@@ -1,178 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_logout"
-    android:padding="24dp"
-    android:layout_margin="20dp">
+    android:layout_margin="24dp"
+    app:cardBackgroundColor="#000000"
+    app:cardCornerRadius="36dp"
+    app:strokeWidth="1.5dp"
+    app:strokeColor="#1A1A1A">
 
-    <View
-        android:id="@+id/topGlow"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:background="@drawable/dot_primary_glow"
-        android:alpha="0.3"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="-75dp"/>
-
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="MONTHLY AWARDS"
-        android:textColor="@color/white"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.15"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tvMonth"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="June 2024"
-        android:textColor="@color/dark_text_muted"
-        android:textSize="14sp"
-        android:textAllCaps="true"
-        android:letterSpacing="0.1"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Winner Section -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/winnerLayout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/bg_admin_popup"
-        android:padding="20dp"
-        app:layout_constraintTop_toBottomOf="@id/tvMonth">
-
-        <ImageView
-            android:id="@+id/ivWinner"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_winner_crown"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+        android:orientation="vertical"
+        android:padding="28dp"
+        android:gravity="center_horizontal">
 
         <TextView
-            android:id="@+id/tvWinnerLabel"
+            android:id="@+id/tvMonth"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🏆 THE CHAMPION"
-            android:textColor="#FFD700"
+            android:text="OCTOBER 2026"
+            android:textColor="@color/teal_accent"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/ivWinner"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:letterSpacing="0.2" />
 
         <TextView
-            android:id="@+id/tvWinnerName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sayan Garai"
+            android:layout_marginTop="4dp"
+            android:text="Hall of Fame"
             android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/tvWinnerLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvWinnerMeals"
-            android:layout_width="wrap_content"
+        <!-- Winner Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/winnerLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="92 Meals"
-            android:textColor="@color/dark_primary"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tvWinnerName"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_marginTop="32dp"
+            app:cardBackgroundColor="#0A0A0A"
+            app:cardCornerRadius="24dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#222222">
 
-    <!-- Duck Section -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/duckLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_admin_popup"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/winnerLayout">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:gravity="center">
 
-        <com.srtech.messwise.DuckView
-            android:id="@+id/duckView"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <ImageView
+                        android:id="@+id/ivWinner"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/ic_winner_crown" />
+                </FrameLayout>
 
-        <TextView
-            android:id="@+id/tvDuckLabel"
-            android:layout_width="wrap_content"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="MONTHLY CHAMPION"
+                    android:textColor="#FFD700"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1" />
+
+                <TextView
+                    android:id="@+id/tvWinnerName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Sayan Garai"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvWinnerMeals"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="92 Meals Tracked"
+                    android:textColor="#9E9E9E"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Duck Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/duckLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🦆 DUCK OF THE MONTH"
-            android:textColor="#FFEB3B"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toEndOf="@id/duckView"
-            android:layout_marginStart="16dp" />
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#121212"
+            app:cardCornerRadius="24dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#1F1F1F">
 
-        <TextView
-            android:id="@+id/tvDuckName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Multiple Members"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:ellipsize="end"
-            android:maxLines="2"
-            app:layout_constraintTop_toBottomOf="@id/tvDuckLabel"
-            app:layout_constraintStart_toEndOf="@id/duckView"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="16dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/tvDuckMeals"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 Meals"
-            android:textColor="@color/dark_error"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tvDuckName"
-            app:layout_constraintStart_toEndOf="@id/duckView"
-            android:layout_marginStart="16dp" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                <ImageView
+                    android:id="@+id/ivDuck"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@drawable/ic_duck_animated" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnClose"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="CONTINUE"
-        app:cornerRadius="16dp"
-        android:backgroundTint="@color/dark_primary"
-        android:textColor="@color/white"
-        android:layout_marginTop="24dp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/duckLayout"
-        app:layout_constraintBottom_toBottomOf="parent" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="20dp"
+                    android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                    <TextView
+                        android:id="@+id/tvDuckLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MONTHLY DUCK"
+                        android:textColor="#FF8A65"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1" />
+
+                    <TextView
+                        android:id="@+id/tvDuckName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="John Doe"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDuckMeals"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:text="Awesome!"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            app:backgroundTint="@color/white"
+            app:cornerRadius="18dp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

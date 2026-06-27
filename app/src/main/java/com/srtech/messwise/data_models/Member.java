@@ -1,18 +1,20 @@
 package com.srtech.messwise.data_models;
 
 public class Member {
-    String uid, mail, name;
-    Boolean is_admin;
-    Integer meal_count;
+    private String uid, mail, name;
+    private Boolean is_admin;
+    private Integer meal_count;
+    private String role; // "Admin", "Meal Manager", "Member", or custom
 
     public Member() {}
 
-    public Member(String uid, String mail, String name, Boolean is_admin, Integer meal_count) {
+    public Member(String uid, String mail, String name, Boolean is_admin, Integer meal_count, String role) {
         this.uid = uid;
         this.mail = mail;
         this.name = name;
         this.is_admin = is_admin;
         this.meal_count = meal_count;
+        this.role = role;
     }
 
     public String getName() {
@@ -53,6 +55,14 @@ public class Member {
 
     public void setMeal_count(Integer meal_count) {
         this.meal_count = meal_count;
+    }
+
+    public String getRole() {
+        return role != null ? role : (is_admin != null && is_admin ? "Admin" : "Member");
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @Override

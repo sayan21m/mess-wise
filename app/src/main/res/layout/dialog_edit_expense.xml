@@ -1,126 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/mw_surface"
-    android:padding="24dp">
-
-    <TextView
-        android:id="@+id/tvEditTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Edit Record"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tvCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Food &amp; Groceries"
-        android:textColor="@color/teal_accent"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvEditTitle" />
-
-    <View
-        android:id="@+id/editDivider"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="20dp"
-        android:background="@color/mw_border"
-        app:layout_constraintTop_toBottomOf="@id/tvCategory" />
-
-    <TextView
-        android:id="@+id/labelAmount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Amount"
-        android:textColor="@color/mw_secondary"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editDivider" />
-
-    <EditText
-        android:id="@+id/etAmount"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/card_background"
-        android:backgroundTint="#0F172A"
-        android:hint="₹ 0.00"
-        android:inputType="numberDecimal"
-        android:paddingHorizontal="16dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/mw_secondary"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/labelAmount" />
-
-    <TextView
-        android:id="@+id/labelDesc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Description"
-        android:textColor="@color/mw_secondary"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etAmount" />
-
-    <EditText
-        android:id="@+id/etDescription"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/card_background"
-        android:backgroundTint="#0F172A"
-        android:hint="Notes about this record"
-        android:inputType="text"
-        android:paddingHorizontal="16dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/mw_secondary"
-        android:textSize="15sp"
-        app:layout_constraintTop_toBottomOf="@id/labelDesc" />
+    app:cardBackgroundColor="@color/bg_dark"
+    app:cardCornerRadius="32dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/etDescription">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="28dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancel"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_weight="1"
-            android:text="Discard"
-            android:textColor="@color/mw_secondary"
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:background="#333333"
+            android:layout_marginBottom="24dp"/>
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="#1E2A2E"
+            android:padding="16dp"
+            android:src="@drawable/ic_receipt"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:tint="@color/teal_accent" />
+
+        <TextView
+            android:id="@+id/tvEditTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Edit Record"
+            android:textColor="@color/white"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnUpdate"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1.2"
-            android:text="Save Changes"
-            android:textColor="@color/mw_bg"
-            android:textStyle="bold"
-            app:backgroundTint="@color/teal_accent"
-            app:cornerRadius="12dp" />
+        <TextView
+            android:id="@+id/tvCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Food &amp; Groceries"
+            android:textColor="@color/teal_accent"
+            android:textSize="14sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            app:boxBackgroundColor="#111111"
+            app:boxCornerRadiusBottomEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxStrokeColor="@color/teal_accent"
+            app:hintTextColor="@color/teal_accent"
+            android:hint="Amount"
+            app:prefixText="₹ "
+            app:prefixTextColor="@color/white">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAmount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:boxBackgroundColor="#111111"
+            app:boxCornerRadiusBottomEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxStrokeColor="@color/teal_accent"
+            app:hintTextColor="@color/teal_accent"
+            android:hint="Description">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="Discard"
+                android:textColor="@color/dark_text_muted"
+                android:textAllCaps="false"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUpdate"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1.2"
+                android:text="Save Changes"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                app:backgroundTint="@color/teal_accent"
+                app:cornerRadius="16dp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

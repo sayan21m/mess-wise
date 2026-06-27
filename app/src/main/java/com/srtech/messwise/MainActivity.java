@@ -6,9 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.Animatable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -21,7 +19,6 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,13 +31,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -53,17 +48,21 @@ import com.srtech.messwise.fragment_ui.dashboard.HomeFragment;
 import com.srtech.messwise.fragment_ui.expenses.ExpensesFragment;
 import com.srtech.messwise.ui.AdminWheelMenuView;
 
-import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import com.srtech.messwise.utils.FinanceUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.Random;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import com.srtech.messwise.workers.DueReminderWorker;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -76,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase db;
     private AlertDialog manageSlotsDialog;
     private long lastWheelClickTime = 0;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,8 +93,6 @@ public class MainActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Applying bottom padding to the root view creates a gap under the bottom navigation.
-            // We only apply top padding for the status bar and left/right for display cutouts.
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
@@ -111,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
-        // Dual Data Retrieval: Intent (Current Session) -> SharedPreferences (Remembered Session)
         userId = getIntent().getStringExtra("userId");
         messId = getIntent().getStringExtra("messId");
         messName = getIntent().getStringExtra("messName");
@@ -133,6 +128,15 @@ public class MainActivity extends AppCompatActivity {
         addMealRateHistory();
         resetMeal();
         resetFinance();
+        
+        if (isAdmin) {
+            // checkAndManageBudgetMenu(); // Removed as we no longer store daily menus
+        }
+        
+        checkUserPermissions();
+        checkAndSendDueReminders();
+        scheduleBackgroundWorker();
+        requestNotificationPermission();
 
         adminWheelMenu.setOnWheelItemClickListener(index -> {
             if (SystemClock.elapsedRealtime() - lastWheelClickTime < 500) return;
@@ -142,13 +146,25 @@ public class MainActivity extends AppCompatActivity {
 
             switch (index) {
                 case 0:
-                    startActivity(new Intent(this, MemberAdminActivity.class));
+                    if (isAdmin || prefs.getBoolean("perm_manage_members", false)) {
+                        startActivity(new Intent(this, MemberAdminActivity.class));
+                    } else {
+                        Toast.makeText(this, "No permission to manage members", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case 1:
-                    startActivity(new Intent(this, MealAdminActivity.class));
+                    if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
+                        startActivity(new Intent(this, MealAdminActivity.class));
+                    } else {
+                        Toast.makeText(this, "No permission to manage meals", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case 2:
-                    showManageSlotsDialog();
+                    if (isAdmin || prefs.getBoolean("perm_manage_meals", false)) {
+                        showManageSlotsDialog();
+                    } else {
+                        Toast.makeText(this, "No permission to manage slots", Toast.LENGTH_SHORT).show();
+                    }
                     break;
             }
         });
@@ -159,11 +175,15 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.adminFragment) {
-                if (isAdmin) {
+                boolean hasAnyPower = isAdmin || prefs.getBoolean("perm_manage_members", false) 
+                        || prefs.getBoolean("perm_manage_meals", false) 
+                        || prefs.getBoolean("perm_manage_finances", false);
+                
+                if (hasAnyPower) {
                     toggleAdminWheel();
                     return false;
                 } else {
-                    Toast.makeText(this, "You are not an admin!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Access denied!", Toast.LENGTH_SHORT).show();
                 }
             } else if (id == R.id.cashInFragment) {
                 loadFragment(new CashInFragment());
@@ -227,7 +247,6 @@ public class MainActivity extends AppCompatActivity {
         String lastShown = prefs.getString("last_award_shown", "");
         String currentKey = currentMonth + "_" + currentYear;
 
-        // Only show if not already shown this month
         if (lastShown.equals(currentKey)) return;
 
         Calendar prevMonth = (Calendar) now.clone();
@@ -242,8 +261,8 @@ public class MainActivity extends AppCompatActivity {
             DataSnapshot membersSnapshot = snapshot.child("member");
             DataSnapshot expensesSnapshot = snapshot.child("expenses");
 
-            java.util.List<String> winners = new java.util.ArrayList<>();
-            java.util.List<String> ducks = new java.util.ArrayList<>();
+            List<String> winners = new ArrayList<>();
+            List<String> ducks = new ArrayList<>();
             int maxMeals = -1, minMeals = Integer.MAX_VALUE;
             long grandTotalMeals = 0;
             boolean dataFound = false;
@@ -259,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                     String dateKey = entry.getKey();
                     if (dateKey == null) continue;
                     try {
-                        java.util.Date parsedDate = entryFormat.parse(dateKey);
+                        Date parsedDate = entryFormat.parse(dateKey);
                         if (parsedDate != null) {
                             Calendar entryCal = Calendar.getInstance();
                             entryCal.setTime(parsedDate);
@@ -294,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (dataFound) {
-                // Calculate total expenses for the same month
                 double totalExpensesForMonth = 0;
                 for (DataSnapshot expDs : expensesSnapshot.getChildren()) {
                     Long timestamp = expDs.child("timestampMillis").getValue(Long.class);
@@ -308,7 +326,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                // Store meal rate for tracking
                 if (grandTotalMeals > 0) {
                     double rate = totalExpensesForMonth / grandTotalMeals;
                     db.getReference().child(messId).child("meal_rate_history")
@@ -335,18 +352,24 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tvMonth = dialogView.findViewById(R.id.tvMonth);
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        tvMonth.setText(sdf.format(month.getTime()));
+        tvMonth.setText(sdf.format(month.getTime()).toUpperCase());
 
         ((TextView) dialogView.findViewById(R.id.tvWinnerName)).setText(winner);
-        ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(maxMeals + " Meals");
+        ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(maxMeals + " Meals tracked");
         ((TextView) dialogView.findViewById(R.id.tvDuckName)).setText(duck);
-        ((TextView) dialogView.findViewById(R.id.tvDuckMeals)).setText(minMeals + " Meals");
+        ((TextView) dialogView.findViewById(R.id.tvDuckMeals)).setText(String.valueOf(minMeals));
 
         TextView tvDuckLabel = dialogView.findViewById(R.id.tvDuckLabel);
+        ImageView ivDuck = dialogView.findViewById(R.id.ivDuck);
         
         if (minMeals == 0) {
-            tvDuckLabel.setText("🦆 GOLDEN DUCK");
+            tvDuckLabel.setText("GOLDEN DUCK");
             tvDuckLabel.setTextColor(Color.parseColor("#FFD700"));
+            if (ivDuck != null) ivDuck.setImageResource(R.drawable.ic_golden_duck);
+        }
+
+        if (ivDuck != null && ivDuck.getDrawable() instanceof android.graphics.drawable.AnimatedVectorDrawable) {
+            ((android.graphics.drawable.AnimatedVectorDrawable) ivDuck.getDrawable()).start();
         }
 
         dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
@@ -355,9 +378,7 @@ public class MainActivity extends AppCompatActivity {
         View duckLayout = dialogView.findViewById(R.id.duckLayout);
         View btnClose = dialogView.findViewById(R.id.btnClose);
         View ivWinner = dialogView.findViewById(R.id.ivWinner);
-        // ivDuck is already defined as ImageView earlier in the method
         
-        // Initial States
         winnerLayout.setAlpha(0f);
         winnerLayout.setScaleX(0.8f);
         winnerLayout.setScaleY(0.8f);
@@ -370,7 +391,6 @@ public class MainActivity extends AppCompatActivity {
 
         dialog.show();
         
-        // Animation Sequence
         winnerLayout.animate()
                 .alpha(1f)
                 .scaleX(1f)
@@ -386,7 +406,6 @@ public class MainActivity extends AppCompatActivity {
                 .setStartDelay(500)
                 .start();
 
-        // Duck Animation: "Waddle" Walk from left
         duckLayout.animate()
                 .alpha(1f)
                 .translationX(0f)
@@ -405,60 +424,40 @@ public class MainActivity extends AppCompatActivity {
 
     private void resetMeal() {
         if (messId == null) return;
-
-        Calendar now = Calendar.getInstance();
-
         Calendar cutoffCalendar = Calendar.getInstance();
-        cutoffCalendar.add(Calendar.MONTH, -1); // keep this month and previous month
-
+        cutoffCalendar.add(Calendar.MONTH, -1);
         SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
 
         db.getReference().child(messId).child("member").get()
                 .addOnSuccessListener(dataSnapshot -> {
                     for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
                         DataSnapshot history = memberSnapshot.child("meal_count_history");
-
                         for (DataSnapshot entry : history.getChildren()) {
-                            String key = entry.getKey(); // e.g. 19 Jun 2026
-
+                            String key = entry.getKey();
                             if (key == null) continue;
-
                             try {
                                 Calendar entryCal = Calendar.getInstance();
                                 entryCal.setTime(entryFormat.parse(key));
 
-                                boolean isOlderThanPreviousMonth =
-                                        entryCal.get(Calendar.YEAR) < cutoffCalendar.get(Calendar.YEAR) ||
+                                boolean isOlder = entryCal.get(Calendar.YEAR) < cutoffCalendar.get(Calendar.YEAR) ||
                                                 (entryCal.get(Calendar.YEAR) == cutoffCalendar.get(Calendar.YEAR)
                                                         && entryCal.get(Calendar.MONTH) < cutoffCalendar.get(Calendar.MONTH));
 
-                                if (isOlderThanPreviousMonth) {
-                                    entry.getRef().removeValue()
-                                            .addOnSuccessListener(unused ->
-                                                    Log.d("SGT", "Deleted old entry: " + key))
-                                            .addOnFailureListener(e ->
-                                                    Log.e("SGT", "Failed to delete: " + key, e));
-                                }
-                            } catch (Exception e) {
-                                Log.e("SGT", "Invalid date format: " + key, e);
-                            }
+                                if (isOlder) entry.getRef().removeValue();
+                            } catch (Exception ignored) {}
                         }
                     }
-                })
-                .addOnFailureListener(e -> Log.e("SGT", "clearOlderEntries failed", e));
+                });
     }
 
     private void resetFinance() {
         if (messId == null) return;
-
         Calendar cutoff = Calendar.getInstance();
-        cutoff.add(Calendar.MONTH, -1); // Keep current and previous month
+        cutoff.add(Calendar.MONTH, -1);
 
-        // 1. Cleanup Expenses
         db.getReference().child(messId).child("expenses").get().addOnSuccessListener(snapshot -> {
             double amountToSettle = 0;
-            java.util.List<com.google.firebase.database.DatabaseReference> toDelete = new java.util.ArrayList<>();
-
+            List<com.google.firebase.database.DatabaseReference> toDelete = new ArrayList<>();
             for (DataSnapshot ds : snapshot.getChildren()) {
                 Long ts = ds.child("timestampMillis").getValue(Long.class);
                 Double amt = ds.child("amount").getValue(Double.class);
@@ -476,26 +475,19 @@ public class MainActivity extends AppCompatActivity {
                 final double finalAmt = amountToSettle;
                 db.getReference().child(messId).child("finance").child("settled_expenses")
                         .runTransaction(new com.google.firebase.database.Transaction.Handler() {
-                            @NonNull
-                            @Override
-                            public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
+                            @NonNull @Override public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
                                 Double current = currentData.getValue(Double.class);
                                 if (current == null) current = 0.0;
                                 currentData.setValue(current + finalAmt);
                                 return com.google.firebase.database.Transaction.success(currentData);
                             }
-
-                            @Override
-                            public void onComplete(@Nullable com.google.firebase.database.DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
-                                if (committed) {
-                                    for (com.google.firebase.database.DatabaseReference ref : toDelete) ref.removeValue();
-                                }
+                            @Override public void onComplete(@Nullable com.google.firebase.database.DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                                if (committed) for (com.google.firebase.database.DatabaseReference ref : toDelete) ref.removeValue();
                             }
                         });
             }
         });
 
-        // 2. Cleanup Cash In Records (Aggregation is already handled in member/monthly_balance)
         db.getReference().child(messId).child("cash_in").get().addOnSuccessListener(snapshot -> {
             for (DataSnapshot ds : snapshot.getChildren()) {
                 Long ts = ds.child("timestampMillis").getValue(Long.class);
@@ -510,26 +502,16 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isOlderThanCutoff(Calendar target, Calendar cutoff) {
         if (target.get(Calendar.YEAR) < cutoff.get(Calendar.YEAR)) return true;
-        return target.get(Calendar.YEAR) == cutoff.get(Calendar.YEAR) &&
-                target.get(Calendar.MONTH) < cutoff.get(Calendar.MONTH);
+        return target.get(Calendar.YEAR) == cutoff.get(Calendar.YEAR) && target.get(Calendar.MONTH) < cutoff.get(Calendar.MONTH);
     }
 
     private void showManageSlotsDialog() {
         if (manageSlotsDialog != null && manageSlotsDialog.isShowing()) return;
-        
-        if (messId == null) {
-            Toast.makeText(this, "Session error: Mess ID missing", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_slots, null);
-        manageSlotsDialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setCancelable(true)
-                .create();
+        if (messId == null) return;
 
-        if (manageSlotsDialog.getWindow() != null) {
-            manageSlotsDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_manage_slots, null);
+        manageSlotsDialog = new AlertDialog.Builder(this).setView(dialogView).setCancelable(true).create();
+        if (manageSlotsDialog.getWindow() != null) manageSlotsDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         EditText etMealName = dialogView.findViewById(R.id.etMealName);
         EditText etTime = dialogView.findViewById(R.id.etTime);
@@ -538,112 +520,70 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<MealSlot> slotsList = new ArrayList<>();
         rvSlots.setLayoutManager(new LinearLayoutManager(this));
-
         RecyclerView.Adapter adapter = new RecyclerView.Adapter() {
-            @NonNull
-            @Override
-            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_meal_slot, parent, false);
-                return new RecyclerView.ViewHolder(v) {};
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                return new RecyclerView.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_meal_slot, parent, false)) {};
             }
-
-            @Override
-            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
                 MealSlot slot = slotsList.get(position);
                 ((TextView) holder.itemView.findViewById(R.id.tvSlotName)).setText(slot.getName());
                 ((TextView) holder.itemView.findViewById(R.id.tvSlotTime)).setText(slot.getTime());
-
-                holder.itemView.findViewById(R.id.ivDelete).setOnClickListener(v -> {
-                    db.getReference().child(messId).child("meal_slots").child(slot.getId()).removeValue();
-                });
+                holder.itemView.findViewById(R.id.ivDelete).setOnClickListener(v -> db.getReference().child(messId).child("meal_slots").child(slot.getId()).removeValue());
             }
-
-            @Override
-            public int getItemCount() {
-                return slotsList.size();
-            }
+            @Override public int getItemCount() { return slotsList.size(); }
         };
         rvSlots.setAdapter(adapter);
 
-        // Fetch existing slots
         db.getReference().child(messId).child("meal_slots").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
                 slotsList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     MealSlot slot = ds.getValue(MealSlot.class);
-                    if (slot != null) {
-                        slot.setId(ds.getKey());
-                        slotsList.add(slot);
-                    }
+                    if (slot != null) { slot.setId(ds.getKey()); slotsList.add(slot); }
                 }
                 adapter.notifyDataSetChanged();
-                if (tvSlotCount != null) {
-                    tvSlotCount.setText(slotsList.size() + (slotsList.size() == 1 ? " slot" : " slots"));
-                }
+                if (tvSlotCount != null) tvSlotCount.setText(slotsList.size() + (slotsList.size() == 1 ? " slot" : " slots"));
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
 
         etTime.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
-            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-                Calendar selectedTime = Calendar.getInstance();
-                selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                selectedTime.set(Calendar.MINUTE, minute);
-                etTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(selectedTime.getTime()));
+            new TimePickerDialog(this, (view, h, m) -> {
+                Calendar st = Calendar.getInstance(); st.set(Calendar.HOUR_OF_DAY, h); st.set(Calendar.MINUTE, m);
+                etTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(st.getTime()));
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), false).show();
         });
 
         dialogView.findViewById(R.id.btnAddSlot).setOnClickListener(v -> {
-            String name = etMealName.getText().toString().trim();
-            String time = etTime.getText().toString().trim();
-
-            if (name.isEmpty() || time.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
+            String name = etMealName.getText().toString().trim(), time = etTime.getText().toString().trim();
+            if (name.isEmpty() || time.isEmpty()) return;
             String id = db.getReference().child(messId).child("meal_slots").push().getKey();
-            MealSlot newSlot = new MealSlot(id, name, time);
-            db.getReference().child(messId).child("meal_slots").child(id).setValue(newSlot)
-                    .addOnSuccessListener(unused -> {
-                        etMealName.setText("");
-                        etTime.setText("");
-                        Toast.makeText(this, "Slot added", Toast.LENGTH_SHORT).show();
-                    });
+            db.getReference().child(messId).child("meal_slots").child(id).setValue(new MealSlot(id, name, time));
         });
 
         dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> manageSlotsDialog.dismiss());
         dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> manageSlotsDialog.dismiss());
-
         manageSlotsDialog.show();
     }
 
     private void addMealRateHistory() {
         if (messId == null) return;
-        
         db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Calendar now = Calendar.getInstance();
-                int currentMonth = now.get(Calendar.MONTH);
-                int currentYear = now.get(Calendar.YEAR);
+                int cm = now.get(Calendar.MONTH), cy = now.get(Calendar.YEAR);
                 String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(now.getTime());
-
                 long totalMeals = 0;
                 SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
 
-                for (DataSnapshot memberSnap : snapshot.child("member").getChildren()) {
-                    for (DataSnapshot entry : memberSnap.child("meal_count_history").getChildren()) {
+                for (DataSnapshot mSnap : snapshot.child("member").getChildren()) {
+                    for (DataSnapshot entry : mSnap.child("meal_count_history").getChildren()) {
                         try {
                             Date d = entryFormat.parse(entry.getKey());
                             if (d != null) {
-                                Calendar c = Calendar.getInstance();
-                                c.setTime(d);
-                                if (c.get(Calendar.MONTH) == currentMonth && c.get(Calendar.YEAR) == currentYear) {
+                                Calendar c = Calendar.getInstance(); c.setTime(d);
+                                if (c.get(Calendar.MONTH) == cm && c.get(Calendar.YEAR) == cy) {
                                     Integer val = entry.getValue(Integer.class);
                                     if (val != null) totalMeals += val;
                                 }
@@ -657,45 +597,20 @@ public class MainActivity extends AppCompatActivity {
                     Long ts = expDs.child("timestampMillis").getValue(Long.class);
                     Double amt = expDs.child("amount").getValue(Double.class);
                     if (ts != null && amt != null) {
-                        Calendar expCal = Calendar.getInstance();
-                        expCal.setTimeInMillis(ts);
-                        if (expCal.get(Calendar.MONTH) == currentMonth && expCal.get(Calendar.YEAR) == currentYear) {
-                            totalExpenses += amt;
-                        }
-                    }
-                }
-
-                for (DataSnapshot memberSnap : snapshot.child("member").getChildren()) {
-                    long userMeals = 0;
-                    for (DataSnapshot entry : memberSnap.child("meal_count_history").getChildren()) {
-                        try {
-                            Date d = entryFormat.parse(entry.getKey());
-                            if (d != null) {
-                                Calendar c = Calendar.getInstance();
-                                c.setTime(d);
-                                if (c.get(Calendar.MONTH) == currentMonth && c.get(Calendar.YEAR) == currentYear) {
-                                    Integer val = entry.getValue(Integer.class);
-                                    if (val != null) userMeals += val;
-                                }
-                            }
-                        } catch (Exception ignored) {}
-                    }
-
-                    Integer storedCount = memberSnap.child("meal_count").getValue(Integer.class);
-                    if (storedCount == null || storedCount != (int) userMeals) {
-                        memberSnap.getRef().child("meal_count").setValue(userMeals);
+                        Calendar ec = Calendar.getInstance(); ec.setTimeInMillis(ts);
+                        if (ec.get(Calendar.MONTH) == cm && ec.get(Calendar.YEAR) == cy) totalExpenses += amt;
                     }
                 }
 
                 if (totalMeals > 0) {
-                    double rate = (double) totalExpenses / totalMeals;
-                    db.getReference().child(messId).child("meal_rate_history")
-                            .child(currentMonthKey).setValue(Double.parseDouble(String.format(Locale.ENGLISH, "%.2f", rate)));
+                    double rate = totalExpenses / totalMeals;
+                    db.getReference().child(messId).child("meal_rate_history").child(currentMonthKey).setValue(Double.parseDouble(String.format(Locale.ENGLISH, "%.2f", rate)));
+                    
+                    // After updating rate, check if we need to adjust the menu
+                    // checkAndManageBudgetMenu(); // Removed as we no longer store daily menus
                 }
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
@@ -703,11 +618,263 @@ public class MainActivity extends AppCompatActivity {
         FinanceUtils.updateAllMemberDues(messId);
     }
 
+    private void checkUserPermissions() {
+        if (messId == null || userId == null) return;
+        db.getReference().child(messId).child("member").child(userId).child("role").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String role = snapshot.getValue(String.class);
+                if (role == null) role = isAdmin ? "Admin" : "Member";
+                fetchPermissionsAndAct(role);
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void fetchPermissionsAndAct(String role) {
+        if (role.equals("Admin")) { 
+            savePermissions(true, true, true, true); 
+            // Admins can see the summary if they want, but the automatic pop-up 
+            // is primarily for the Meal Manager as requested.
+            // If you want Admin to see it too, uncomment the line below.
+            // showDailySummaryPopUp(); 
+            return; 
+        }
+        db.getReference().child(messId).child("config").child("role_permissions").child(role).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean members = snapshot.child("manage_members").getValue(Boolean.class) != null && snapshot.child("manage_members").getValue(Boolean.class);
+                boolean meals = snapshot.child("manage_meals").getValue(Boolean.class) != null && snapshot.child("manage_meals").getValue(Boolean.class);
+                boolean finances = snapshot.child("manage_finances").getValue(Boolean.class) != null && snapshot.child("manage_finances").getValue(Boolean.class);
+                boolean summary = snapshot.child("view_meal_summary").getValue(Boolean.class) != null && snapshot.child("view_meal_summary").getValue(Boolean.class);
+                savePermissions(members, meals, finances, summary);
+                
+                // Only show the automatic pop-up if the role is specifically "Meal Manager"
+                if (role.equals("Meal Manager") && summary) {
+                    showDailySummaryPopUp();
+                }
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void savePermissions(boolean members, boolean meals, boolean finances, boolean summary) {
+        prefs.edit().putBoolean("perm_manage_members", members).putBoolean("perm_manage_meals", meals).putBoolean("perm_manage_finances", finances).putBoolean("perm_view_meal_summary", summary).apply();
+    }
+
+    // Removed checkAndManageBudgetMenu as we no longer store daily menus in Firebase.
+    // Menu selection is now dynamic and deterministic in HomeFragment.
+
+    private void showDailySummaryPopUp() {
+        if (messId == null) return;
+        db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot slotsSnapshot) {
+                String currentSlotKey = determineCurrentSlotKey(slotsSnapshot);
+                if (currentSlotKey.equals(prefs.getString("last_summary_slot_shown", ""))) return;
+
+                db.getReference().child(messId).child("member").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        ArrayList<String> leaveNames = new ArrayList<>(), takingNames = new ArrayList<>(), leaveUids = new ArrayList<>();
+                        for (DataSnapshot m : snapshot.getChildren()) {
+                            String name = m.child("name").getValue(String.class);
+                            Boolean onLeave = m.child("next_meal_leave").getValue(Boolean.class);
+                            if (onLeave != null && onLeave) { leaveNames.add(name); leaveUids.add(m.getKey()); }
+                            else { takingNames.add(name); }
+                        }
+                        if (!leaveNames.isEmpty() || !takingNames.isEmpty()) {
+                            displaySummaryDialog((int)snapshot.getChildrenCount(), leaveNames, takingNames, leaveUids);
+                            prefs.edit().putString("last_summary_slot_shown", currentSlotKey).apply();
+                        }
+                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) {}
+                });
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private String determineCurrentSlotKey(DataSnapshot snapshot) {
+        if (!snapshot.exists()) return "no_slots_" + new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).format(new Date());
+        Calendar now = Calendar.getInstance();
+        int nowMins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.ENGLISH);
+        String bestId = "unknown"; int minDiff = Integer.MAX_VALUE;
+        for (DataSnapshot ds : snapshot.getChildren()) {
+            String time = ds.child("time").getValue(String.class);
+            if (time != null) {
+                try {
+                    Date d = sdf.parse(time);
+                    if (d != null) {
+                        Calendar cal = Calendar.getInstance(); cal.setTime(d);
+                        int diff = (cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)) - nowMins;
+                        if (diff > 0 && diff < minDiff) { minDiff = diff; bestId = ds.getKey(); }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        if (bestId.equals("unknown") && snapshot.hasChildren()) bestId = snapshot.getChildren().iterator().next().getKey();
+        return bestId + "_" + new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).format(new Date());
+    }
+
+    private void displaySummaryDialog(int total, ArrayList<String> leaveNames, ArrayList<String> takingNames, ArrayList<String> leaveUids) {
+        View dv = LayoutInflater.from(this).inflate(R.layout.dialog_daily_summary, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dv).setCancelable(true).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setGravity(android.view.Gravity.BOTTOM);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        }
+
+        TextView tvTotalTaking = dv.findViewById(R.id.tvTotalTakingMeal), tvTotalLeave = dv.findViewById(R.id.tvTotalOnLeave), tvListTitle = dv.findViewById(R.id.tvListTitle);
+        RecyclerView rv = dv.findViewById(R.id.rvLeavesList);
+        View empty = dv.findViewById(R.id.dialogEmptyState);
+        TextView tvEmptyMsg = dv.findViewById(R.id.tvEmptyMsg);
+
+        tvTotalLeave.setText(String.valueOf(leaveNames.size()));
+        tvTotalTaking.setText(String.valueOf(takingNames.size()));
+
+        ArrayList<String> currentList = new ArrayList<>(leaveNames);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        RecyclerView.Adapter adapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+                return new RecyclerView.ViewHolder(LayoutInflater.from(p.getContext()).inflate(android.R.layout.simple_list_item_1, p, false)) {};
+            }
+            @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) {
+                TextView t = h.itemView.findViewById(android.R.id.text1);
+                t.setText(currentList.get(pos)); t.setTextColor(Color.WHITE); t.setTextSize(14f);
+            }
+            @Override public int getItemCount() { return currentList.size(); }
+        };
+        rv.setAdapter(adapter);
+
+        Runnable updateEmpty = () -> {
+            if (currentList.isEmpty()) {
+                rv.setVisibility(View.GONE); empty.setVisibility(View.VISIBLE);
+                tvEmptyMsg.setText(tvListTitle.getText().toString().contains("LEAVE") ? "All members are eating today!" : "No one is taking meals?");
+            } else { rv.setVisibility(View.VISIBLE); empty.setVisibility(View.GONE); }
+        };
+        updateEmpty.run();
+
+        dv.findViewById(R.id.btnShowTaking).setOnClickListener(v -> {
+            currentList.clear(); currentList.addAll(takingNames); tvListTitle.setText("MEMBERS TAKING MEAL");
+            adapter.notifyDataSetChanged(); tvTotalTaking.setTextColor(Color.WHITE); tvTotalLeave.setTextColor(Color.parseColor("#9C9790")); updateEmpty.run();
+        });
+
+        dv.findViewById(R.id.btnShowLeave).setOnClickListener(v -> {
+            currentList.clear(); currentList.addAll(leaveNames); tvListTitle.setText("MEMBERS ON LEAVE");
+            adapter.notifyDataSetChanged(); tvTotalLeave.setTextColor(Color.parseColor("#FF5A5A")); tvTotalTaking.setTextColor(Color.parseColor("#9C9790")); updateEmpty.run();
+        });
+
+        dv.findViewById(R.id.btnClearNotifications).setOnClickListener(v -> {
+            for (String uid : leaveUids) {
+                db.getReference().child(messId).child("member").child(uid).child("next_meal_leave").removeValue();
+                db.getReference().child(messId).child("member").child(uid).child("pending_leave_slot").removeValue();
+            }
+            dialog.dismiss();
+        });
+
+        dv.findViewById(R.id.btnCloseSummary).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void checkAndSendDueReminders() {
+        if (messId == null) return;
+        db.getReference().child(messId).child("config").child("reminders").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) return;
+                Boolean en = snapshot.child("enabled").getValue(Boolean.class);
+                Integer iv = snapshot.child("interval").getValue(Integer.class);
+                Long ls = snapshot.child("last_sent").getValue(Long.class);
+                if (en != null && en && iv != null && ls != null) {
+                    if (System.currentTimeMillis() - ls >= iv.longValue() * 60 * 60 * 1000) {
+                        sendDueNotifications();
+                        db.getReference().child(messId).child("config").child("reminders").child("last_sent").setValue(System.currentTimeMillis());
+                    }
+                }
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void sendDueNotifications() {
+        db.getReference().child(messId).child("member").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ms : snapshot.getChildren()) {
+                    double totalDue = 0;
+                    for (DataSnapshot m : ms.child("due_history").getChildren()) {
+                        Object val = m.getValue();
+                        if (val instanceof Number) totalDue += ((Number) val).doubleValue();
+                    }
+                    if (totalDue > 0) {
+                        String memberUid = ms.getKey();
+                        String id = db.getReference().child(messId).child("notifications").push().getKey();
+                        String title = "Pending Due Reminder";
+                        String message = "Hi " + ms.child("name").getValue(String.class) + ", you have a pending due of ₹" + String.format(Locale.getDefault(), "%.2f", totalDue) + ". Please clear it soon.";
+                        
+                        com.srtech.messwise.data_models.NotificationModel n = new com.srtech.messwise.data_models.NotificationModel(
+                                id, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis()
+                        );
+                        
+                        if (id != null) {
+                            db.getReference().child(messId).child("notifications").child(id).setValue(n);
+                            
+                            // If this is the current user, show a system notification too
+                            if (memberUid != null && memberUid.equals(userId)) {
+                                showSystemNotification(title, message);
+                            }
+                        }
+                    }
+                }
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void showSystemNotification(String title, String message) {
+        String channelId = "messwise_alerts";
+        android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(channelId, "MessWise Alerts", android.app.NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent intent = new Intent(this, NotificationsActivity.class);
+        android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(this, 0, intent, android.app.PendingIntent.FLAG_IMMUTABLE);
+
+        androidx.core.app.NotificationCompat.Builder builder = new androidx.core.app.NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_notifications)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+    }
+    
+    private void scheduleBackgroundWorker() {
+        PeriodicWorkRequest reminderRequest = new PeriodicWorkRequest.Builder(
+                DueReminderWorker.class, 1, TimeUnit.HOURS)
+                .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "DueReminderWork",
+                ExistingPeriodicWorkPolicy.KEEP,
+                reminderRequest
+        );
+    }
+
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
     private Double getDoubleValue(DataSnapshot snapshot) {
         Object value = snapshot.getValue();
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        }
+        if (value instanceof Number) return ((Number) value).doubleValue();
         return null;
     }
 }

@@ -23,29 +23,70 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="#2D1E1E"
+            android:background="#2E2A1E"
             android:padding="16dp"
-            android:src="@drawable/ic_logout"
+            android:src="@drawable/ic_summary"
             app:shapeAppearanceOverlay="@style/CircleImage"
-            app:tint="#FF5A5A" />
+            app:tint="@color/teal_accent" />
 
         <TextView
+            android:id="@+id/tvPermissionTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Sign Out?"
+            android:text="Manage Powers"
             android:textColor="@color/white"
             android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvRoleSub"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:gravity="center"
-            android:text="Are you sure you want to log out of your session?"
-            android:textColor="@color/dark_text_muted"
+            android:text="Role: Meal Manager"
+            android:textColor="@color/teal_accent"
             android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchMembers"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Manage Members"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchMeals"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Manage Meals &amp; Menu"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchFinances"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Manage Finances"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchSummary"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="View Daily Meal Summary"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -59,21 +100,21 @@
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_weight="1"
-                android:text="Not now"
+                android:text="Cancel"
                 android:textColor="@color/dark_text_muted"
                 android:textAllCaps="false"
                 app:cornerRadius="16dp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnLogout"
+                android:id="@+id/btnSavePermissions"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="16dp"
-                android:layout_weight="1"
-                android:text="Sign Out"
+                android:layout_weight="1.2"
+                android:text="Update Powers"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
-                app:backgroundTint="#FF5A5A"
+                android:textColor="@color/black"
+                app:backgroundTint="@color/white"
                 app:cornerRadius="16dp"
                 android:textStyle="bold" />
         </LinearLayout>

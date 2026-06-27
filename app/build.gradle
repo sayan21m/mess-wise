@@ -46,6 +46,8 @@ dependencies {
     implementation libs.navigation.ui
     implementation libs.glide
     annotationProcessor libs.glide.compiler
+    
+    implementation "androidx.work:work-runtime:2.9.1"
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
