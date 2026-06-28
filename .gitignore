@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+CODEBASE_MAP.md
+DEVELOPER_BLUEPRINT.md
+INTERNAL_DOCS.md
