@@ -276,4 +276,8 @@
     <string name="update_required_msg">A newer version of MessWise is available. Please update to continue using the app.</string>
     <string name="update_now">Update Now</string>
     <string name="update_later">Later</string>
+
+    <string name="error_device_rooted">Security Alert: This device is rooted. For your safety, MessWise cannot run on rooted devices.</string>
+    <string name="label_administrator">Administrator</string>
+    <string name="label_mess_member">Mess Member</string>
 </resources>

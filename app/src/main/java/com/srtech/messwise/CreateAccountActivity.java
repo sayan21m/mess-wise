@@ -14,6 +14,8 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.Patterns;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -265,7 +267,7 @@ public class CreateAccountActivity extends BaseActivity {
                 });
     }
 
-    private void handleMessJoinAfterAuth(FirebaseUser user, String messId, String name, String email, String messName, boolean rememberMe) {
+    private void handleMessJoinAfterAuth(FirebaseUser user, String messId, String name, String email, String messNameInput, boolean rememberMe) {
         if (user == null) {
             Toast.makeText(this, R.string.toast_user_null, Toast.LENGTH_SHORT).show();
             return;
@@ -275,20 +277,21 @@ public class CreateAccountActivity extends BaseActivity {
 
         db.getReference()
                 .child(messId)
-                .child("member")
-                .child(uid)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    if (snapshot.exists()) {
+                    if (snapshot.child("member").child(uid).exists()) {
                         Toast.makeText(this, R.string.toast_already_member, Toast.LENGTH_SHORT).show();
                     } else {
+                        // For members, we fetch the actual mess name from the DB
+                        String actualMessName = snapshot.child("mess_name").getValue(String.class);
+                        if (actualMessName == null) actualMessName = messNameInput;
+
                         saveToDatabase(messId, user, name, email);
 
-                        // Always save session data for fragments, 
-                        // but only set isLoggedIn=true if 'rememberMe' is checked
-                        saveLoginState(rememberMe, uid, messId, messName, isAdmin);
+                        // Use actualMessName for storage
+                        saveLoginState(rememberMe, uid, messId, actualMessName, isAdmin);
 
-                        navigateToMain(uid, messId, messName, isAdmin);
+                        navigateToMain(uid, messId, actualMessName, isAdmin);
                     }
                 })
                 .addOnFailureListener(error -> {
@@ -315,12 +318,14 @@ public class CreateAccountActivity extends BaseActivity {
         void onResult(boolean exist);
     }
 
-    private void messIdExistance(String messName, MessExistanceCallback callback) {
-        db.getReference().child(messName).get()
+    private void messIdExistance(String messId, MessExistanceCallback callback) {
+        // We check for the 'mess_name' field specifically, which we'll make publicly readable
+        db.getReference().child(messId).child("mess_name").get()
                 .addOnSuccessListener(snapshot -> {
                     callback.onResult(snapshot.exists());
                 })
                 .addOnFailureListener(error -> {
+                    Log.e("SGT", "Mess existence check failed: " + error.getMessage());
                     callback.onResult(false);
                 });
     }

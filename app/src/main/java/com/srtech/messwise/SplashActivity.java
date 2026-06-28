@@ -50,7 +50,7 @@ public class SplashActivity extends BaseActivity {
 
         new Handler().postDelayed(() -> {
             if (isDeviceRooted()) {
-                Toast.makeText(this, "Security Alert: This device is rooted. For your safety, MessWise cannot run on rooted devices.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
                 finish();
                 return;
             }

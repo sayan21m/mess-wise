@@ -94,8 +94,11 @@ public class FinanceUtils {
                 // 4. Update each member's dues
                 if (membersSnap.exists()) {
                     for (DataSnapshot memberSnap : membersSnap.getChildren()) {
-                        Long memberMeals = memberSnap.child("meal_count").getValue(Long.class);
-                        if (memberMeals == null) memberMeals = 0L;
+                        long memberMeals = 0;
+                        Object mealCountObj = memberSnap.child("meal_count").getValue();
+                        if (mealCountObj instanceof Number) {
+                            memberMeals = ((Number) mealCountObj).longValue();
+                        }
 
                         double monthlyBalance = 0;
                         DataSnapshot balSnap = memberSnap.child("monthly_balance").child(currentMonthKey);

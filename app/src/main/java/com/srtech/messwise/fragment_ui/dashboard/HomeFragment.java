@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.animation.ObjectAnimator;
+import android.animation.AnimatorSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,7 +61,6 @@ public class HomeFragment extends Fragment {
     private double messTotalExpenses = 0;
     private long messTotalMeals = 0;
     private long memberTotalMeals = 0;
-    private double memberTotalContribution = 0;
     private boolean isAdmin = false;
 
     public HomeFragment() {

@@ -97,10 +97,10 @@ public class SettingsActivity extends BaseActivity {
                             
                             com.google.android.material.chip.Chip chip = findViewById(R.id.chipMemberType);
                             if (admin != null && admin) {
-                                chip.setText("Administrator");
+                                chip.setText(R.string.label_administrator);
                                 chip.setChipBackgroundColorResource(R.color.dark_error);
                             } else {
-                                chip.setText("Mess Member");
+                                chip.setText(R.string.label_mess_member);
                             }
                         }
                     }
