@@ -36,6 +36,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.AdManager;
 import com.srtech.messwise.R;
 
 import java.text.SimpleDateFormat;
@@ -104,7 +105,9 @@ public class SummaryFragment extends Fragment {
         });
         
         btnExport = v.findViewById(R.id.btnExportReport);
-        btnExport.setOnClickListener(v1 -> generateAndShareReport());
+        btnExport.setOnClickListener(v1 -> {
+            AdManager.getInstance().showInterstitialAd(requireActivity(), this::generateAndShareReport);
+        });
     }
 
     private void setupFirebase() {
