@@ -73,7 +73,7 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation libs.play.services.ads
     implementation "com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava"
-    implementation "com.google.guava:guava:33.2.1-android"
+    implementation "com.google.guava:guava:33.6.0-android"
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
