@@ -24,3 +24,4 @@ INTERNAL_DOCS.md
 
 # Exception to allow the specific release APK
 !app/release/MessWise.apk
+.firebaserc
