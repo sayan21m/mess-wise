@@ -21,14 +21,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    applicationVariants.all { variant ->
-        variant.outputs.all {
-            if (variant.buildType.name == 'release') {
-                outputFileName = "MessWise.apk"
-            }
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled true
@@ -43,6 +35,14 @@ android {
     buildFeatures {
         compose true
     }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release"), { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("MessWise.apk")
+        }
+    })
 }
 
 dependencies {

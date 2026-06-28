@@ -32,9 +32,6 @@
 # MPAndroidChart
 -keep class com.github.mikephil.charting.** { *; }
 
-# Lottie
--keep class com.airbnb.lottie.** { *; }
-
 # Security Crypto
 -keep class androidx.security.crypto.** { *; }
 
