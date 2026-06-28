@@ -1,3 +1,4 @@
+// Copyright (c) 2026 SR Tech. All rights reserved.
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
@@ -20,9 +21,18 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            if (variant.buildType.name == 'release') {
+                outputFileName = "MessWise.apk"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -44,6 +54,7 @@ dependencies {
     implementation libs.firebase.auth
     implementation libs.firebase.database
     implementation libs.firebase.crashlytics
+    implementation libs.security.crypto
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation libs.glide

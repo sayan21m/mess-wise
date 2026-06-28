@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise.ui;
 
 import android.app.Dialog;
@@ -52,9 +57,10 @@ public class SettingsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        setScreenSecurity(true);
         setupWindow();
 
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
 
         // Data Retrieval
         userId = getIntent().getStringExtra("userId");

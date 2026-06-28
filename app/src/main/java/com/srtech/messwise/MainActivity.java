@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise;
 
 import android.app.Dialog;
@@ -106,7 +111,7 @@ public class MainActivity extends BaseActivity {
             loadFragment(new HomeFragment());
         }
 
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
 
         userId = getIntent().getStringExtra("userId");
         messId = getIntent().getStringExtra("messId");
@@ -235,6 +240,10 @@ public class MainActivity extends BaseActivity {
     }
 
     private void loadFragment(Fragment fragment) {
+        // Apply screen security for financial fragments
+        boolean isFinancial = fragment instanceof CashInFragment || fragment instanceof SummaryFragment || fragment instanceof ExpensesFragment;
+        setScreenSecurity(isFinancial);
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)

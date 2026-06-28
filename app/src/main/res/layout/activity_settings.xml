@@ -260,6 +260,14 @@
                         android:textColor="#9E9E9E"
                         android:layout_marginTop="4dp"/>
 
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:text="© 2026 SR Tech. All rights reserved."
+                        android:textColor="#666666"
+                        android:textSize="11sp"
+                        android:layout_marginTop="8dp"/>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

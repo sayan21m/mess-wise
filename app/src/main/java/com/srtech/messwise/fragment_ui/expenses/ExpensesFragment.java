@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.srtech.messwise.utils.SecurityUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -51,7 +52,7 @@ public class ExpensesFragment extends Fragment {
     private TextView tvTotalExpense, tvCategoryName, tvExpenseDate;
     private EditText etExpenseAmount, etExpenseDescription;
     private ImageView ivCategoryIcon;
-    private LinearLayout btnSelectCategory, btnSelectDate, btnViewAllExpenses;
+    private LinearLayout btnSelectCategory, btnSelectDate, btnViewAllExpenses, layoutEmptyExpenses;
     private MaterialButton btnAddExpense;
     private RecyclerView rvRecentExpenses;
     
@@ -90,7 +91,7 @@ public class ExpensesFragment extends Fragment {
     }
 
     private void loadPreferences() {
-        prefs = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = SecurityUtils.getSecurePrefs(requireContext());
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);
         isAdmin = prefs.getBoolean("isAdmin", false);
@@ -109,6 +110,7 @@ public class ExpensesFragment extends Fragment {
         btnSelectDate = view.findViewById(R.id.btnSelectDate);
         btnAddExpense = view.findViewById(R.id.btnAddExpense);
         btnViewAllExpenses = view.findViewById(R.id.btnViewAllExpenses);
+        layoutEmptyExpenses = view.findViewById(R.id.layoutEmptyExpenses);
         
         rvRecentExpenses = view.findViewById(R.id.rvRecentExpenses);
         
@@ -349,6 +351,7 @@ public class ExpensesFragment extends Fragment {
                 }
                 
                 expenseAdapter.setData(recentExpenses);
+                updateEmptyState(recentExpenses.isEmpty());
             }
 
             @Override
@@ -356,5 +359,16 @@ public class ExpensesFragment extends Fragment {
                 Log.e("ExpensesFragment", "Database error: " + error.getMessage());
             }
         });
+    }
+
+    private void updateEmptyState(boolean isEmpty) {
+        if (layoutEmptyExpenses == null) return;
+        if (isEmpty) {
+            rvRecentExpenses.setVisibility(View.GONE);
+            layoutEmptyExpenses.setVisibility(View.VISIBLE);
+        } else {
+            rvRecentExpenses.setVisibility(View.VISIBLE);
+            layoutEmptyExpenses.setVisibility(View.GONE);
+        }
     }
 }

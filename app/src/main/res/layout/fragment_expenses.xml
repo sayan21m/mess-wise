@@ -39,33 +39,32 @@
                     android:layout_marginTop="18dp"
                     android:layout_marginBottom="24dp">
 
-                    <ImageView
-                        android:id="@+id/ivExpenseIllustration"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/vector_wallet_illustration"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+<!--                    <ImageView-->
+<!--                        android:id="@+id/ivExpenseIllustration"-->
+<!--                        android:layout_width="80dp"-->
+<!--                        android:layout_height="80dp"-->
+<!--                        android:src="@drawable/vector_wallet_illustration"-->
+<!--                        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                        app:layout_constraintStart_toStartOf="parent"-->
+<!--                        app:layout_constraintTop_toTopOf="parent" />-->
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
                         android:orientation="vertical"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@id/btnFilter"
-                        app:layout_constraintStart_toEndOf="@id/ivExpenseIllustration"
+                        app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:letterSpacing="-0.01"
                             android:text="Expenses"
                             android:textColor="@color/dark_text_primary"
                             android:textSize="30sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="-0.01" />
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -451,15 +450,45 @@
                 </LinearLayout>
 
                 <!-- Recent Expenses List -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvRecentExpenses"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_dark"
-                    android:padding="10dp"
-                    android:nestedScrollingEnabled="false"
-                    android:overScrollMode="never"
-                    tools:listitem="@layout/item_expense" />
+                    android:background="@drawable/bg_card_dark">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvRecentExpenses"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never"
+                        tools:listitem="@layout/item_expense" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutEmptyExpenses"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="40dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:alpha="0.3"
+                            android:src="@drawable/ic_receipt"
+                            app:tint="@color/white" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="No expenses found"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </FrameLayout>
 
             </LinearLayout>
 

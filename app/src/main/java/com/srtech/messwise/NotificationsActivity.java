@@ -92,7 +92,7 @@ public class NotificationsActivity extends BaseActivity {
 
     private void setupFirebase() {
         db = FirebaseDatabase.getInstance();
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);
     }

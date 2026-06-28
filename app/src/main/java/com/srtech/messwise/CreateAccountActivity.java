@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise;
 
 import android.content.Context;
@@ -70,7 +75,7 @@ public class CreateAccountActivity extends BaseActivity {
 
         firebaseAuth = FirebaseAuth.getInstance();
         db = FirebaseDatabase.getInstance();
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
 
         typeAdmin = findViewById(R.id.typeAdmin);
         typeMember = findViewById(R.id.typeMember);

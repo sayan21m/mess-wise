@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise;
 
 import android.content.Context;
@@ -71,7 +76,7 @@ public class LoginActivity extends BaseActivity {
 
         firebaseAuth = FirebaseAuth.getInstance();
         db = FirebaseDatabase.getInstance();
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
 
         createAccount = findViewById(R.id.tvCreateAccount);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
@@ -281,6 +286,10 @@ public class LoginActivity extends BaseActivity {
             btnSend.setEnabled(false);
             btnSend.setText(R.string.common_loading);
 
+            // Directly send password reset email.
+            // If "Email enumeration protection" is ENABLED in Firebase Console, 
+            // this will ALWAYS return success even if the email doesn't exist.
+            // If DISABLED, it will return an error if the email is not found.
             firebaseAuth.sendPasswordResetEmail(email).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Toast.makeText(this, R.string.reset_link_sent, Toast.LENGTH_LONG).show();

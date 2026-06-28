@@ -19,3 +19,24 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Firebase Realtime Database
+-keep class com.google.firebase.** { *; }
+-keep class com.srtech.messwise.data_models.** { *; }
+
+# Glide
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public class * extends com.bumptech.glide.module.LibraryGlideModule
+-keep class com.bumptech.glide.** { *; }
+
+# MPAndroidChart
+-keep class com.github.mikephil.charting.** { *; }
+
+# Lottie
+-keep class com.airbnb.lottie.** { *; }
+
+# Security Crypto
+-keep class androidx.security.crypto.** { *; }
+
+# Firebase missing rules
+-dontwarn com.google.firebase.ktx.Firebase

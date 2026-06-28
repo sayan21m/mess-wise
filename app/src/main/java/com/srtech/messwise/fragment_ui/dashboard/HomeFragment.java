@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise.fragment_ui.dashboard;
 
 import android.content.Context;
@@ -30,6 +35,8 @@ import com.srtech.messwise.admin_ui.MealSlot;
 import com.srtech.messwise.ui.AttendanceActivity;
 import com.srtech.messwise.ui.SettingsActivity;
 
+import com.srtech.messwise.BaseActivity;
+import com.srtech.messwise.utils.SecurityUtils;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -66,7 +73,7 @@ public class HomeFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.home_fragment, container, false);
 
-        prefs = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = SecurityUtils.getSecurePrefs(requireContext());
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);
         isAdmin = prefs.getBoolean("isAdmin", false);

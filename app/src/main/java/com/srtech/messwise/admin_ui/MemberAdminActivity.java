@@ -65,6 +65,8 @@ public class MemberAdminActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_member_admin);
+
+        setScreenSecurity(true);
         
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
@@ -82,7 +84,7 @@ public class MemberAdminActivity extends BaseActivity {
         });
 
         db = FirebaseDatabase.getInstance();
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
         messId = prefs.getString("messId", null);
 
         tvTotalMembersCount = findViewById(R.id.tvTotalMembersCount);
@@ -91,6 +93,9 @@ public class MemberAdminActivity extends BaseActivity {
         tvUpcomingDueCount = findViewById(R.id.tvUpcomingDueCount);
         rvAdminMembers = findViewById(R.id.rvAdminMembers);
         etSearchMembers = findViewById(R.id.etSearchMembers);
+
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         findViewById(R.id.btnInviteMember).setOnClickListener(v -> {
             if (messId != null) {

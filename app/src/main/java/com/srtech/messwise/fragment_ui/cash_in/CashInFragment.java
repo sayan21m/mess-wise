@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.srtech.messwise.utils.SecurityUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -122,7 +123,7 @@ public class CashInFragment extends Fragment {
     }
 
     private void loadPreferences() {
-        prefs = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = SecurityUtils.getSecurePrefs(requireContext());
 
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise;
 
 import android.annotation.SuppressLint;
@@ -5,6 +10,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.widget.Toast;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
@@ -43,6 +49,11 @@ public class SplashActivity extends BaseActivity {
                 .start();
 
         new Handler().postDelayed(() -> {
+            if (isDeviceRooted()) {
+                Toast.makeText(this, "Security Alert: This device is rooted. For your safety, MessWise cannot run on rooted devices.", Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
             startActivity(new Intent(SplashActivity.this, LoginActivity.class));
             finish();
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);

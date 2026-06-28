@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 SR Tech. All rights reserved. -->
 <resources>
     <string name="app_name">Mess Wise</string>
     <string name="settings_title">Settings</string>
@@ -138,7 +139,7 @@
     <string name="dialog_enter_count">Enter count</string>
     <string name="dialog_meal_updated">Meal count updated</string>
     <string name="dialog_marked_present">Marked present (+1)</string>
-    <string name="dialog_invite_msg">Join our Mess on MessWise!\n\nMess ID: %1$s\n\nDownload the app and create an account as a Member using this ID.</string>
+    <string name="dialog_invite_msg">Join our Mess on MessWise!\n\nMess ID: %1$s\n\nDownload the app from our website: https://mess-wise.web.app\n\nCreate an account as a Member using this Mess ID to get started.</string>
     <string name="dialog_invite_title">Invite Member via</string>
     <string name="dialog_session_error">Session error: Mess ID missing</string>
     <string name="dialog_every_hours">Every %d hours</string>

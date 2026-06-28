@@ -72,6 +72,8 @@ public class MealAdminActivity extends BaseActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_meal_admin);
 
+        setScreenSecurity(true);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
@@ -89,7 +91,7 @@ public class MealAdminActivity extends BaseActivity {
 
         db = FirebaseDatabase.getInstance();
 
-        prefs = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = getSecurePrefs();
         
         // Dual Data Retrieval
         userId = getIntent().getStringExtra("userId");

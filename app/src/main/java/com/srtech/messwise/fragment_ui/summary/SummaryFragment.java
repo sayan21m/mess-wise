@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 SR Tech. All rights reserved.
+ * This project and its source code are the intellectual property of SR Tech.
+ * Unauthorized copying, distribution, or modification is strictly prohibited.
+ */
 package com.srtech.messwise.fragment_ui.summary;
 
 import android.content.Context;
@@ -26,6 +31,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.srtech.messwise.utils.SecurityUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -103,7 +109,7 @@ public class SummaryFragment extends Fragment {
 
     private void setupFirebase() {
         db = FirebaseDatabase.getInstance();
-        prefs = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        prefs = SecurityUtils.getSecurePrefs(requireContext());
         messId = prefs.getString("messId", null);
     }
 
@@ -338,6 +344,14 @@ public class SummaryFragment extends Fragment {
         TreeMap<String, Double> combined = new TreeMap<>();
         combined.putAll(dailyCashIn);
         combined.putAll(dailyExpenses);
+
+        if (combined.isEmpty()) {
+            lineChart.clear();
+            lineChart.setNoDataText("No financial data available for this month");
+            lineChart.setNoDataTextColor(Color.WHITE);
+            lineChart.invalidate();
+            return;
+        }
 
         int index = 0;
         for (String date : combined.keySet()) {
