@@ -275,28 +275,36 @@ public class CreateAccountActivity extends BaseActivity {
 
         String uid = user.getUid();
 
-        db.getReference()
-                .child(messId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (snapshot.child("member").child(uid).exists()) {
-                        Toast.makeText(this, R.string.toast_already_member, Toast.LENGTH_SHORT).show();
-                    } else {
-                        // For members, we fetch the actual mess name from the DB
-                        String actualMessName = snapshot.child("mess_name").getValue(String.class);
-                        if (actualMessName == null) actualMessName = messNameInput;
+        // 1. First fetch the actual mess name (this is allowed by the public '.read' on mess_name)
+        db.getReference().child(messId).child("mess_name").get().addOnSuccessListener(nameSnapshot -> {
+            String actualMessName = nameSnapshot.getValue(String.class);
+            if (actualMessName == null) actualMessName = messNameInput;
 
+            final String finalMessName = actualMessName;
+
+            // 2. Then check if user is already a member (We need to update rules to allow user to read their own member node)
+            db.getReference().child(messId).child("member").child(uid).get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            Toast.makeText(this, R.string.toast_already_member, Toast.LENGTH_SHORT).show();
+                        } else {
+                            saveToDatabase(messId, user, name, email);
+                            saveLoginState(rememberMe, uid, messId, finalMessName, isAdmin);
+                            navigateToMain(uid, messId, finalMessName, isAdmin);
+                        }
+                    })
+                    .addOnFailureListener(error -> {
+                        Log.e("SGT", "Membership check failed: " + error.getMessage());
+                        // If check fails but account was created, we try to save anyway (might be a permission quirk)
                         saveToDatabase(messId, user, name, email);
+                        saveLoginState(rememberMe, uid, messId, finalMessName, isAdmin);
+                        navigateToMain(uid, messId, finalMessName, isAdmin);
+                    });
 
-                        // Use actualMessName for storage
-                        saveLoginState(rememberMe, uid, messId, actualMessName, isAdmin);
-
-                        navigateToMain(uid, messId, actualMessName, isAdmin);
-                    }
-                })
-                .addOnFailureListener(error -> {
-                    Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
-                });
+        }).addOnFailureListener(e -> {
+            Log.e("SGT", "Name fetch failed: " + e.getMessage());
+            Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void saveToDatabase(String messId, FirebaseUser user, String name, String mail) {
