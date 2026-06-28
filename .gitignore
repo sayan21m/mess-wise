@@ -13,6 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+google-services.json
+firebase-debug.log
+.firebase/
+app/release/
+*.apk
 CODEBASE_MAP.md
 DEVELOPER_BLUEPRINT.md
 INTERNAL_DOCS.md

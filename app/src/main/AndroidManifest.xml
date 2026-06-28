@@ -20,7 +20,7 @@
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/> <!-- Test App ID (Production: ca-app-pub-7189372192433975~8417765815) -->
+            android:value="${admobAppId}"/>
 
         <activity
             android:name=".CreateAccountActivity"
