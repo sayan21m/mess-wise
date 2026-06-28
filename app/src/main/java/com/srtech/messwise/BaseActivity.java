@@ -15,8 +15,17 @@ import androidx.appcompat.app.AppCompatDelegate;
 import com.srtech.messwise.utils.SecurityUtils;
 import android.content.SharedPreferences;
 import android.view.WindowManager;
+import android.content.Intent;
+import android.net.Uri;
+import androidx.annotation.NonNull;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class BaseActivity extends AppCompatActivity {
+
+    private ValueEventListener versionListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,6 +35,68 @@ public class BaseActivity extends AppCompatActivity {
         AppCompatDelegate.setDefaultNightMode(theme);
         
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Don't start real-time listener on SplashActivity to avoid conflict with initial check
+        if (!(this instanceof SplashActivity)) {
+            startVersionMonitor();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopVersionMonitor();
+    }
+
+    private void startVersionMonitor() {
+        versionListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    long minVersion = snapshot.child("min_version_code").getValue(Long.class) != null ? 
+                            snapshot.child("min_version_code").getValue(Long.class) : 0;
+                    String updateUrl = snapshot.child("update_url").getValue(String.class);
+
+                    int currentVersion = 0;
+                    try {
+                        currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                    } catch (Exception ignored) {}
+
+                    if (currentVersion < minVersion) {
+                        showRealtimeUpdateDialog(updateUrl != null ? updateUrl : "https://mess-wise.web.app");
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        FirebaseDatabase.getInstance().getReference().child("version_control").addValueEventListener(versionListener);
+    }
+
+    private void stopVersionMonitor() {
+        if (versionListener != null) {
+            FirebaseDatabase.getInstance().getReference().child("version_control").removeEventListener(versionListener);
+        }
+    }
+
+    private void showRealtimeUpdateDialog(String url) {
+        if (isFinishing() || isDestroyed()) return;
+        
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.update_required_title)
+                .setMessage(R.string.update_required_msg)
+                .setCancelable(false)
+                .setPositiveButton(R.string.update_now, (dialog, which) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                    finishAffinity(); // Close all activities
+                })
+                .show();
     }
 
     protected void setScreenSecurity(boolean enabled) {

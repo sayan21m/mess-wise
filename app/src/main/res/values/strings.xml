@@ -271,4 +271,9 @@
     <string name="forgot_password_desc">Enter your email address to receive a password reset link.</string>
     <string name="send_reset_link">Send Reset Link</string>
     <string name="reset_link_sent">Password reset link sent to your email.</string>
+
+    <string name="update_required_title">Update Required</string>
+    <string name="update_required_msg">A newer version of MessWise is available. Please update to continue using the app.</string>
+    <string name="update_now">Update Now</string>
+    <string name="update_later">Later</string>
 </resources>

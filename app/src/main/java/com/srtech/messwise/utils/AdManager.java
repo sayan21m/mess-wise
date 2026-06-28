@@ -33,12 +33,12 @@ public class AdManager implements Application.ActivityLifecycleCallbacks {
 
     private static final String TAG = "AdManager";
     // Production IDs
-    // private static final String AD_UNIT_APP_OPEN = "ca-app-pub-7189372192433975/5871072065";
-    // private static final String AD_UNIT_INTERSTITIAL = "ca-app-pub-7189372192433975/4861242726";
+     private static final String AD_UNIT_APP_OPEN = "ca-app-pub-7189372192433975/5871072065";
+     private static final String AD_UNIT_INTERSTITIAL = "ca-app-pub-7189372192433975/4861242726";
     
     // Test IDs
-    private static final String AD_UNIT_APP_OPEN = "ca-app-pub-3940256099942544/9257395923";
-    private static final String AD_UNIT_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
+//    private static final String AD_UNIT_APP_OPEN = "ca-app-pub-3940256099942544/9257395923";
+//    private static final String AD_UNIT_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
 
     private static final int MAX_ADS_PER_DAY = 5;
 

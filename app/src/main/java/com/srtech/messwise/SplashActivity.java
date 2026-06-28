@@ -54,9 +54,58 @@ public class SplashActivity extends BaseActivity {
                 finish();
                 return;
             }
-            startActivity(new Intent(SplashActivity.this, LoginActivity.class));
-            finish();
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            checkAppVersion();
         }, 3000);
+    }
+
+    private void checkAppVersion() {
+        com.google.firebase.database.FirebaseDatabase.getInstance().getReference().child("version_control")
+                .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                    @Override
+                    public void onDataChange(@androidx.annotation.NonNull com.google.firebase.database.DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            long minVersion = snapshot.child("min_version_code").getValue(Long.class) != null ? 
+                                    snapshot.child("min_version_code").getValue(Long.class) : 0;
+                            String updateUrl = snapshot.child("update_url").getValue(String.class);
+                            
+                            int currentVersion = 0;
+                            try {
+                                currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                            } catch (Exception ignored) {}
+
+                            if (currentVersion < minVersion) {
+                                showUpdateDialog(updateUrl != null ? updateUrl : "https://mess-wise.web.app");
+                            } else {
+                                proceedToLogin();
+                            }
+                        } else {
+                            proceedToLogin();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@androidx.annotation.NonNull com.google.firebase.database.DatabaseError error) {
+                        proceedToLogin();
+                    }
+                });
+    }
+
+    private void showUpdateDialog(String url) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.update_required_title)
+                .setMessage(R.string.update_required_msg)
+                .setCancelable(false)
+                .setPositiveButton(R.string.update_now, (dialog, which) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                    startActivity(intent);
+                    finish();
+                })
+                .show();
+    }
+
+    private void proceedToLogin() {
+        startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }
