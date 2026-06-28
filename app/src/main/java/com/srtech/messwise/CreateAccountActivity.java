@@ -257,7 +257,8 @@ public class CreateAccountActivity extends BaseActivity {
                                             FirebaseUser user = firebaseAuth.getCurrentUser();
                                             handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
                                         } else {
-                                            Toast.makeText(this, R.string.toast_login_failed, Toast.LENGTH_SHORT).show();
+                                            String error = loginTask.getException() != null ? loginTask.getException().getMessage() : "Unknown";
+                                            Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error, Toast.LENGTH_LONG).show();
                                         }
                                     });
                         } else {
@@ -282,7 +283,7 @@ public class CreateAccountActivity extends BaseActivity {
 
             final String finalMessName = actualMessName;
 
-            // 2. Then check if user is already a member (We need to update rules to allow user to read their own member node)
+            // 2. Then check if user is already a member
             db.getReference().child(messId).child("member").child(uid).get()
                     .addOnSuccessListener(snapshot -> {
                         if (snapshot.exists()) {
@@ -295,7 +296,8 @@ public class CreateAccountActivity extends BaseActivity {
                     })
                     .addOnFailureListener(error -> {
                         Log.e("SGT", "Membership check failed: " + error.getMessage());
-                        // If check fails but account was created, we try to save anyway (might be a permission quirk)
+                        // If reading fails, it's likely because the user isn't in the DB yet (security rule blocking read)
+                        // In this case, we SHOULD proceed to save if they don't exist.
                         saveToDatabase(messId, user, name, email);
                         saveLoginState(rememberMe, uid, messId, finalMessName, isAdmin);
                         navigateToMain(uid, messId, finalMessName, isAdmin);
