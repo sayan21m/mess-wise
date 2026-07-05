@@ -193,7 +193,7 @@ public class CreateAccountActivity extends BaseActivity {
 
     // Check if "Remember me" checkbox is checked
     private boolean cbRemember() {
-        return cbAgree.isChecked(); // Or add a separate cbRemember checkbox
+        return true;
     }
 
     // Save login state
@@ -296,11 +296,7 @@ public class CreateAccountActivity extends BaseActivity {
                     })
                     .addOnFailureListener(error -> {
                         Log.e("SGT", "Membership check failed: " + error.getMessage());
-                        // If reading fails, it's likely because the user isn't in the DB yet (security rule blocking read)
-                        // In this case, we SHOULD proceed to save if they don't exist.
-                        saveToDatabase(messId, user, name, email);
-                        saveLoginState(rememberMe, uid, messId, finalMessName, isAdmin);
-                        navigateToMain(uid, messId, finalMessName, isAdmin);
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
                     });
 
         }).addOnFailureListener(e -> {

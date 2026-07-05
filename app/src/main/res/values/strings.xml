@@ -45,11 +45,21 @@
     <string name="dashboard_today_menu">TODAY\'S MENU</string>
 
     <string name="status_on_leave">On Leave</string>
-    <string name="status_booked">Booked</string>
+    <string name="status_booked">Not Marked</string>
     <string name="status_for_today">For today</string>
     <string name="status_leave_applied">Leave applied</string>
 
     <string name="menu_regular">Regular Menu</string>
+    <string name="menu_for_slot">%1$s • %2$s</string>
+    <string name="menu_planning">Planning menu…</string>
+    <string name="menu_planning_desc">Syncing the shared menu for your mess</string>
+    <string name="menu_planning_failed">Menu unavailable</string>
+    <string name="menu_planning_failed_desc">Could not sync the shared menu. Pull to refresh or try again later.</string>
+    <string name="next_meal_tomorrow">Tomorrow • %1$s</string>
+    <string name="url_help_faq">https://mess-wise.web.app</string>
+    <string name="url_terms">https://mess-wise.web.app</string>
+    <string name="url_privacy">https://mess-wise.web.app</string>
+    <string name="email_support">support@mess-wise.web.app</string>
     <string name="menu_no_special">No special menu updated</string>
     <string name="menu_bank_empty">Add items to Menu Bank to see them here.</string>
 

@@ -67,45 +67,61 @@
 
                     <!-- Ghost wallet bg -->
                     <ImageView
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
-                        android:alpha="0.07"
+                        android:layout_width="130dp"
+                        android:layout_height="130dp"
+                        android:alpha="0.55"
                         android:contentDescription="@null"
                         android:src="@drawable/vector_wallet_outline_bg"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
-                    <!-- Left: wallet illustration -->
+                    <!-- Modern wallet icon -->
                     <FrameLayout
                         android:id="@+id/walletFrame"
-                        android:layout_width="76dp"
-                        android:layout_height="76dp"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
-                        <ImageView
-                            android:layout_width="60dp"
-                            android:layout_height="60dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:src="@drawable/vector_wallet_illustration" />
+                        <View
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            android:background="@drawable/bg_wallet_icon_glow" />
 
                         <FrameLayout
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="top|center_horizontal"
-                            android:layout_marginTop="-2dp"
-                            android:background="@drawable/bg_transaction_icon">
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_gravity="center"
+                            android:background="@drawable/bg_wallet_icon_surface"
+                            android:padding="10dp">
+
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="@null"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_wallet_modern" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:background="@drawable/bg_wallet_rupee_badge"
+                            android:elevation="2dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
+                                android:includeFontPadding="false"
                                 android:text="₹"
                                 android:textColor="@color/bg_dark"
-                                android:textSize="11sp"
+                                android:textSize="10sp"
                                 android:textStyle="bold" />
                         </FrameLayout>
                     </FrameLayout>

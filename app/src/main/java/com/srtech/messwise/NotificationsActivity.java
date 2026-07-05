@@ -27,6 +27,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.data_models.NotificationModel;
+import com.srtech.messwise.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class NotificationsActivity extends BaseActivity {
     private String userId, messId;
     private FirebaseDatabase db;
     private SharedPreferences prefs;
+    private ValueEventListener messListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +74,15 @@ public class NotificationsActivity extends BaseActivity {
         initViews();
         setupFirebase();
         loadNotifications();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (messListener != null && messId != null) {
+            db.getReference().child(messId).removeEventListener(messListener);
+            messListener = null;
+        }
     }
 
     private void initViews() {
@@ -101,7 +112,7 @@ public class NotificationsActivity extends BaseActivity {
         if (messId == null) return;
 
         // Single listener to manage both persistent and dynamic notifications
-        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
+        messListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (isDestroyed() || isFinishing()) return;
@@ -127,8 +138,6 @@ public class NotificationsActivity extends BaseActivity {
                 if (!isUserMainAdmin && userRole != null) {
                     Boolean summaryPerm = snapshot.child("config").child("role_permissions").child(userRole).child("view_meal_summary").getValue(Boolean.class);
                     if (summaryPerm != null && summaryPerm) canUserViewSummary = true;
-                    // Also check if specifically "Meal Manager" - often defaults to true
-                    if (userRole.equals("Meal Manager")) canUserViewSummary = true;
                 }
 
                 // 1. Dynamic Meal Summary (Only if allowed)
@@ -190,13 +199,13 @@ public class NotificationsActivity extends BaseActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        };
+        db.getReference().child(messId).addValueEventListener(messListener);
     }
 
     private String getUpcomingSlotName(DataSnapshot slotsSnapshot) {
         Calendar now = Calendar.getInstance();
         int currentMins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.ENGLISH);
 
         String bestSlotName = "Next Meal";
         int minDiff = Integer.MAX_VALUE;
@@ -205,20 +214,14 @@ public class NotificationsActivity extends BaseActivity {
             String timeStr = ds.child("time").getValue(String.class);
             String name = ds.child("name").getValue(String.class);
             if (timeStr != null && name != null) {
-                try {
-                    Date d = sdf.parse(timeStr);
-                    if (d != null) {
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(d);
-                        int slotMins = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
-                        int diff = slotMins - currentMins;
+                int slotMins = DateUtils.parseSlotTimeMinutes(timeStr);
+                if (slotMins < 0) continue;
+                int diff = slotMins - currentMins;
 
-                        if (diff > 0 && diff < minDiff) {
-                            minDiff = diff;
-                            bestSlotName = name;
-                        }
-                    }
-                } catch (Exception ignored) {}
+                if (diff > 0 && diff < minDiff) {
+                    minDiff = diff;
+                    bestSlotName = name;
+                }
             }
         }
         
@@ -250,11 +253,13 @@ public class NotificationsActivity extends BaseActivity {
                 ArrayList<String> uids = new ArrayList<>();
                 for (DataSnapshot m : snapshot.getChildren()) {
                     Boolean onLeave = m.child("next_meal_leave").getValue(Boolean.class);
+                    String name = m.child("name").getValue(String.class);
+                    if (name == null) name = "Member";
                     if (onLeave != null && onLeave) {
-                        leaves.add(m.child("name").getValue(String.class));
+                        leaves.add(name);
                         uids.add(m.getKey());
                     } else {
-                        takings.add(m.child("name").getValue(String.class));
+                        takings.add(name);
                     }
                 }
                 displaySummaryDialog(total, leaves, takings, uids);

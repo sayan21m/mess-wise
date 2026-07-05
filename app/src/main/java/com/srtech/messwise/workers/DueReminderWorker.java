@@ -10,13 +10,19 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
+import com.srtech.messwise.utils.SecurityUtils;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.srtech.messwise.NotificationsActivity;
 import com.srtech.messwise.R;
 import com.srtech.messwise.data_models.NotificationModel;
@@ -35,7 +41,7 @@ public class DueReminderWorker extends Worker {
     public Result doWork() {
         Log.d("MessWiseWorker", "Checking due reminders in background...");
 
-        SharedPreferences prefs = getApplicationContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = SecurityUtils.getSecurePrefs(getApplicationContext());
         String messId = prefs.getString("messId", null);
         String userId = prefs.getString("userId", null);
 
@@ -45,21 +51,52 @@ public class DueReminderWorker extends Worker {
             DataSnapshot configSnapshot = Tasks.await(FirebaseDatabase.getInstance().getReference()
                     .child(messId).child("config").child("reminders").get());
 
-            if (configSnapshot.exists()) {
-                Boolean enabled = configSnapshot.child("enabled").getValue(Boolean.class);
-                Integer interval = configSnapshot.child("interval").getValue(Integer.class);
-                Long lastSent = configSnapshot.child("last_sent").getValue(Long.class);
+            if (!configSnapshot.exists()) return Result.success();
 
-                if (enabled != null && enabled && interval != null && lastSent != null) {
-                    long currentTime = System.currentTimeMillis();
-                    long diff = currentTime - lastSent;
-                    long intervalMillis = interval.longValue() * 60 * 60 * 1000;
+            Boolean enabled = configSnapshot.child("enabled").getValue(Boolean.class);
+            Integer interval = configSnapshot.child("interval").getValue(Integer.class);
+            Long lastSent = configSnapshot.child("last_sent").getValue(Long.class);
 
-                    if (diff >= intervalMillis) {
-                        checkAndNotifyDues(messId, userId);
-                        configSnapshot.getRef().child("last_sent").setValue(currentTime);
+            if (enabled == null || !enabled || interval == null || lastSent == null) {
+                return Result.success();
+            }
+
+            long intervalMillis = interval.longValue() * 60L * 60L * 1000L;
+            if (System.currentTimeMillis() - lastSent < intervalMillis) {
+                return Result.success();
+            }
+
+            final TaskCompletionSource<Boolean> tcs = new TaskCompletionSource<>();
+            configSnapshot.getRef().runTransaction(new Transaction.Handler() {
+                @NonNull
+                @Override
+                public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                    Boolean en = currentData.child("enabled").getValue(Boolean.class);
+                    Integer iv = currentData.child("interval").getValue(Integer.class);
+                    Long ls = currentData.child("last_sent").getValue(Long.class);
+                    if (en == null || !en || iv == null || ls == null) {
+                        return Transaction.abort();
+                    }
+                    long ivMillis = iv.longValue() * 60L * 60L * 1000L;
+                    if (System.currentTimeMillis() - ls >= ivMillis) {
+                        currentData.child("last_sent").setValue(System.currentTimeMillis());
+                        return Transaction.success(currentData);
+                    }
+                    return Transaction.abort();
+                }
+
+                @Override
+                public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                    if (error != null) {
+                        tcs.setException(error.toException());
+                    } else {
+                        tcs.setResult(committed);
                     }
                 }
+            });
+
+            if (Boolean.TRUE.equals(Tasks.await(tcs.getTask()))) {
+                checkAndNotifyDues(messId, userId);
             }
         } catch (ExecutionException | InterruptedException e) {
             Log.e("MessWiseWorker", "Error fetching config", e);
@@ -87,19 +124,17 @@ public class DueReminderWorker extends Worker {
 
                 if (totalDue > 0) {
                     String name = memberSnap.child("name").getValue(String.class);
+                    if (name == null) name = "Member";
                     String title = "Pending Due Reminder";
                     String message = "Hi " + name + ", you have a pending due of ₹" + String.format(Locale.getDefault(), "%.2f", totalDue) + ". Please clear it soon.";
 
-                    // Use a consistent ID to avoid redundant records
                     NotificationModel n = new NotificationModel(notiId, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis());
                     FirebaseDatabase.getInstance().getReference().child(messId).child("notifications").child(notiId).setValue(n);
 
-                    // Show system notification ONLY for the current logged-in user
                     if (memberUid != null && memberUid.equals(currentUserId)) {
                         showNotification(title, message);
                     }
                 } else {
-                    // If due is cleared, remove the reminder record
                     FirebaseDatabase.getInstance().getReference().child(messId).child("notifications").child(notiId).removeValue();
                 }
             }

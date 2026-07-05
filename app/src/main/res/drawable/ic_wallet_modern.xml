@@ -1,0 +1,75 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Wallet body -->
+    <path android:pathData="M8,18C8,15.79 9.79,14 12,14H34C36.21,14 38,15.79 38,18V32C38,34.21 36.21,36 34,36H12C9.79,36 8,34.21 8,32V18Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="135"
+                android:endColor="#006E5D"
+                android:startColor="#00BFA5"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+
+    <!-- Top highlight -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:pathData="M8,18C8,15.79 9.79,14 12,14H34C36.21,14 38,15.79 38,18V22H8V18Z" />
+
+    <!-- Card peek -->
+    <path android:pathData="M14,10H30C31.66,10 33,11.34 33,13V16H11V13C11,11.34 12.34,10 14,10Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="90"
+                android:endColor="#2A3543"
+                android:startColor="#3D4A5C"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+
+    <!-- Card stripe -->
+    <path
+        android:fillColor="#52A3B0"
+        android:pathData="M11,13.5H33V15H11Z" />
+
+    <!-- Inner slot lines -->
+    <path
+        android:fillColor="#26000000"
+        android:pathData="M14,24H26V25.5H14Z" />
+    <path
+        android:fillColor="#26000000"
+        android:pathData="M14,28H22V29.5H14Z" />
+
+    <!-- Clasp pocket -->
+    <path android:pathData="M28,22H38C39.1,22 40,22.9 40,24V28C40,29.1 39.1,30 38,30H28C26.9,30 26,29.1 26,28V24C26,22.9 26.9,22 28,22Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="0"
+                android:endColor="#00806D"
+                android:startColor="#19E0C2"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+
+    <!-- Clasp button -->
+    <path android:pathData="M33,26m-3,0a3,3 0,1 0,6 0a3,3 0,1 0,-6 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="135"
+                android:endColor="#006E5D"
+                android:startColor="#5CFFE6"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+
+    <!-- Clasp shine -->
+    <path
+        android:fillColor="#66FFFFFF"
+        android:pathData="M31.5,24.5m-1,0a1,1 0,1 0,2 0a1,1 0,1 0,-2 0" />
+
+</vector>

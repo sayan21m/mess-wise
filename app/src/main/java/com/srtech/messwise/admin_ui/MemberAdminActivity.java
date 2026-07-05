@@ -40,6 +40,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.R;
 import com.srtech.messwise.data_models.Member;
+import com.srtech.messwise.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public class MemberAdminActivity extends BaseActivity {
     private MemberAdapter memberAdapter;
     private ArrayList<Member> membersList = new ArrayList<>();
     private boolean isAdmin = false;
+    private ValueEventListener membersListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,105 +127,121 @@ public class MemberAdminActivity extends BaseActivity {
             btnReminders.setVisibility(canManageReminders ? View.VISIBLE : View.GONE);
             btnReminders.setOnClickListener(v -> showReminderSettingsDialog());
 
-            setTotalMemberCount();
-            setGlobalStats();
-            loadMembersList();
+            attachMembersListener();
         } else {
             Toast.makeText(this, R.string.dialog_session_error, Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void setTotalMemberCount() {
-        db.getReference().child(messId).child("member")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        long count = snapshot.getChildrenCount();
-                        tvTotalMembersCount.setText(String.valueOf(count));
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("MemberAdminActivity", "Error fetching members: " + error.getMessage());
-                    }
-                });
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (membersListener != null && messId != null) {
+            db.getReference().child(messId).child("member").removeEventListener(membersListener);
+            membersListener = null;
+        }
     }
 
-    private void setGlobalStats() {
-        String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date());
-        db.getReference().child(messId).child("member")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        double totalPaid = 0;
-                        double totalDues = 0;
-                        int upcomingDueCount = 0;
+    private void attachMembersListener() {
+        membersListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                tvTotalMembersCount.setText(String.valueOf(snapshot.getChildrenCount()));
 
-                        for (DataSnapshot memberSnap : snapshot.getChildren()) {
-                            // 1. Calculate All-time Total Paid
-                            DataSnapshot balanceHistory = memberSnap.child("monthly_balance");
-                            for (DataSnapshot month : balanceHistory.getChildren()) {
-                                Object val = month.getValue();
-                                if (val instanceof Number) totalPaid += ((Number) val).doubleValue();
-                            }
+                double totalPaid = 0;
+                double totalDues = 0;
+                int upcomingDueCount = 0;
 
-                            // 2. Calculate All-time Total Dues
-                            double memberTotalDue = 0;
-                            DataSnapshot dueHistory = memberSnap.child("due_history");
-                            for (DataSnapshot month : dueHistory.getChildren()) {
-                                Object val = month.getValue();
-                                if (val instanceof Number) {
-                                    memberTotalDue += ((Number) val).doubleValue();
-                                }
-                            }
+                membersList.clear();
+                for (DataSnapshot memberSnap : snapshot.getChildren()) {
+                    Member member = memberSnap.getValue(Member.class);
+                    if (member != null) {
+                        member.setUid(memberSnap.getKey());
+                        membersList.add(member);
+                    }
 
-                            // Add to global mess debt total only if this member owes money
-                            if (memberTotalDue > 0) {
-                                totalDues += memberTotalDue;
-                                upcomingDueCount++;
-                            }
-                        }
+                    DataSnapshot balanceHistory = memberSnap.child("monthly_balance");
+                    for (DataSnapshot month : balanceHistory.getChildren()) {
+                        Object val = month.getValue();
+                        if (val instanceof Number) totalPaid += ((Number) val).doubleValue();
+                    }
 
-                        if (tvTotalContributionCount != null) {
-                            tvTotalContributionCount.setText("₹" + String.format(Locale.getDefault(), "%,.0f", totalPaid));
-                        }
-                        if (tvTotalDueCount != null) {
-                            tvTotalDueCount.setText("₹" + String.format(Locale.getDefault(), "%,.0f", totalDues));
-                            tvTotalDueCount.setTextColor(getColor(R.color.dark_error));
-                        }
-                        if (tvUpcomingDueCount != null) {
-                            tvUpcomingDueCount.setText(String.valueOf(upcomingDueCount));
+                    double memberTotalDue = 0;
+                    DataSnapshot dueHistory = memberSnap.child("due_history");
+                    for (DataSnapshot month : dueHistory.getChildren()) {
+                        Object val = month.getValue();
+                        if (val instanceof Number) {
+                            memberTotalDue += ((Number) val).doubleValue();
                         }
                     }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("MemberAdminActivity", "Error fetching global stats: " + error.getMessage());
+                    if (memberTotalDue > 0) {
+                        totalDues += memberTotalDue;
+                        upcomingDueCount++;
                     }
-                });
+                }
+
+                if (tvTotalContributionCount != null) {
+                    tvTotalContributionCount.setText("₹" + String.format(Locale.getDefault(), "%,.0f", totalPaid));
+                }
+                if (tvTotalDueCount != null) {
+                    tvTotalDueCount.setText("₹" + String.format(Locale.getDefault(), "%,.0f", totalDues));
+                    tvTotalDueCount.setTextColor(getColor(R.color.dark_error));
+                }
+                if (tvUpcomingDueCount != null) {
+                    tvUpcomingDueCount.setText(String.valueOf(upcomingDueCount));
+                }
+
+                filterMembers(etSearchMembers.getText().toString());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("MemberAdminActivity", "Error fetching members: " + error.getMessage());
+            }
+        };
+        db.getReference().child(messId).child("member").addValueEventListener(membersListener);
     }
 
-    private void loadMembersList() {
-        db.getReference().child(messId).child("member")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        membersList.clear();
-                        for (DataSnapshot ds : snapshot.getChildren()) {
-                            Member member = ds.getValue(Member.class);
-                            if (member != null) {
-                                member.setUid(ds.getKey());
-                                membersList.add(member);
+    private static String getInitials(String name) {
+        if (name == null || name.trim().isEmpty()) return "?";
+        String[] parts = name.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        if (!parts[0].isEmpty()) {
+            initials.append(parts[0].substring(0, 1).toUpperCase(Locale.getDefault()));
+        }
+        if (parts.length > 1 && !parts[1].isEmpty()) {
+            initials.append(parts[1].substring(0, 1).toUpperCase(Locale.getDefault()));
+        }
+        return initials.toString();
+    }
+
+    private void deleteMemberWithCleanup(Member member) {
+        String uid = member.getUid();
+        db.getReference().child(messId).child("member").child(uid).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    db.getReference().child(messId).child("notifications").child("DUE_REMINDER_" + uid).removeValue();
+
+                    db.getReference().child(messId).child("notifications").get().addOnSuccessListener(notiSnap -> {
+                        for (DataSnapshot ds : notiSnap.getChildren()) {
+                            String targetUid = ds.child("userId").getValue(String.class);
+                            if (uid.equals(targetUid)) {
+                                ds.getRef().removeValue();
                             }
                         }
-                        // Apply filter if search is active, otherwise update all
-                        filterMembers(etSearchMembers.getText().toString());
-                    }
+                    });
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("MemberAdminActivity", "Error loading members: " + error.getMessage());
-                    }
+                    db.getReference().child(messId).child("cash_in").get().addOnSuccessListener(snap -> {
+                        for (DataSnapshot ds : snap.getChildren()) {
+                            String txUserId = ds.child("userId").getValue(String.class);
+                            if (uid.equals(txUserId)) {
+                                ds.getRef().removeValue();
+                            }
+                        }
+                    });
+
+                    com.srtech.messwise.utils.FinanceUtils.updateAllMemberDues(messId);
+                    Toast.makeText(MemberAdminActivity.this, R.string.dialog_member_deleted, Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -271,12 +289,7 @@ public class MemberAdminActivity extends BaseActivity {
         ((TextView) dialogView.findViewById(R.id.tvMemberName)).setText(member.getName());
         
         TextView tvInitials = dialogView.findViewById(R.id.tvDialogInitials);
-        if (member.getName() != null && !member.getName().isEmpty()) {
-            String[] names = member.getName().split(" ");
-            String initials = names[0].substring(0, 1).toUpperCase();
-            if (names.length > 1) initials += names[1].substring(0, 1).toUpperCase();
-            tvInitials.setText(initials);
-        }
+        tvInitials.setText(getInitials(member.getName()));
 
         // Fetch real data from Firebase
         db.getReference().child(messId).child("member").child(member.getUid())
@@ -336,15 +349,19 @@ public class MemberAdminActivity extends BaseActivity {
         });
         
         View btnManageRole = dialogView.findViewById(R.id.btnManageRole);
-        if (mainAdminUid != null && member.getUid().equals(mainAdminUid)) {
-            // Can't manage role of the main admin (owner)
-            btnManageRole.setVisibility(View.GONE);
-        } else {
-            btnManageRole.setOnClickListener(v -> {
-                dialog.dismiss();
-                showManageRoleDialog(member);
-            });
-        }
+        btnManageRole.setVisibility(View.GONE);
+        db.getReference().child(messId).child("admin_uid").get().addOnSuccessListener(adminSnap -> {
+            String adminUid = adminSnap.getValue(String.class);
+            if (adminUid != null && member.getUid().equals(adminUid)) {
+                btnManageRole.setVisibility(View.GONE);
+            } else {
+                btnManageRole.setVisibility(View.VISIBLE);
+                btnManageRole.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    showManageRoleDialog(member);
+                });
+            }
+        });
 
         dialog.show();
     }
@@ -606,31 +623,22 @@ public class MemberAdminActivity extends BaseActivity {
                 }
             }
 
-            java.util.Map<String, Object> config = new java.util.HashMap<>();
-            config.put("enabled", sEnable.isChecked());
-            config.put("interval", intervalHours);
-            config.put("last_sent", System.currentTimeMillis());
+            db.getReference().child(messId).child("config").child("reminders").get().addOnSuccessListener(existingSnap -> {
+                Long existingLastSent = existingSnap.child("last_sent").getValue(Long.class);
+                java.util.Map<String, Object> config = new java.util.HashMap<>();
+                config.put("enabled", sEnable.isChecked());
+                config.put("interval", intervalHours);
+                config.put("last_sent", existingLastSent != null ? existingLastSent : System.currentTimeMillis());
 
-            db.getReference().child(messId).child("config").child("reminders").setValue(config)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, R.string.dialog_reminder_saved, Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    });
+                db.getReference().child(messId).child("config").child("reminders").setValue(config)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, R.string.dialog_reminder_saved, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        });
+            });
         });
 
         dialog.show();
-    }
-
-    private void deleteMemberConfirm(Member member) {
-        new AlertDialog.Builder(MemberAdminActivity.this)
-                .setTitle(R.string.dialog_delete_member)
-                .setMessage(getString(R.string.dialog_delete_confirm, member.getName()))
-                .setPositiveButton(R.string.common_delete, (dialog, which) -> {
-                    db.getReference().child(messId).child("member").child(member.getUid()).removeValue()
-                            .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, R.string.dialog_member_deleted, Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton(R.string.common_cancel, null)
-                .show();
     }
 
     private void showClearDuePopup(Member member) {
@@ -653,7 +661,7 @@ public class MemberAdminActivity extends BaseActivity {
 
         tvMemberName.setText(member.getName());
 
-        String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date());
+        String currentMonthKey = DateUtils.formatMonthKey(new Date());
 
         // Fetch all-time total due and breakdown
         db.getReference().child(messId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -725,7 +733,13 @@ public class MemberAdminActivity extends BaseActivity {
                 return;
             }
 
-            final double amountToClear = Double.parseDouble(amountStr);
+            final double amountToClear;
+            try {
+                amountToClear = Double.parseDouble(amountStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, R.string.dialog_enter_valid_amount, Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (amountToClear <= 0) {
                 Toast.makeText(this, R.string.dialog_enter_valid_amount, Toast.LENGTH_SHORT).show();
                 return;
@@ -876,14 +890,7 @@ public class MemberAdminActivity extends BaseActivity {
             holder.tvName.setText(member.getName());
             
             // Set initials
-            if (member.getName() != null && !member.getName().isEmpty()) {
-                String[] names = member.getName().split(" ");
-                String initials = names[0].substring(0, 1).toUpperCase();
-                if (names.length > 1) {
-                    initials += names[1].substring(0, 1).toUpperCase();
-                }
-                holder.tvInitials.setText(initials);
-            }
+            holder.tvInitials.setText(getInitials(member.getName()));
 
             holder.itemView.setOnClickListener(v -> showMemberDetailsPopup(member));
 
@@ -898,10 +905,7 @@ public class MemberAdminActivity extends BaseActivity {
                 new AlertDialog.Builder(MemberAdminActivity.this)
                         .setTitle(R.string.dialog_delete_member)
                         .setMessage(getString(R.string.dialog_delete_confirm, member.getName()))
-                        .setPositiveButton(R.string.common_delete, (dialog, which) -> {
-                            db.getReference().child(messId).child("member").child(member.getUid()).removeValue()
-                                    .addOnSuccessListener(aVoid -> Toast.makeText(MemberAdminActivity.this, R.string.dialog_member_deleted, Toast.LENGTH_SHORT).show());
-                        })
+                        .setPositiveButton(R.string.common_delete, (dialog, which) -> deleteMemberWithCleanup(member))
                         .setNegativeButton(R.string.common_cancel, null)
                         .show();
             });

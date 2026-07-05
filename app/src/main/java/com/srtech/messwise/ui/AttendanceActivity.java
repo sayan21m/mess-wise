@@ -20,6 +20,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.R;
 
 import java.text.SimpleDateFormat;
@@ -39,6 +40,7 @@ public class AttendanceActivity extends BaseActivity {
     private FirebaseDatabase db;
     private Map<String, Integer> mealHistory = new HashMap<>();
     private Calendar currentCalendar = Calendar.getInstance();
+    private ValueEventListener attendanceListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,11 @@ public class AttendanceActivity extends BaseActivity {
 
         userId = getIntent().getStringExtra("userId");
         messId = getIntent().getStringExtra("messId");
+        if (userId == null || messId == null) {
+            android.content.SharedPreferences prefs = com.srtech.messwise.utils.SecurityUtils.getSecurePrefs(this);
+            if (userId == null) userId = prefs.getString("userId", null);
+            if (messId == null) messId = prefs.getString("messId", null);
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -75,6 +82,15 @@ public class AttendanceActivity extends BaseActivity {
         loadAttendanceData();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (attendanceListener != null && messId != null && userId != null) {
+            db.getReference().child(messId).child("member").child(userId)
+                    .child("meal_count_history").removeEventListener(attendanceListener);
+        }
+    }
+
     private void updateUI() {
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
         tvMonthYear.setText(sdf.format(currentCalendar.getTime()));
@@ -88,9 +104,9 @@ public class AttendanceActivity extends BaseActivity {
 
         // Show 6 weeks (42 days) to keep grid consistent
         for (int i = 0; i < 42; i++) {
-            days.add(new CalendarDay(cal.get(Calendar.DAY_OF_MONTH), 
+            days.add(new CalendarDay(cal.get(Calendar.DAY_OF_MONTH),
                     cal.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH),
-                    new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(cal.getTime())));
+                    DateUtils.formatMealDay(cal.getTime())));
             cal.add(Calendar.DAY_OF_MONTH, 1);
         }
 
@@ -101,7 +117,7 @@ public class AttendanceActivity extends BaseActivity {
         if (messId == null || userId == null) return;
 
         db.getReference().child(messId).child("member").child(userId).child("meal_count_history")
-                .addValueEventListener(new ValueEventListener() {
+                .addValueEventListener(attendanceListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         mealHistory.clear();

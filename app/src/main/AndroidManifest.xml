@@ -18,10 +18,6 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.MessWise.Dark">
 
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${admobAppId}"/>
-
         <activity
             android:name=".CreateAccountActivity"
             android:exported="false"

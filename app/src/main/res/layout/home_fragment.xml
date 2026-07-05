@@ -161,7 +161,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:text="@string/status_booked"
-                        android:textColor="@color/dark_success"
+                        android:textColor="@color/dark_error"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 

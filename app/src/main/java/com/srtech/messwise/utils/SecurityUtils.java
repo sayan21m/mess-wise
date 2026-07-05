@@ -34,8 +34,7 @@ public class SecurityUtils {
             );
         } catch (GeneralSecurityException | IOException e) {
             Log.e("SecurityUtils", "Could not create EncryptedSharedPreferences", e);
-            // Fallback to normal if encryption fails (should not happen on modern devices)
-            return context.getSharedPreferences(SECURE_PREFS_NAME, Context.MODE_PRIVATE);
+            throw new IllegalStateException("Secure storage unavailable", e);
         }
     }
 }

@@ -36,7 +36,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.srtech.messwise.utils.AdManager;
 import com.srtech.messwise.R;
 
 import java.text.SimpleDateFormat;
@@ -66,6 +65,9 @@ public class SummaryFragment extends Fragment {
     private Map<String, Double> dailyExpenses = new TreeMap<>();
     private Map<String, Double> categoryExpenses = new HashMap<>();
     private List<MemberContribution> topContributors = new ArrayList<>();
+    private ValueEventListener dataListener;
+    private double monthlyTotalCash = 0;
+    private double monthlyTotalExpenses = 0;
 
     public SummaryFragment() {}
 
@@ -79,6 +81,15 @@ public class SummaryFragment extends Fragment {
         loadData();
 
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (dataListener != null && messId != null) {
+            db.getReference().child(messId).removeEventListener(dataListener);
+            dataListener = null;
+        }
     }
 
     private void initViews(View v) {
@@ -105,9 +116,7 @@ public class SummaryFragment extends Fragment {
         });
         
         btnExport = v.findViewById(R.id.btnExportReport);
-        btnExport.setOnClickListener(v1 -> {
-            AdManager.getInstance().showInterstitialAd(requireActivity(), this::generateAndShareReport);
-        });
+        btnExport.setOnClickListener(v1 -> generateAndShareReport());
     }
 
     private void setupFirebase() {
@@ -144,7 +153,7 @@ public class SummaryFragment extends Fragment {
     private void loadData() {
         if (messId == null) return;
 
-        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
+        db.getReference().child(messId).addValueEventListener(dataListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
@@ -173,6 +182,9 @@ public class SummaryFragment extends Fragment {
 
         double totalCash = 0;
         double totalExp = 0;
+        double settledExp = 0;
+        Double settledVal = messSnapshot.child("finance").child("settled_expenses").getValue(Double.class);
+        if (settledVal != null) settledExp = settledVal;
 
         // Process Expenses
         DataSnapshot expNode = messSnapshot.child("expenses");
@@ -235,8 +247,11 @@ public class SummaryFragment extends Fragment {
         // UI Updates
         tvTotalCashIn.setText(String.format(Locale.getDefault(), "₹%,.0f", totalCash));
         tvTotalExpenses.setText(String.format(Locale.getDefault(), "₹%,.0f", totalExp));
+
+        monthlyTotalCash = totalCash;
+        monthlyTotalExpenses = totalExp;
         
-        double balance = totalCash - totalExp;
+        double balance = totalCash - (totalExp + settledExp);
         tvTotalBalance.setText(String.format(Locale.getDefault(), "₹%,.0f", Math.abs(balance)));
         if (balance >= 0) {
             tvTotalBalance.setTextColor(requireContext().getColor(R.color.dark_success));
@@ -247,7 +262,7 @@ public class SummaryFragment extends Fragment {
         }
 
         Calendar c = Calendar.getInstance();
-        int dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+        int dayOfMonth = Math.max(c.get(Calendar.DAY_OF_MONTH), 1);
         tvAvgExpense.setText(String.format(Locale.getDefault(), "₹%,.0f", totalExp / dayOfMonth));
         tvCategoryTotal.setText(String.format(Locale.getDefault(), "₹%,.0f", totalExp));
 
@@ -305,11 +320,8 @@ public class SummaryFragment extends Fragment {
 
     private void updateInsights(DataSnapshot snapshot) {
         // Budget Insight
-        double cash = 0, exp = 0;
-        try {
-            cash = Double.parseDouble(tvTotalCashIn.getText().toString().replaceAll("[^0-9]", ""));
-            exp = Double.parseDouble(tvTotalExpenses.getText().toString().replaceAll("[^0-9]", ""));
-        } catch (Exception ignored) {}
+        double cash = monthlyTotalCash;
+        double exp = monthlyTotalExpenses;
 
         if (cash >= exp) {
             tvInsightBudget.setText(R.string.insight_cash_healthy);
@@ -503,10 +515,6 @@ public class SummaryFragment extends Fragment {
         intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_subject));
         intent.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(intent, getString(R.string.report_chooser)));
-    }
-
-    private void exportCSVReport() {
-        // Deprecated in favor of generateAndShareReport
     }
 
     private static class MemberContribution {

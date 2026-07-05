@@ -38,6 +38,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.R;
 import com.srtech.messwise.data_models.Member;
@@ -65,6 +66,7 @@ public class MealAdminActivity extends BaseActivity {
     String date;
     Button btnSetMeal, btnMarkPresent;
     LinearLayout distributionList;
+    private ValueEventListener memberDataListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,8 +109,6 @@ public class MealAdminActivity extends BaseActivity {
         if (messName == null) messName = prefs.getString("messName", null);
         if (!isAdmin) isAdmin = prefs.getBoolean("isAdmin", false);
         
-        Log.d("SGT", "MealAdminActivity Init - userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
-
         // Initialize Views
         spinnerMember = findViewById(R.id.spinnerMember);
         etMeals = findViewById(R.id.etMeals);
@@ -153,10 +153,16 @@ public class MealAdminActivity extends BaseActivity {
                 return;
             }
 
-            int count = Integer.parseInt(mealCountStr);
+            int count;
+            try {
+                count = Integer.parseInt(mealCountStr);
+            } catch (NumberFormatException e) {
+                etMeals.setError(getString(R.string.cash_in_invalid_amount));
+                return;
+            }
             String note = etNote.getText().toString().trim();
 
-            // Save meal count
+            // Save meal count only
             db.getReference().child(messId).child("member").child(selectedMember.getUid())
                     .child("meal_count_history").child(date).setValue(count)
                     .addOnSuccessListener(aVoid -> {
@@ -166,11 +172,6 @@ public class MealAdminActivity extends BaseActivity {
                         hideKeyboard();
                         FinanceUtils.updateAllMemberDues(messId);
                     });
-
-            // Save daily menu if etNote has text
-            if (!note.isEmpty()) {
-                db.getReference().child(messId).child("daily_menu").child(date).setValue(note);
-            }
         });
 
         btnMarkPresent.setOnClickListener(v -> {
@@ -198,6 +199,15 @@ public class MealAdminActivity extends BaseActivity {
         checkPendingLeaves();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (memberDataListener != null && messId != null) {
+            db.getReference().child(messId).child("member").removeEventListener(memberDataListener);
+            memberDataListener = null;
+        }
+    }
+
     private void checkPendingLeaves() {
         if (messId == null) return;
 
@@ -209,7 +219,9 @@ public class MealAdminActivity extends BaseActivity {
             for (DataSnapshot memberSnapshot : snapshot.getChildren()) {
                 Boolean hasLeave = memberSnapshot.child("next_meal_leave").getValue(Boolean.class);
                 if (hasLeave != null && hasLeave) {
-                    names.add(memberSnapshot.child("name").getValue(String.class));
+                    String name = memberSnapshot.child("name").getValue(String.class);
+                    if (name == null) name = getString(R.string.common_unknown);
+                    names.add(name);
                     String slot = memberSnapshot.child("pending_leave_slot").getValue(String.class);
                     slotDetails.add(slot != null ? slot : getString(R.string.noti_upcoming_meal));
                     pendingUids.add(memberSnapshot.getKey());
@@ -276,8 +288,6 @@ public class MealAdminActivity extends BaseActivity {
     }
 
     private void loadMealData() {
-        Log.d("SGT", "loadMealData: Fetching for messId: " + messId);
-        
         if (messId == null) {
             Log.e("SGT", "loadMealData Error: messId is null.");
             return;
@@ -285,15 +295,20 @@ public class MealAdminActivity extends BaseActivity {
 
         loadFinancialStats();
 
-        db.getReference().child(messId).child("member")
-                .addValueEventListener(new ValueEventListener() {
+        if (memberDataListener != null) {
+            db.getReference().child(messId).child("member").removeEventListener(memberDataListener);
+        }
+
+        int selectedMonth = selectedCalendar.get(Calendar.MONTH);
+        int selectedYear = selectedCalendar.get(Calendar.YEAR);
+
+        memberDataListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         memberList.clear();
                         ArrayList<MemberMeal> memberMeals = new ArrayList<>();
                         int totalMealsTaken = 0;
                         int maxMealForScale = 0;
-                        String currentMonthYear = new SimpleDateFormat("MMM yyyy", Locale.getDefault()).format(selectedCalendar.getTime());
 
                         for (DataSnapshot s : snapshot.getChildren()) {
                             Member member = s.getValue(Member.class);
@@ -304,15 +319,14 @@ public class MealAdminActivity extends BaseActivity {
 
                                 int memberTotalForMonth = 0;
                                 for (DataSnapshot mealSnapshot : s.child("meal_count_history").getChildren()) {
-                                    String mealDate = mealSnapshot.getKey();
+                                    java.util.Date mealDate = DateUtils.parseMealDay(mealSnapshot.getKey());
+                                    if (!DateUtils.isSameMonthYear(mealDate, selectedMonth, selectedYear)) continue;
+
                                     Object value = mealSnapshot.getValue();
                                     int count = 0;
                                     if (value instanceof Long) count = ((Long) value).intValue();
                                     else if (value instanceof Integer) count = (Integer) value;
-
-                                    if (mealDate != null && mealDate.contains(currentMonthYear)) {
-                                        memberTotalForMonth += count;
-                                    }
+                                    memberTotalForMonth += count;
                                 }
                                 totalMealsTaken += memberTotalForMonth;
                                 memberMeals.add(new MemberMeal(uid, member.getName(), memberTotalForMonth));
@@ -335,7 +349,8 @@ public class MealAdminActivity extends BaseActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         Log.e("MealAdminActivity", "Database error", error.toException());
                     }
-                });
+                };
+        db.getReference().child(messId).child("member").addValueEventListener(memberDataListener);
     }
 
     private void loadFinancialStats() {
@@ -439,11 +454,8 @@ public class MealAdminActivity extends BaseActivity {
     }
 
     private void updateDateDisplay() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-        tvDate.setText(sdf.format(selectedCalendar.getTime()));
-
-        date = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                .format(selectedCalendar.getTime());
+        tvDate.setText(DateUtils.formatMealDay(selectedCalendar.getTime()));
+        date = DateUtils.formatMealDay(selectedCalendar.getTime());
 
         // Refresh monthly stats when date changes (month might have changed)
         loadMealData();

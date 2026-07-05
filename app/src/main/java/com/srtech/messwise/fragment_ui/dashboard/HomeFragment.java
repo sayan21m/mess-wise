@@ -21,6 +21,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
@@ -38,8 +42,10 @@ import com.srtech.messwise.ui.AttendanceActivity;
 import com.srtech.messwise.ui.SettingsActivity;
 
 import com.srtech.messwise.BaseActivity;
+import com.srtech.messwise.utils.DateUtils;
+import com.srtech.messwise.utils.MenuPlanner;
+import com.srtech.messwise.utils.PermissionUtils;
 import com.srtech.messwise.utils.SecurityUtils;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -54,14 +60,13 @@ public class HomeFragment extends Fragment {
     private SharedPreferences prefs;
     private String userId, messId;
     private FirebaseDatabase db;
-    private TextView tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn, tvMemberDue, tvMealRate, tvDueLabel, tvDueDeadline, tvTodayMenu, tvMenuDescription;
+    private TextView tvNextMealName, tvNextMealTime, tvMealStatus, tvMealStatusDesc, tvTotalCashIn, tvMemberDue, tvMealRate, tvDueLabel, tvDueDeadline, tvTodayMenu, tvMenuDescription, totalMeal;
     private CardView cardTodayMenu;
-    private ValueEventListener statusListener, messDataListener, menuListener;
+    private ValueEventListener statusListener, messDataListener, notificationListener, mealSlotsListener;
     private boolean isLeaveDialogShowing = false;
-    private double messTotalExpenses = 0;
-    private long messTotalMeals = 0;
-    private long memberTotalMeals = 0;
-    private boolean isAdmin = false;
+    private boolean menuCommitInFlight = false;
+    private int menuPlanningAttempts = 0;
+    private static final int MAX_MENU_PLANNING_ATTEMPTS = 3;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -77,7 +82,6 @@ public class HomeFragment extends Fragment {
         prefs = SecurityUtils.getSecurePrefs(requireContext());
         userId = prefs.getString("userId", null);
         messId = prefs.getString("messId", null);
-        isAdmin = prefs.getBoolean("isAdmin", false);
 
         profile = view.findViewById(R.id.profile);
         mealAttendance = view.findViewById(R.id.mealAttendance);
@@ -93,6 +97,7 @@ public class HomeFragment extends Fragment {
         tvTodayMenu = view.findViewById(R.id.tvTodayMenu);
         tvMenuDescription = view.findViewById(R.id.tvMenuDescription);
         cardTodayMenu = view.findViewById(R.id.cardTodayMenu);
+        totalMeal = view.findViewById(R.id.totalMeal);
         btnApplyLeave = view.findViewById(R.id.btnApplyLeave);
 
         db = FirebaseDatabase.getInstance();
@@ -124,7 +129,10 @@ public class HomeFragment extends Fragment {
 
     private void setNextMeal() {
         if (messId == null) return;
-        db.getReference().child(messId).child("meal_slots").addListenerForSingleValueEvent(new ValueEventListener() {
+        if (mealSlotsListener != null) {
+            db.getReference().child(messId).child("meal_slots").removeEventListener(mealSlotsListener);
+        }
+        mealSlotsListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
@@ -141,7 +149,8 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        };
+        db.getReference().child(messId).child("meal_slots").addValueEventListener(mealSlotsListener);
     }
 
     private void updateNextMealUI(List<MealSlot> slots) {
@@ -151,40 +160,23 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        Calendar now = Calendar.getInstance();
-        int currentHour = now.get(Calendar.HOUR_OF_DAY);
-        int currentMinute = now.get(Calendar.MINUTE);
-        int currentTimeInMins = currentHour * 60 + currentMinute;
+        Collections.sort(slots, java.util.Comparator.comparingInt(
+                slot -> DateUtils.parseSlotTimeMinutes(slot.getTime())));
 
-        MealSlot nextSlot = null;
-        int minDiff = Integer.MAX_VALUE;
-
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-
-        for (MealSlot slot : slots) {
-            try {
-                Date date = sdf.parse(slot.getTime());
-                if (date != null) {
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(date);
-                    int slotTimeInMins = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
-                    int diff = slotTimeInMins - currentTimeInMins;
-
-                    if (diff > 0 && diff < minDiff) {
-                        minDiff = diff;
-                        nextSlot = slot;
-                    }
-                }
-            } catch (Exception ignored) {}
+        MenuPlanner.NextSlotContext ctx = MenuPlanner.resolveNextSlot(slots, Calendar.getInstance());
+        if (ctx == null) {
+            tvNextMealName.setText("No slots set");
+            tvNextMealTime.setText("--:--");
+            return;
         }
 
-        if (nextSlot == null) {
-            // All slots for today are passed, show first slot of tomorrow
-            nextSlot = slots.get(0);
-        }
-
+        MealSlot nextSlot = ctx.getSlot();
         tvNextMealName.setText(nextSlot.getName());
-        tvNextMealTime.setText(nextSlot.getTime());
+        if (ctx.isTomorrow()) {
+            tvNextMealTime.setText(getString(R.string.next_meal_tomorrow, nextSlot.getTime()));
+        } else {
+            tvNextMealTime.setText(nextSlot.getTime());
+        }
     }
 
     private void applyForLeave() {
@@ -246,11 +238,16 @@ public class HomeFragment extends Fragment {
                 name.setText(slot.getName());
                 time.setText(slot.getTime());
 
-                holder.itemView.setOnClickListener(v -> cb.setChecked(!cb.isChecked()));
+                cb.setOnCheckedChangeListener(null);
+                cb.setChecked(selectedSlots.contains(slot));
                 cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (isChecked) selectedSlots.add(slot);
-                    else selectedSlots.remove(slot);
+                    if (isChecked) {
+                        if (!selectedSlots.contains(slot)) selectedSlots.add(slot);
+                    } else {
+                        selectedSlots.remove(slot);
+                    }
                 });
+                holder.itemView.setOnClickListener(v -> cb.toggle());
             }
 
             @Override
@@ -303,15 +300,44 @@ public class HomeFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
+
+                Calendar now = Calendar.getInstance();
+                int currentMonth = now.get(Calendar.MONTH);
+                int currentYear = now.get(Calendar.YEAR);
+                String todayKey = DateUtils.formatMealDay(now.getTime());
+
+                int monthTotal = 0;
+                Integer todayCount = null;
+                for (DataSnapshot entry : snapshot.child("meal_count_history").getChildren()) {
+                    Integer val = entry.getValue(Integer.class);
+                    if (val == null) continue;
+                    if (todayKey.equals(entry.getKey())) {
+                        todayCount = val;
+                    }
+                    Date entryDate = DateUtils.parseMealDay(entry.getKey());
+                    if (DateUtils.isSameMonthYear(entryDate, currentMonth, currentYear)) {
+                        monthTotal += val;
+                    }
+                }
+                if (todayCount == null) todayCount = 0;
+
+                if (totalMeal != null) {
+                    totalMeal.setText(getString(R.string.award_meals_tracked, monthTotal));
+                }
+
                 Boolean onLeave = snapshot.child("next_meal_leave").getValue(Boolean.class);
                 if (onLeave != null && onLeave) {
                     tvMealStatus.setText(R.string.status_on_leave);
                     tvMealStatus.setTextColor(getResources().getColor(R.color.dark_error));
                     String slot = snapshot.child("pending_leave_slot").getValue(String.class);
                     tvMealStatusDesc.setText(slot != null ? slot : getString(R.string.status_leave_applied));
+                } else if (todayCount > 0) {
+                    tvMealStatus.setText(getString(R.string.award_meals_tracked, todayCount));
+                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_success));
+                    tvMealStatusDesc.setText(R.string.status_for_today);
                 } else {
                     tvMealStatus.setText(R.string.status_booked);
-                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_success));
+                    tvMealStatus.setTextColor(getResources().getColor(R.color.dark_error));
                     tvMealStatusDesc.setText(R.string.status_for_today);
                 }
             }
@@ -325,15 +351,18 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (messId == null || userId == null) return;
         if (statusListener != null) {
             db.getReference().child(messId).child("member").child(userId).removeEventListener(statusListener);
         }
         if (messDataListener != null) {
             db.getReference().child(messId).removeEventListener(messDataListener);
         }
-        if (menuListener != null) {
-            String today = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH).format(new Date());
-            db.getReference().child(messId).child("daily_menu").child(today).removeEventListener(menuListener);
+        if (notificationListener != null) {
+            db.getReference().child(messId).removeEventListener(notificationListener);
+        }
+        if (mealSlotsListener != null) {
+            db.getReference().child(messId).child("meal_slots").removeEventListener(mealSlotsListener);
         }
     }
 
@@ -345,7 +374,9 @@ public class HomeFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
 
-                String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(new Date());
+                PermissionUtils.syncFromMessSnapshot(prefs, snapshot, userId);
+
+                String currentMonthKey = DateUtils.formatMonthKey(new Date());
 
                 // Display meal rate from database
                 double dbRate = 0.0;
@@ -370,40 +401,32 @@ public class HomeFragment extends Fragment {
                 }
 
                 if (takingCount > 0) {
-                    DataSnapshot bankNode = snapshot.child("menu_bank");
-                    List<DataSnapshot> affordable = new ArrayList<>();
-                    List<DataSnapshot> allBank = new ArrayList<>();
-
-                    for (DataSnapshot ms : bankNode.getChildren()) {
-                        Object val = ms.getValue();
-                        if (val instanceof java.util.Map) {
-                            allBank.add(ms);
-                            Double totalCost = ms.child("cost").getValue(Double.class);
-                            if (totalCost != null && (totalCost / takingCount) <= (goalRate != null ? goalRate : Double.MAX_VALUE)) {
-                                affordable.add(ms);
-                            }
-                        }
-                    }
-
-                    // If rate > goal, use affordable. Otherwise use full bank.
-                    List<DataSnapshot> pool = (goalRate != null && dbRate > goalRate && !affordable.isEmpty()) ? affordable : allBank;
-                    
-                    if (!pool.isEmpty()) {
-                        // Deterministic random selection based on date string
-                        String dateStr = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).format(new Date());
-                        int seed = dateStr.hashCode();
-                        DataSnapshot selected = pool.get(new java.util.Random(seed).nextInt(pool.size()));
-                        
-                        String menuName = selected.child("menuName").getValue(String.class);
-                        String menuDesc = selected.child("description").getValue(String.class);
-                        Double cost = selected.child("cost").getValue(Double.class);
-                        
-                        tvTodayMenu.setText(menuName);
-                        String detail = (menuDesc != null ? menuDesc : "") + (cost != null ? " • ₹" + cost : "");
-                        tvMenuDescription.setText(detail);
-                    } else {
+                    DataSnapshot menuBank = snapshot.child("menu_bank");
+                    if (!menuBank.exists() || menuBank.getChildrenCount() == 0) {
                         tvTodayMenu.setText(R.string.menu_regular);
                         tvMenuDescription.setText(R.string.menu_bank_empty);
+                    } else {
+                        Calendar today = Calendar.getInstance();
+                        MenuPlanner.SlotMenuResult menuResult =
+                                MenuPlanner.readScheduledNextSlot(snapshot, today, takingCount);
+
+                        if (menuResult != null) {
+                            menuPlanningAttempts = 0;
+                            displaySlotMenu(menuResult);
+                        } else if (menuPlanningAttempts >= MAX_MENU_PLANNING_ATTEMPTS) {
+                            tvTodayMenu.setText(R.string.menu_planning_failed);
+                            tvMenuDescription.setText(R.string.menu_planning_failed_desc);
+                        } else if (!menuCommitInFlight && messId != null) {
+                            tvTodayMenu.setText(R.string.menu_planning);
+                            tvMenuDescription.setText(R.string.menu_planning_desc);
+                            menuCommitInFlight = true;
+                            menuPlanningAttempts++;
+                            MenuPlanner.ensureSchedulesCommitted(db, messId, today, () -> {
+                                if (isAdded()) {
+                                    menuCommitInFlight = false;
+                                }
+                            });
+                        }
                     }
                 }
 
@@ -460,6 +483,28 @@ public class HomeFragment extends Fragment {
         db.getReference().child(messId).addValueEventListener(messDataListener);
     }
 
+    private void displaySlotMenu(MenuPlanner.SlotMenuResult menuResult) {
+        com.srtech.messwise.data_models.MenuItem selected = menuResult.getMenuItem();
+        MealSlot slot = menuResult.getSlot();
+
+        if (slot != null && slot.getName() != null) {
+            tvTodayMenu.setText(getString(R.string.menu_for_slot, slot.getName(), selected.getName()));
+        } else {
+            tvTodayMenu.setText(selected.getName());
+        }
+
+        String detail = selected.getDescription();
+        if (detail == null || detail.isEmpty()) {
+            detail = String.format(Locale.getDefault(), "₹%.0f per person", menuResult.getPerPersonCost());
+        } else {
+            detail = detail + String.format(Locale.getDefault(), " • ₹%.0f", selected.getCost());
+        }
+        if (menuResult.getTargetUnitCost() > 0) {
+            detail = detail + String.format(Locale.getDefault(), " • target ₹%.2f", menuResult.getTargetUnitCost());
+        }
+        tvMenuDescription.setText(detail);
+    }
+
     private Double getDoubleValue(DataSnapshot snapshot) {
         Object value = snapshot.getValue();
         if (value instanceof Number) {
@@ -476,7 +521,7 @@ public class HomeFragment extends Fragment {
         if (messId == null || userId == null) return;
 
         // Unified permission & data listener
-        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
+        notificationListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot messSnapshot) {
                 if (!isAdded()) return;
@@ -530,7 +575,8 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        };
+        db.getReference().child(messId).addValueEventListener(notificationListener);
     }
 
     private void startPulseAnimation(View view) {

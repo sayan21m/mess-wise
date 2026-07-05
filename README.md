@@ -22,8 +22,7 @@
 *   **Root Detection**: Built-in integrity checks prevent the app from running on compromised or rooted devices.
 *   **R8 Obfuscation**: Release builds are hardened against reverse engineering.
 
-### 💰 Monetization & Distribution
-*   **AdMob Integration**: Strategically placed App Open and Interstitial ads with a local frequency cap (max 5 ads/day).
+### 📦 Distribution
 *   **Direct Distribution**: Hosted via **Firebase Hosting** with a modern landing page for direct APK downloads.
 
 ---
@@ -63,11 +62,10 @@
 
 ---
 
-## 🌐 Web Hosting & Verification
-The landing page and AdMob verification are managed through the `docs/` folder.
+## 🌐 Web Hosting
+The landing page is managed through the `docs/` folder.
 
 *   **Landing Page**: [https://mess-wise.web.app](https://mess-wise.web.app)
-*   **AdMob Verification**: The `app-ads.txt` is served at the root for automated crawler validation.
 
 To deploy website updates:
 ```bash

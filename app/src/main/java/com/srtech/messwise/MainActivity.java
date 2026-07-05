@@ -15,7 +15,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +43,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
 import com.srtech.messwise.admin_ui.MealSlot;
@@ -61,14 +61,18 @@ import com.srtech.messwise.utils.FinanceUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import com.srtech.messwise.workers.DueReminderWorker;
 import java.util.concurrent.TimeUnit;
+import com.srtech.messwise.utils.DateUtils;
+import com.srtech.messwise.utils.PermissionUtils;
 
 public class MainActivity extends BaseActivity {
 
@@ -80,6 +84,8 @@ public class MainActivity extends BaseActivity {
     private String userId, messId, messName;
     private FirebaseDatabase db;
     private AlertDialog manageSlotsDialog;
+    private ValueEventListener slotsDialogListener;
+    private ValueEventListener permissionListener;
     private long lastWheelClickTime = 0;
 
     @Override
@@ -123,24 +129,23 @@ public class MainActivity extends BaseActivity {
         if (messName == null) messName = prefs.getString("messName", null);
         if (!isAdmin) isAdmin = prefs.getBoolean("isAdmin", false);
 
-        Log.d("SGT", "MainActivity Init - userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
-
         checkAndShowMonthlyAwards();
 
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);
 
-        due_add_update();
-        addMealRateHistory();
-        resetMeal();
-        resetFinance();
+        if (messId != null && (isAdmin || prefs.getBoolean("perm_manage_finances", false))) {
+            due_add_update();
+            resetMeal();
+            resetFinance();
+        }
         
         if (isAdmin) {
             // checkAndManageBudgetMenu(); // Removed as we no longer store daily menus
         }
         
         checkUserPermissions();
-        checkAndSendDueReminders();
+        startPermissionListener();
         scheduleBackgroundWorker();
         requestNotificationPermission();
 
@@ -187,9 +192,9 @@ public class MainActivity extends BaseActivity {
                 
                 if (hasAnyPower) {
                     toggleAdminWheel();
-                    return false;
+                    return true;
                 } else {
-                    Toast.makeText(this, "Access denied!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
                 }
             } else if (id == R.id.cashInFragment) {
                 loadFragment(new CashInFragment());
@@ -470,7 +475,7 @@ public class MainActivity extends BaseActivity {
 
         db.getReference().child(messId).child("expenses").get().addOnSuccessListener(snapshot -> {
             double amountToSettle = 0;
-            List<com.google.firebase.database.DatabaseReference> toDelete = new ArrayList<>();
+            List<String> keysToDelete = new ArrayList<>();
             for (DataSnapshot ds : snapshot.getChildren()) {
                 Long ts = ds.child("timestampMillis").getValue(Long.class);
                 Double amt = ds.child("amount").getValue(Double.class);
@@ -479,36 +484,18 @@ public class MainActivity extends BaseActivity {
                     expCal.setTimeInMillis(ts);
                     if (isOlderThanCutoff(expCal, cutoff)) {
                         amountToSettle += amt;
-                        toDelete.add(ds.getRef());
+                        keysToDelete.add(ds.getKey());
                     }
                 }
             }
 
-            if (!toDelete.isEmpty()) {
-                final double finalAmt = amountToSettle;
-                db.getReference().child(messId).child("finance").child("settled_expenses")
-                        .runTransaction(new com.google.firebase.database.Transaction.Handler() {
-                            @NonNull @Override public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
-                                Double current = currentData.getValue(Double.class);
-                                if (current == null) current = 0.0;
-                                currentData.setValue(current + finalAmt);
-                                return com.google.firebase.database.Transaction.success(currentData);
-                            }
-                            @Override public void onComplete(@Nullable com.google.firebase.database.DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
-                                if (committed) for (com.google.firebase.database.DatabaseReference ref : toDelete) ref.removeValue();
-                            }
-                        });
-            }
-        });
-
-        db.getReference().child(messId).child("cash_in").get().addOnSuccessListener(snapshot -> {
-            for (DataSnapshot ds : snapshot.getChildren()) {
-                Long ts = ds.child("timestampMillis").getValue(Long.class);
-                if (ts != null) {
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTimeInMillis(ts);
-                    if (isOlderThanCutoff(cal, cutoff)) ds.getRef().removeValue();
+            if (!keysToDelete.isEmpty()) {
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("finance/settled_expenses", ServerValue.increment(amountToSettle));
+                for (String key : keysToDelete) {
+                    updates.put("expenses/" + key, null);
                 }
+                db.getReference().child(messId).updateChildren(updates);
             }
         });
     }
@@ -547,7 +534,7 @@ public class MainActivity extends BaseActivity {
         };
         rvSlots.setAdapter(adapter);
 
-        db.getReference().child(messId).child("meal_slots").addValueEventListener(new ValueEventListener() {
+        db.getReference().child(messId).child("meal_slots").addValueEventListener(slotsDialogListener = new ValueEventListener() {
             @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
                 slotsList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
@@ -560,11 +547,17 @@ public class MainActivity extends BaseActivity {
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
 
+        manageSlotsDialog.setOnDismissListener(d -> {
+            if (slotsDialogListener != null && messId != null) {
+                db.getReference().child(messId).child("meal_slots").removeEventListener(slotsDialogListener);
+                slotsDialogListener = null;
+            }
+        });
+
         etTime.setOnClickListener(v -> {
             Calendar c = Calendar.getInstance();
             new TimePickerDialog(this, (view, h, m) -> {
-                Calendar st = Calendar.getInstance(); st.set(Calendar.HOUR_OF_DAY, h); st.set(Calendar.MINUTE, m);
-                etTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(st.getTime()));
+                etTime.setText(DateUtils.formatSlotTime(h, m));
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), false).show();
         });
 
@@ -572,6 +565,10 @@ public class MainActivity extends BaseActivity {
             String name = etMealName.getText().toString().trim(), time = etTime.getText().toString().trim();
             if (name.isEmpty() || time.isEmpty()) return;
             String id = db.getReference().child(messId).child("meal_slots").push().getKey();
+            if (id == null) {
+                Toast.makeText(this, R.string.toast_id_gen_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
             db.getReference().child(messId).child("meal_slots").child(id).setValue(new MealSlot(id, name, time));
         });
 
@@ -580,62 +577,21 @@ public class MainActivity extends BaseActivity {
         manageSlotsDialog.show();
     }
 
-    private void addMealRateHistory() {
-        if (messId == null) return;
-        db.getReference().child(messId).addValueEventListener(new ValueEventListener() {
-            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Calendar now = Calendar.getInstance();
-                int cm = now.get(Calendar.MONTH), cy = now.get(Calendar.YEAR);
-                String currentMonthKey = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(now.getTime());
-                long totalMeals = 0;
-                SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
-
-                for (DataSnapshot mSnap : snapshot.child("member").getChildren()) {
-                    for (DataSnapshot entry : mSnap.child("meal_count_history").getChildren()) {
-                        try {
-                            Date d = entryFormat.parse(entry.getKey());
-                            if (d != null) {
-                                Calendar c = Calendar.getInstance(); c.setTime(d);
-                                if (c.get(Calendar.MONTH) == cm && c.get(Calendar.YEAR) == cy) {
-                                    Integer val = entry.getValue(Integer.class);
-                                    if (val != null) totalMeals += val;
-                                }
-                            }
-                        } catch (Exception ignored) {}
-                    }
-                }
-
-                double totalExpenses = 0;
-                for (DataSnapshot expDs : snapshot.child("expenses").getChildren()) {
-                    Long ts = expDs.child("timestampMillis").getValue(Long.class);
-                    Double amt = expDs.child("amount").getValue(Double.class);
-                    if (ts != null && amt != null) {
-                        Calendar ec = Calendar.getInstance(); ec.setTimeInMillis(ts);
-                        if (ec.get(Calendar.MONTH) == cm && ec.get(Calendar.YEAR) == cy) totalExpenses += amt;
-                    }
-                }
-
-                if (totalMeals > 0) {
-                    double rate = totalExpenses / totalMeals;
-                    db.getReference().child(messId).child("meal_rate_history").child(currentMonthKey).setValue(Double.parseDouble(String.format(Locale.ENGLISH, "%.2f", rate)));
-                    
-                    // After updating rate, check if we need to adjust the menu
-                    // checkAndManageBudgetMenu(); // Removed as we no longer store daily menus
-                }
-            }
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
     public void due_add_update() {
         FinanceUtils.updateAllMemberDues(messId);
     }
 
     private void checkUserPermissions() {
         if (messId == null || userId == null) return;
-        db.getReference().child(messId).child("member").child(userId).child("role").addListenerForSingleValueEvent(new ValueEventListener() {
+        db.getReference().child(messId).child("member").child(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String role = snapshot.getValue(String.class);
+                Boolean adminFlag = snapshot.child("is_admin").getValue(Boolean.class);
+                if (adminFlag != null) {
+                    isAdmin = adminFlag;
+                    prefs.edit().putBoolean("isAdmin", isAdmin).apply();
+                }
+                String role = snapshot.child("role").getValue(String.class);
                 if (role == null) role = isAdmin ? "Admin" : "Member";
                 fetchPermissionsAndAct(role);
             }
@@ -670,7 +626,36 @@ public class MainActivity extends BaseActivity {
     }
 
     private void savePermissions(boolean members, boolean meals, boolean finances, boolean summary) {
-        prefs.edit().putBoolean("perm_manage_members", members).putBoolean("perm_manage_meals", meals).putBoolean("perm_manage_finances", finances).putBoolean("perm_view_meal_summary", summary).apply();
+        PermissionUtils.savePermissions(prefs, members, meals, finances, summary);
+    }
+
+    private void startPermissionListener() {
+        if (messId == null || userId == null) return;
+        if (permissionListener != null) {
+            db.getReference().child(messId).removeEventListener(permissionListener);
+        }
+        permissionListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                PermissionUtils.syncFromMessSnapshot(prefs, snapshot, userId);
+                Boolean adminFlag = snapshot.child("member").child(userId).child("is_admin").getValue(Boolean.class);
+                String adminUid = snapshot.child("admin_uid").getValue(String.class);
+                isAdmin = userId.equals(adminUid) || (adminFlag != null && adminFlag);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+        db.getReference().child(messId).addValueEventListener(permissionListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (permissionListener != null && messId != null) {
+            db.getReference().child(messId).removeEventListener(permissionListener);
+            permissionListener = null;
+        }
+        super.onDestroy();
     }
 
     // Removed checkAndManageBudgetMenu as we no longer store daily menus in Firebase.
@@ -688,6 +673,7 @@ public class MainActivity extends BaseActivity {
                         ArrayList<String> leaveNames = new ArrayList<>(), takingNames = new ArrayList<>(), leaveUids = new ArrayList<>();
                         for (DataSnapshot m : snapshot.getChildren()) {
                             String name = m.child("name").getValue(String.class);
+                            if (name == null) name = getString(R.string.common_unknown);
                             Boolean onLeave = m.child("next_meal_leave").getValue(Boolean.class);
                             if (onLeave != null && onLeave) { leaveNames.add(name); leaveUids.add(m.getKey()); }
                             else { takingNames.add(name); }
@@ -708,19 +694,14 @@ public class MainActivity extends BaseActivity {
         if (!snapshot.exists()) return "no_slots_" + new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).format(new Date());
         Calendar now = Calendar.getInstance();
         int nowMins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.ENGLISH);
         String bestId = "unknown"; int minDiff = Integer.MAX_VALUE;
         for (DataSnapshot ds : snapshot.getChildren()) {
             String time = ds.child("time").getValue(String.class);
             if (time != null) {
-                try {
-                    Date d = sdf.parse(time);
-                    if (d != null) {
-                        Calendar cal = Calendar.getInstance(); cal.setTime(d);
-                        int diff = (cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)) - nowMins;
-                        if (diff > 0 && diff < minDiff) { minDiff = diff; bestId = ds.getKey(); }
-                    }
-                } catch (Exception ignored) {}
+                int slotMins = DateUtils.parseSlotTimeMinutes(time);
+                if (slotMins < 0) continue;
+                int diff = slotMins - nowMins;
+                if (diff > 0 && diff < minDiff) { minDiff = diff; bestId = ds.getKey(); }
             }
         }
         if (bestId.equals("unknown") && snapshot.hasChildren()) bestId = snapshot.getChildren().iterator().next().getKey();
@@ -789,85 +770,6 @@ public class MainActivity extends BaseActivity {
         dialog.show();
     }
 
-    private void checkAndSendDueReminders() {
-        if (messId == null) return;
-        db.getReference().child(messId).child("config").child("reminders").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()) return;
-                Boolean en = snapshot.child("enabled").getValue(Boolean.class);
-                Integer iv = snapshot.child("interval").getValue(Integer.class);
-                Long ls = snapshot.child("last_sent").getValue(Long.class);
-                if (en != null && en && iv != null && ls != null) {
-                    if (System.currentTimeMillis() - ls >= iv.longValue() * 60 * 60 * 1000) {
-                        sendDueNotifications();
-                        db.getReference().child(messId).child("config").child("reminders").child("last_sent").setValue(System.currentTimeMillis());
-                    }
-                }
-            }
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void sendDueNotifications() {
-        db.getReference().child(messId).child("member").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot ms : snapshot.getChildren()) {
-                    double totalDue = 0;
-                    for (DataSnapshot m : ms.child("due_history").getChildren()) {
-                        Object val = m.getValue();
-                        if (val instanceof Number) totalDue += ((Number) val).doubleValue();
-                    }
-                    String memberUid = ms.getKey();
-                    String notiId = "DUE_REMINDER_" + memberUid;
-                    
-                    if (totalDue > 0) {
-                        String title = getString(R.string.noti_pending_due_title);
-                        String name = ms.child("name").getValue(String.class);
-                        String message = getString(R.string.noti_pending_due_msg, name, totalDue);
-                        
-                        com.srtech.messwise.data_models.NotificationModel n = new com.srtech.messwise.data_models.NotificationModel(
-                                notiId, title, message, "DUE_REMINDER", memberUid, System.currentTimeMillis()
-                        );
-                        
-                        db.getReference().child(messId).child("notifications").child(notiId).setValue(n);
-                        
-                        // If this is the current user, show a system notification too
-                        if (memberUid != null && memberUid.equals(userId)) {
-                            showSystemNotification(title, message);
-                        }
-                    } else {
-                        // If due is cleared, remove any existing reminder
-                        db.getReference().child(messId).child("notifications").child(notiId).removeValue();
-                    }
-                }
-            }
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void showSystemNotification(String title, String message) {
-        String channelId = "messwise_alerts";
-        android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            android.app.NotificationChannel channel = new android.app.NotificationChannel(channelId, getString(R.string.noti_channel_name), android.app.NotificationManager.IMPORTANCE_HIGH);
-            notificationManager.createNotificationChannel(channel);
-        }
-
-        Intent intent = new Intent(this, NotificationsActivity.class);
-        android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(this, 0, intent, android.app.PendingIntent.FLAG_IMMUTABLE);
-
-        androidx.core.app.NotificationCompat.Builder builder = new androidx.core.app.NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.ic_notifications)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent);
-
-        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
-    }
-    
     private void scheduleBackgroundWorker() {
         PeriodicWorkRequest reminderRequest = new PeriodicWorkRequest.Builder(
                 DueReminderWorker.class, 1, TimeUnit.HOURS)
@@ -886,11 +788,5 @@ public class MainActivity extends BaseActivity {
                 androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
             }
         }
-    }
-
-    private Double getDoubleValue(DataSnapshot snapshot) {
-        Object value = snapshot.getValue();
-        if (value instanceof Number) return ((Number) value).doubleValue();
-        return null;
     }
 }

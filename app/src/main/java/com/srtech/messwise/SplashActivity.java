@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -18,6 +19,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseActivity {
+
+    private final Handler splashHandler = new Handler(Looper.getMainLooper());
+    private final Runnable splashRunnable = () -> {
+        if (isFinishing() || isDestroyed()) return;
+        if (isDeviceRooted() || (!com.srtech.messwise.BuildConfig.DEBUG && isEmulator())) {
+            Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        checkAppVersion();
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,14 +60,13 @@ public class SplashActivity extends BaseActivity {
                 .setDuration(800)
                 .start();
 
-        new Handler().postDelayed(() -> {
-            if (isDeviceRooted()) {
-                Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
-                finish();
-                return;
-            }
-            checkAppVersion();
-        }, 3000);
+        splashHandler.postDelayed(splashRunnable, 3000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        splashHandler.removeCallbacks(splashRunnable);
+        super.onDestroy();
     }
 
     private void checkAppVersion() {

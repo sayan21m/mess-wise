@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
-import java.util.Objects;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -48,6 +47,7 @@ public class LoginActivity extends BaseActivity {
     FirebaseAuth firebaseAuth;
     FirebaseDatabase db;
     SharedPreferences prefs;
+    private CharSequence loginBtnDefaultText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +85,7 @@ public class LoginActivity extends BaseActivity {
         etPassword = findViewById(R.id.etPassword);
         cbRemember = findViewById(R.id.cbRemember);
         loginBtn = findViewById(R.id.btnLogin);
+        loginBtnDefaultText = loginBtn.getText();
 
         // Setup automatic form scrolling
         FormUtils.setupAutoScroll(etMessId, etUserMail, etPassword);
@@ -177,6 +178,8 @@ public class LoginActivity extends BaseActivity {
             intent.putExtra("isAdmin", isAdmin);
             startActivity(intent);
             finish();
+        } else {
+            clearLoginState();
         }
     }
 
@@ -210,9 +213,17 @@ public class LoginActivity extends BaseActivity {
 
                         checkMember(userId, messId);
                     } else {
-                        Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception ex = task.getException();
+                        Toast.makeText(this, getString(R.string.toast_login_failed)
+                                + (ex != null ? ": " + ex.getMessage() : ""), Toast.LENGTH_SHORT).show();
+                        resetLoginButton();
                     }
                 });
+    }
+
+    private void resetLoginButton() {
+        loginBtn.setEnabled(true);
+        loginBtn.setText(loginBtnDefaultText);
     }
 
     private void checkMember(String userId, String messId) {
@@ -221,6 +232,7 @@ public class LoginActivity extends BaseActivity {
                 .addOnSuccessListener(snapshot -> {
                     if (!snapshot.exists()) {
                         Toast.makeText(this, R.string.toast_mess_not_found, Toast.LENGTH_SHORT).show();
+                        resetLoginButton();
                         return;
                     }
 
@@ -244,10 +256,12 @@ public class LoginActivity extends BaseActivity {
                         finish();
                     } else {
                         Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
+                        resetLoginButton();
                     }
                 })
                 .addOnFailureListener(error -> {
                     Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    resetLoginButton();
                 });
     }
 

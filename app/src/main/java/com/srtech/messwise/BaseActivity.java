@@ -22,6 +22,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import android.widget.Toast;
+import com.srtech.messwise.BuildConfig;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -35,6 +37,18 @@ public class BaseActivity extends AppCompatActivity {
         AppCompatDelegate.setDefaultNightMode(theme);
         
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (this instanceof SplashActivity) {
+            return;
+        }
+        if (isDeviceRooted() || (!BuildConfig.DEBUG && isEmulator())) {
+            Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
+            finishAffinity();
+        }
     }
 
     @Override

@@ -57,11 +57,13 @@ public class ExpensesFragment extends Fragment {
     private RecyclerView rvRecentExpenses;
     
     private ExpenseAdapter expenseAdapter;
+    private ExpenseAdapter fullExpenseAdapter;
     private List<ExpenseModel> fullExpenseList = new ArrayList<>();
     
     private String selectedCategory = "Food";
     private Calendar selectedDate = Calendar.getInstance();
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+    private ValueEventListener expensesListener;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
 
     public ExpensesFragment() {
         // Required empty public constructor
@@ -88,6 +90,21 @@ public class ExpensesFragment extends Fragment {
         initViews(view);
         setupListeners();
         loadExpenses();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadPreferences();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (expensesListener != null && messId != null) {
+            db.getReference().child(messId).child("expenses").removeEventListener(expensesListener);
+            expensesListener = null;
+        }
     }
 
     private void loadPreferences() {
@@ -126,13 +143,15 @@ public class ExpensesFragment extends Fragment {
         btnSelectDate.setOnClickListener(v -> showDatePicker());
         btnAddExpense.setOnClickListener(v -> addExpense());
         
-        btnViewAllExpenses.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "View All coming soon", Toast.LENGTH_SHORT).show();
-        });
+        btnViewAllExpenses.setOnClickListener(v -> showAllExpensesDialog());
 
-        if (isAdmin) {
+        if (isAdmin || prefs.getBoolean("perm_manage_finances", false)) {
             expenseAdapter.setOnExpenseLongClickListener(this::showExpenseOptionsDialog);
         }
+    }
+
+    private boolean canManageFinances() {
+        return isAdmin || prefs.getBoolean("perm_manage_finances", false);
     }
 
     private void showExpenseOptionsDialog(ExpenseModel model) {
@@ -178,7 +197,12 @@ public class ExpensesFragment extends Fragment {
             String newDesc = etDesc.getText().toString().trim();
             
             if (!newAmount.isEmpty()) {
-                model.setAmount(Double.parseDouble(newAmount));
+                try {
+                    model.setAmount(Double.parseDouble(newAmount));
+                } catch (NumberFormatException e) {
+                    etAmount.setError("Invalid amount");
+                    return;
+                }
                 model.setDescription(newDesc);
                 db.getReference().child(messId).child("expenses").child(model.getExpenseId()).setValue(model)
                         .addOnSuccessListener(aVoid -> {
@@ -283,7 +307,17 @@ public class ExpensesFragment extends Fragment {
             return;
         }
 
-        double amount = Double.parseDouble(amountStr);
+        double amount;
+        try {
+            amount = Double.parseDouble(amountStr);
+        } catch (NumberFormatException e) {
+            etExpenseAmount.setError("Invalid amount");
+            return;
+        }
+        if (amount <= 0) {
+            etExpenseAmount.setError("Enter a valid amount");
+            return;
+        }
         String date = tvExpenseDate.getText().toString();
         long timestamp = selectedDate.getTimeInMillis();
         
@@ -314,7 +348,7 @@ public class ExpensesFragment extends Fragment {
     private void loadExpenses() {
         if (messId == null) return;
 
-        db.getReference().child(messId).child("expenses").addValueEventListener(new ValueEventListener() {
+        db.getReference().child(messId).child("expenses").addValueEventListener(expensesListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
@@ -370,5 +404,38 @@ public class ExpensesFragment extends Fragment {
             rvRecentExpenses.setVisibility(View.VISIBLE);
             layoutEmptyExpenses.setVisibility(View.GONE);
         }
+    }
+
+    private void showAllExpensesDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_transaction_history, null);
+
+        android.app.Dialog dialog = new android.app.Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(dialogView);
+
+        ViewCompat.setOnApplyWindowInsetsListener(dialogView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(
+                    systemBars.left + v.getPaddingLeft(),
+                    systemBars.top + v.getPaddingTop(),
+                    systemBars.right + v.getPaddingRight(),
+                    systemBars.bottom + v.getPaddingBottom());
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        RecyclerView rvFullHistory = dialogView.findViewById(R.id.rvFullHistory);
+        View btnClose = dialogView.findViewById(R.id.btnClose);
+
+        rvFullHistory.setLayoutManager(new LinearLayoutManager(requireContext()));
+        fullExpenseAdapter = new ExpenseAdapter();
+        rvFullHistory.setAdapter(fullExpenseAdapter);
+        fullExpenseAdapter.setData(fullExpenseList);
+
+        if (canManageFinances()) {
+            fullExpenseAdapter.setOnExpenseLongClickListener(this::showExpenseOptionsDialog);
+        }
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.setOnDismissListener(d -> fullExpenseAdapter = null);
+        dialog.show();
     }
 }

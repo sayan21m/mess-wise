@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -81,7 +82,7 @@ public class SettingsActivity extends BaseActivity {
 
     private void loadUserProfile() {
         if (messId == null || userId == null) return;
-        
+
         FirebaseDatabase.getInstance()
                 .getReference().child(messId).child("member").child(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -93,7 +94,17 @@ public class SettingsActivity extends BaseActivity {
                             Boolean admin = snapshot.child("is_admin").getValue(Boolean.class);
 
                             if (name != null) tvName.setText(name);
-                            if (mail != null) tvEmail.setText(mail);
+
+                            com.google.firebase.auth.FirebaseUser authUser =
+                                    FirebaseAuth.getInstance().getCurrentUser();
+                            if (authUser != null && authUser.getEmail() != null && authUser.isEmailVerified()) {
+                                tvEmail.setText(authUser.getEmail());
+                                if (!authUser.getEmail().equals(mail)) {
+                                    snapshot.getRef().child("mail").setValue(authUser.getEmail());
+                                }
+                            } else if (mail != null) {
+                                tvEmail.setText(mail);
+                            }
                             
                             com.google.android.material.chip.Chip chip = findViewById(R.id.chipMemberType);
                             if (admin != null && admin) {
@@ -160,7 +171,10 @@ public class SettingsActivity extends BaseActivity {
         itemEmail.setOnClickListener(v -> showUpdateEmailDialog());
 
         // Preferences Section
-        setupItem(findViewById(R.id.itemNotification), R.drawable.ic_notifications, "Notifications", "Alerts and reminders");
+        View itemNotification = findViewById(R.id.itemNotification);
+        setupItem(itemNotification, R.drawable.ic_notifications, "Notifications", "Alerts and reminders");
+        itemNotification.setOnClickListener(v ->
+                startActivity(new Intent(this, com.srtech.messwise.NotificationsActivity.class)));
         
         View itemMenu = findViewById(R.id.itemFood);
         setupItem(itemMenu, R.drawable.ic_meal_plate, getString(R.string.setting_update_menu), getString(R.string.setting_update_menu_desc));
@@ -183,10 +197,36 @@ public class SettingsActivity extends BaseActivity {
         });
 
         // Support Section
-        setupItem(findViewById(R.id.itemFaq), R.drawable.ic_help, "Help & FAQs", "Find answers");
-        setupItem(findViewById(R.id.itemContact), R.drawable.ic_contact, "Contact Support", "Talk to us");
-        setupItem(findViewById(R.id.itemTerms), R.drawable.ic_terms, "Terms & Conditions", "Legal information");
-        setupItem(findViewById(R.id.itemPrivacy), R.drawable.ic_privacy, "Privacy Policy", "Data usage policy");
+        View itemFaq = findViewById(R.id.itemFaq);
+        View itemContact = findViewById(R.id.itemContact);
+        View itemTerms = findViewById(R.id.itemTerms);
+        View itemPrivacy = findViewById(R.id.itemPrivacy);
+        setupItem(itemFaq, R.drawable.ic_help, "Help & FAQs", "Find answers");
+        setupItem(itemContact, R.drawable.ic_contact, "Contact Support", "Talk to us");
+        setupItem(itemTerms, R.drawable.ic_terms, "Terms & Conditions", "Legal information");
+        setupItem(itemPrivacy, R.drawable.ic_privacy, "Privacy Policy", "Data usage policy");
+        itemFaq.setOnClickListener(v -> openWebUrl(getString(R.string.url_help_faq)));
+        itemContact.setOnClickListener(v -> openEmailSupport());
+        itemTerms.setOnClickListener(v -> openWebUrl(getString(R.string.url_terms)));
+        itemPrivacy.setOnClickListener(v -> openWebUrl(getString(R.string.url_privacy)));
+    }
+
+    private void openWebUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openEmailSupport() {
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getString(R.string.email_support)));
+        intent.putExtra(Intent.EXTRA_SUBJECT, "MessWise Support");
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.setting_contact_support)));
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showUpdateMenuDialog() {
@@ -211,9 +251,20 @@ public class SettingsActivity extends BaseActivity {
                 return;
             }
 
-            double totalCost = 0;
-            if (!costStr.isEmpty()) {
-                try { totalCost = Double.parseDouble(costStr); } catch (Exception ignored) {}
+            double totalCost;
+            if (costStr.isEmpty()) {
+                totalCost = 0;
+            } else {
+                try {
+                    totalCost = Double.parseDouble(costStr);
+                } catch (NumberFormatException e) {
+                    etCost.setError("Enter a valid amount");
+                    return;
+                }
+                if (totalCost < 0) {
+                    etCost.setError("Enter a valid amount");
+                    return;
+                }
             }
 
             String menuId = FirebaseDatabase.getInstance().getReference().child(messId).child("menu_bank").push().getKey();
@@ -445,15 +496,8 @@ public class SettingsActivity extends BaseActivity {
 
         user.verifyBeforeUpdateEmail(newEmail).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                // Also update in DB
-                if (messId != null && userId != null) {
-                    FirebaseDatabase.getInstance().getReference()
-                            .child(messId).child("member").child(userId).child("mail")
-                            .setValue(newEmail);
-                }
-                tvEmail.setText(newEmail);
                 dialog.dismiss();
-                Toast.makeText(this, "Verification email sent to " + newEmail, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Verification email sent to " + newEmail + ". Your profile will update after you confirm.", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, "Failed to update email: " + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
             }
