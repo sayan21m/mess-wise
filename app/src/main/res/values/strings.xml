@@ -34,7 +34,7 @@
     <string name="setting_privacy_policy_desc">Data usage policy</string>
     <string name="logout">Logout</string>
     <string name="logout_desc">Sign out from your account</string>
-    <string name="version_text">Version 1.0.0</string>
+    <string name="version_label">Version %1$s</string>
 
     <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_today">TODAY IN MESS</string>
@@ -130,6 +130,12 @@
     <!-- Awards -->
     <string name="award_meals_tracked">%d Meals tracked</string>
     <string name="award_golden_duck">GOLDEN DUCK</string>
+    <string name="award_hall_of_fame">Hall of Fame</string>
+    <string name="award_hall_subtitle">Last month\'s mess legends</string>
+    <string name="award_monthly_champion">MONTHLY CHAMPION</string>
+    <string name="award_monthly_duck">MONTHLY DUCK</string>
+    <string name="award_meals_count_label">Meals tracked</string>
+    <string name="award_awesome_button">Awesome!</string>
 
     <!-- Dialogs & Toasts -->
     <string name="dialog_no_slots">No slots set</string>
@@ -284,6 +290,8 @@
 
     <string name="update_required_title">Update Required</string>
     <string name="update_required_msg">A newer version of MessWise is available. Please update to continue using the app.</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_optional_msg">A new version of MessWise is available with improvements and fixes.</string>
     <string name="update_now">Update Now</string>
     <string name="update_later">Later</string>
 

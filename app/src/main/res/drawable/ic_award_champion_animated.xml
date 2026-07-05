@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_award_champion">
+    <target
+        android:name="bobbing_group"
+        android:animation="@animator/award_trophy_bob" />
+    <target
+        android:name="star_group"
+        android:animation="@animator/award_star_twinkle" />
+    <target
+        android:name="shine_group"
+        android:animation="@animator/award_shine_pulse" />
+</animated-vector>

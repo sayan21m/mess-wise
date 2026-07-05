@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | MessWise</title>
+    <meta name="description" content="Contact the MessWise team — questions, support, and feedback.">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="overflow-x-hidden antialiased">
+
+    <nav id="site-nav" class="fixed w-full z-50 py-4 transition-all duration-300">
+        <div class="nav-shell site-container flex justify-between items-center glass rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300">
+            <a href="index.html" class="flex items-center gap-2.5 shrink-0" aria-label="MessWise home">
+                <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
+                    <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
+                </div>
+                <span class="text-lg sm:text-xl font-bold tracking-tight">Mess<span class="text-teal-400">Wise</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="index.html#features" class="nav-link">Features</a>
+                <a href="contact.html" class="nav-link active">Contact</a>
+                <a href="privacy.html" class="nav-link">Privacy</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex btn-secondary glass px-4 py-2 rounded-xl text-sm font-semibold text-slate-200 items-center gap-2">
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    GitHub
+                </a>
+                <button type="button" onclick="downloadApk()" class="hidden sm:inline-flex bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5">Download APK</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="fixed top-0 left-0 w-full h-1 z-[100]" aria-hidden="true">
+        <div id="scroll-progress" class="h-full bg-gradient-to-r from-teal-500 to-blue-500 w-0 transition-all duration-100"></div>
+    </div>
+
+    <main class="page-main site-container">
+        <header class="page-hero">
+            <p class="text-teal-400 font-semibold section-kicker text-xs uppercase mb-3">Support</p>
+            <h1 class="section-title font-bold mb-4">Contact us</h1>
+            <p class="text-slate-400 text-sm sm:text-base max-w-lg mx-auto">Questions about MessWise, bug reports, or partnership inquiries — we'd love to hear from you.</p>
+        </header>
+
+        <div class="max-w-xl mx-auto grid gap-6">
+            <div id="form-success" class="alert-success hidden" role="alert">
+                <strong>Message sent.</strong> Thank you — we'll get back to you at your email address soon.
+            </div>
+
+            <form
+                id="contact-form"
+                class="page-card glass border border-white/5 space-y-5"
+                action="https://formsubmit.co/srtechfly85@gmail.com"
+                method="POST">
+
+                <input type="hidden" name="_subject" value="MessWise — New contact form message">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_next" value="https://mess-wise.web.app/contact.html?sent=1">
+                <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+
+                <div>
+                    <label class="form-label" for="name">Full name</label>
+                    <input class="form-input" type="text" id="name" name="name" placeholder="Your name" required autocomplete="name">
+                </div>
+                <div>
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+                </div>
+                <div>
+                    <label class="form-label" for="subject">Subject</label>
+                    <input class="form-input" type="text" id="subject" name="subject" placeholder="How can we help?" required>
+                </div>
+                <div>
+                    <label class="form-label" for="message">Message</label>
+                    <textarea class="form-input min-h-[140px] resize-y" id="message" name="message" placeholder="Tell us more…" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-base inline-flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                    Send message
+                </button>
+                <p class="text-xs text-slate-500 text-center leading-relaxed">
+                    Messages are delivered to <a href="mailto:srtechfly85@gmail.com" class="text-teal-400 hover:underline">srtechfly85@gmail.com</a>.
+                    You can also reach us on
+                    <a href="https://github.com/sayan21m/mess-wise/issues" target="_blank" rel="noopener noreferrer" class="text-teal-400 hover:underline">GitHub Issues</a>.
+                </p>
+            </form>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="glass rounded-2xl p-5 border border-white/5 text-center">
+                    <i data-lucide="mail" class="w-6 h-6 text-teal-400 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold mb-1">Email</p>
+                    <a href="mailto:srtechfly85@gmail.com" class="text-sm text-slate-400 hover:text-teal-400 transition">srtechfly85@gmail.com</a>
+                </div>
+                <div class="glass rounded-2xl p-5 border border-white/5 text-center">
+                    <i data-lucide="github" class="w-6 h-6 text-blue-400 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold mb-1">GitHub</p>
+                    <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="text-sm text-slate-400 hover:text-teal-400 transition">sayan21m/mess-wise</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-12 sm:py-14 border-t border-slate-800/60">
+        <div class="site-container">
+            <div class="footer-grid mb-10">
+                <div>
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center">
+                            <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold">MessWise</span>
+                    </div>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, and monthly settlement in one app.</p>
+                    <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
+                        <i data-lucide="github" class="w-4 h-4"></i>
+                        github.com/sayan21m/mess-wise
+                    </a>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Product</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="index.html#features" class="hover:text-teal-400 transition">Features</a></li>
+                        <li><a href="index.html#how-it-works" class="hover:text-teal-400 transition">How it works</a></li>
+                        <li><button type="button" onclick="downloadApk()" class="hover:text-teal-400 transition text-left">Download APK</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Legal</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="privacy.html" class="hover:text-teal-400 transition">Privacy Policy</a></li>
+                        <li><a href="terms.html" class="hover:text-teal-400 transition">Terms & Conditions</a></li>
+                        <li><a href="contact.html" class="text-teal-400">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Open source</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition">GitHub Repository</a></li>
+                        <li><a href="https://github.com/sayan21m/mess-wise/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition">Documentation</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+                <p>© 2026 SR Tech. All rights reserved.</p>
+                <p>Made with ❤️ by SR Tech</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="download-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 glass px-4 py-3 rounded-xl border border-teal-500/30 shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50 flex items-center gap-3 text-sm" role="status">
+        <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
+            <i data-lucide="download" class="w-4 h-4 text-white"></i>
+        </div>
+        <div>
+            <div class="font-semibold">Download started</div>
+            <div class="text-xs text-slate-400">MessWise.apk is downloading…</div>
+        </div>
+    </div>
+
+    <script src="js/site.js"></script>
+    <script>
+        if (new URLSearchParams(window.location.search).get('sent') === '1') {
+            const success = document.getElementById('form-success');
+            if (success) {
+                success.classList.remove('hidden');
+                success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            history.replaceState({}, '', 'contact.html');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_award_golden_duck_modern">
+    <target
+        android:name="bobbing_group"
+        android:animation="@animator/duck_bob" />
+    <target
+        android:name="leg_left_group"
+        android:animation="@animator/duck_walk_left" />
+    <target
+        android:name="leg_right_group"
+        android:animation="@animator/duck_walk_right" />
+    <target
+        android:name="wing_group"
+        android:animation="@animator/duck_bat_swing" />
+    <target
+        android:name="shine_group"
+        android:animation="@animator/golden_duck_glow" />
+</animated-vector>

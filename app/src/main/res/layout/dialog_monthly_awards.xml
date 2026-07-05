@@ -4,80 +4,99 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="24dp"
-    app:cardBackgroundColor="#000000"
-    app:cardCornerRadius="36dp"
-    app:strokeWidth="1.5dp"
-    app:strokeColor="#1A1A1A">
+    app:cardBackgroundColor="@color/mw_bg"
+    app:cardCornerRadius="32dp"
+    app:strokeColor="@color/mw_border"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="28dp"
-        android:gravity="center_horizontal">
+        android:padding="28dp">
 
         <TextView
             android:id="@+id/tvMonth"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:letterSpacing="0.18"
             android:text="OCTOBER 2026"
             android:textColor="@color/teal_accent"
             android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.2" />
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvHallTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/award_hall_of_fame"
+            android:textColor="@color/white"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Hall of Fame"
-            android:textColor="@color/white"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="@string/award_hall_subtitle"
+            android:textColor="@color/dark_text_muted"
+            android:textSize="14sp" />
 
-        <!-- Winner Section -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/winnerLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            app:cardBackgroundColor="#0A0A0A"
+            android:layout_marginTop="28dp"
+            app:cardBackgroundColor="@color/mw_surface"
             app:cardCornerRadius="24dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#222222">
+            app:strokeColor="#33FFD700"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:orientation="vertical"
-                android:padding="20dp"
-                android:gravity="center">
+                android:padding="24dp">
 
                 <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_width="112dp"
+                    android:layout_height="112dp">
+
+                    <View
+                        android:id="@+id/winnerHalo"
+                        android:layout_width="112dp"
+                        android:layout_height="112dp"
+                        android:background="@drawable/bg_award_winner_halo" />
+
                     <ImageView
                         android:id="@+id/ivWinner"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/ic_winner_crown" />
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/award_monthly_champion"
+                        android:src="@drawable/ic_award_champion_animated" />
                 </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="MONTHLY CHAMPION"
+                    android:layout_marginTop="18dp"
+                    android:letterSpacing="0.12"
+                    android:text="@string/award_monthly_champion"
                     android:textColor="#FFD700"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.1" />
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvWinnerName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
                     android:text="Sayan Garai"
                     android:textColor="@color/white"
                     android:textSize="22sp"
@@ -87,63 +106,84 @@
                     android:id="@+id/tvWinnerMeals"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="92 Meals Tracked"
-                    android:textColor="#9E9E9E"
+                    android:layout_marginTop="4dp"
+                    android:text="92 Meals tracked"
+                    android:textColor="@color/dark_text_muted"
                     android:textSize="13sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Duck Section -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/duckLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#121212"
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="@color/mw_surface"
             app:cardCornerRadius="24dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#1F1F1F">
+            app:strokeColor="#33FF8A65"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="20dp"
-                android:gravity="center_vertical">
+                android:padding="20dp">
 
-                <ImageView
-                    android:id="@+id/ivDuck"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:src="@drawable/ic_duck_animated" />
+                <FrameLayout
+                    android:layout_width="80dp"
+                    android:layout_height="80dp">
+
+                    <View
+                        android:id="@+id/duckHalo"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:background="@drawable/bg_award_duck_halo" />
+
+                    <ImageView
+                        android:id="@+id/ivDuck"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/award_monthly_duck"
+                        android:src="@drawable/ic_award_duck_modern_animated" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="18dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="20dp"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvDuckLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MONTHLY DUCK"
+                        android:letterSpacing="0.12"
+                        android:text="@string/award_monthly_duck"
                         android:textColor="#FF8A65"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.1" />
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvDuckName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:text="John Doe"
                         android:textColor="@color/white"
                         android:textSize="18sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvDuckMealsLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/award_meals_count_label"
+                        android:textColor="@color/dark_text_muted"
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <TextView
@@ -152,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:text="12"
                     android:textColor="@color/white"
-                    android:textSize="22sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -161,13 +201,13 @@
             android:id="@+id/btnClose"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="32dp"
-            android:text="Awesome!"
+            android:layout_marginTop="28dp"
+            android:text="@string/award_awesome_button"
             android:textAllCaps="false"
             android:textColor="@color/black"
+            android:textStyle="bold"
             app:backgroundTint="@color/white"
-            app:cornerRadius="18dp"
-            android:textStyle="bold" />
+            app:cornerRadius="18dp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

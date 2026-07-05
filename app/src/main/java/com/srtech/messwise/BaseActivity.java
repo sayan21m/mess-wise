@@ -5,37 +5,36 @@
  */
 package com.srtech.messwise;
 
-import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import com.srtech.messwise.utils.SecurityUtils;
-import android.content.SharedPreferences;
-import android.view.WindowManager;
-import android.content.Intent;
-import android.net.Uri;
-import androidx.annotation.NonNull;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.AppUpdateManager;
+import com.srtech.messwise.utils.SecurityUtils;
+
+import android.content.SharedPreferences;
+import android.view.WindowManager;
 import android.widget.Toast;
-import com.srtech.messwise.BuildConfig;
 
 public class BaseActivity extends AppCompatActivity {
 
     private ValueEventListener versionListener;
+    private boolean versionMonitorAttached = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        // Apply theme before super.onCreate
         int theme = getSharedPreferences("UserPrefs", MODE_PRIVATE)
                 .getInt("pref_theme", AppCompatDelegate.MODE_NIGHT_YES);
         AppCompatDelegate.setDefaultNightMode(theme);
-        
+
         super.onCreate(savedInstanceState);
     }
 
@@ -54,7 +53,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Don't start real-time listener on SplashActivity to avoid conflict with initial check
         if (!(this instanceof SplashActivity)) {
             startVersionMonitor();
         }
@@ -67,50 +65,37 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     private void startVersionMonitor() {
+        if (versionMonitorAttached) {
+            return;
+        }
+
         versionListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    long minVersion = snapshot.child("min_version_code").getValue(Long.class) != null ? 
-                            snapshot.child("min_version_code").getValue(Long.class) : 0;
-                    String updateUrl = snapshot.child("update_url").getValue(String.class);
-
-                    int currentVersion = 0;
-                    try {
-                        currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
-                    } catch (Exception ignored) {}
-
-                    if (currentVersion < minVersion) {
-                        showRealtimeUpdateDialog(updateUrl != null ? updateUrl : "https://mess-wise.web.app");
-                    }
-                }
+                AppUpdateManager.handleVersionSnapshot(BaseActivity.this, snapshot, true);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
         };
-        FirebaseDatabase.getInstance().getReference().child("version_control").addValueEventListener(versionListener);
+
+        FirebaseDatabase.getInstance()
+                .getReference()
+                .child("version_control")
+                .addValueEventListener(versionListener);
+        versionMonitorAttached = true;
     }
 
     private void stopVersionMonitor() {
         if (versionListener != null) {
-            FirebaseDatabase.getInstance().getReference().child("version_control").removeEventListener(versionListener);
+            FirebaseDatabase.getInstance()
+                    .getReference()
+                    .child("version_control")
+                    .removeEventListener(versionListener);
+            versionListener = null;
         }
-    }
-
-    private void showRealtimeUpdateDialog(String url) {
-        if (isFinishing() || isDestroyed()) return;
-        
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.update_required_title)
-                .setMessage(R.string.update_required_msg)
-                .setCancelable(false)
-                .setPositiveButton(R.string.update_now, (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
-                    finishAffinity(); // Close all activities
-                })
-                .show();
+        versionMonitorAttached = false;
     }
 
     protected void setScreenSecurity(boolean enabled) {

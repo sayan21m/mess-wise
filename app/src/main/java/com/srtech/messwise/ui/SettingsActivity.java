@@ -36,6 +36,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.BaseActivity;
+import com.srtech.messwise.BuildConfig;
 import com.srtech.messwise.LoginActivity;
 import com.srtech.messwise.R;
 
@@ -144,6 +145,11 @@ public class SettingsActivity extends BaseActivity {
         imgProfile = findViewById(R.id.imgProfile);
         tvName = findViewById(R.id.tvProfileName);
         tvEmail = findViewById(R.id.tvProfileEmail);
+
+        TextView tvAppVersion = findViewById(R.id.tvAppVersion);
+        if (tvAppVersion != null) {
+            tvAppVersion.setText(getString(R.string.version_label, BuildConfig.VERSION_NAME));
+        }
 
         logout.setOnClickListener(v -> showLogoutDialog());
         btnBack.setOnClickListener(v -> finish());

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <group
+        android:name="bobbing_group"
+        android:pivotX="24"
+        android:pivotY="28">
+
+        <path
+            android:fillColor="#33FFD700"
+            android:pathData="M14,40C14,40 18,42 24,42C30,42 34,40 34,40C34,41.1 29.5,42 24,42C18.5,42 14,41.1 14,40Z" />
+
+        <path android:pathData="M12,28C12,21.37 17.37,16 24,16C30.63,16 36,21.37 36,28C36,34.63 30.63,40 24,40C17.37,40 12,34.63 12,28Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:endX="36"
+                    android:endY="40"
+                    android:startX="12"
+                    android:startY="16"
+                    android:type="linear">
+                    <item android:color="#FFF59E0B" android:offset="0.0" />
+                    <item android:color="#FFD700" android:offset="0.55" />
+                    <item android:color="#F59E0B" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <path android:pathData="M27,18C27,14.13 30.13,11 34,11C37.87,11 41,14.13 41,18C41,21.87 37.87,25 34,25C30.13,25 27,21.87 27,18Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:endX="41"
+                    android:endY="25"
+                    android:startX="27"
+                    android:startY="11"
+                    android:type="linear">
+                    <item android:color="#FFE082" android:offset="0.0" />
+                    <item android:color="#FFC107" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <path
+            android:fillColor="#B45309"
+            android:pathData="M28,14C28,12.34 29.34,11 31,11H37C38.66,11 40,12.34 40,14V16H28V14Z" />
+
+        <path
+            android:fillColor="#422006"
+            android:pathData="M35,17.5m-1.2,0a1.2,1.2 0,1 1,2.4 0a1.2,1.2 0,1 1,-2.4 0" />
+
+        <path
+            android:fillColor="#EA580C"
+            android:pathData="M40,18.5L46,20L40,21.5Z" />
+
+        <group
+            android:name="wing_group"
+            android:pivotX="18"
+            android:pivotY="28">
+            <path
+                android:fillColor="#D97706"
+                android:pathData="M16,28C18,23 24,25 22,31C20,35 14,33 16,28Z" />
+        </group>
+
+        <!-- Cricket bat -->
+        <path
+            android:fillColor="#8D6E63"
+            android:pathData="M10,20L8,30L11,30L13,20Z" />
+
+        <!-- Cricket ball -->
+        <path
+            android:fillColor="#DC2626"
+            android:pathData="M34,34m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+        <group
+            android:name="leg_left_group"
+            android:pivotX="20"
+            android:pivotY="38">
+            <path
+                android:fillColor="#00000000"
+                android:pathData="M20,36V42M17,42H23"
+                android:strokeWidth="2"
+                android:strokeColor="#EA580C"
+                android:strokeLineCap="round" />
+        </group>
+
+        <group
+            android:name="leg_right_group"
+            android:pivotX="28"
+            android:pivotY="38">
+            <path
+                android:fillColor="#00000000"
+                android:pathData="M28,36V42M25,42H31"
+                android:strokeWidth="2"
+                android:strokeColor="#EA580C"
+                android:strokeLineCap="round" />
+        </group>
+
+        <group
+            android:name="shine_group"
+            android:pivotX="20"
+            android:pivotY="24">
+            <path
+                android:fillColor="#66FFFFFF"
+                android:pathData="M16,22C16,21.45 16.45,21 17,21H21C21.55,21 22,21.45 22,22V28C22,28.55 21.55,29 21,29H17C16.45,29 16,28.55 16,28V22Z" />
+        </group>
+    </group>
+</vector>

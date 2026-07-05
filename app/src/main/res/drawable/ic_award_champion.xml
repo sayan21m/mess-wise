@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <group
+        android:name="bobbing_group"
+        android:pivotX="24"
+        android:pivotY="28">
+
+        <!-- Pedestal -->
+        <path
+            android:fillColor="#1E293B"
+            android:pathData="M14,40H34C35.1,40 36,40.9 36,42V43C36,44.1 35.1,45 34,45H14C12.9,45 12,44.1 12,43V42C12,40.9 12.9,40 14,40Z" />
+        <path
+            android:fillColor="#334155"
+            android:pathData="M16,36H32C33.1,36 34,36.9 34,38V40H14V38C14,36.9 14.9,36 16,36Z" />
+
+        <!-- Left handle -->
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M14,18C10,18 8,21 8,24C8,27 10,30 14,30"
+            android:strokeWidth="2.2"
+            android:strokeColor="#FBBF24"
+            android:strokeLineCap="round" />
+
+        <!-- Right handle -->
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M34,18C38,18 40,21 40,24C40,27 38,30 34,30"
+            android:strokeWidth="2.2"
+            android:strokeColor="#FBBF24"
+            android:strokeLineCap="round" />
+
+        <!-- Cup -->
+        <path android:pathData="M16,14H32C33.66,14 35,15.34 35,17V30C35,33.31 32.31,36 29,36H19C15.69,36 13,33.31 13,30V17C13,15.34 14.34,14 16,14Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:endX="35"
+                    android:endY="36"
+                    android:startX="13"
+                    android:startY="14"
+                    android:type="linear">
+                    <item android:color="#FFE082" android:offset="0.0" />
+                    <item android:color="#FFC107" android:offset="0.45" />
+                    <item android:color="#FF8F00" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Cup rim -->
+        <path
+            android:fillColor="#FFF8E1"
+            android:pathData="M16,14H32C33.66,14 35,15.34 35,17V18.5H13V17C13,15.34 14.34,14 16,14Z" />
+
+        <!-- Inner shadow -->
+        <path
+            android:fillColor="#33B45309"
+            android:pathData="M18,20H30C31.1,20 32,20.9 32,22V28C32,29.1 31.1,30 30,30H18C16.9,30 16,29.1 16,28V22C16,20.9 16.9,20 18,20Z" />
+
+        <group
+            android:name="shine_group"
+            android:pivotX="22"
+            android:pivotY="22">
+            <path
+                android:fillColor="#66FFFFFF"
+                android:pathData="M18,17C18,16.45 18.45,16 19,16H23C23.55,16 24,16.45 24,17V26C24,26.55 23.55,27 23,27H19C18.45,27 18,26.55 18,26V17Z" />
+        </group>
+
+        <group
+            android:name="star_group"
+            android:pivotX="24"
+            android:pivotY="9">
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M24,4L25.6,8.4L30,8.4L26.7,11.2L28.1,15.5L24,12.8L19.9,15.5L21.3,11.2L18,8.4L22.4,8.4Z" />
+            <path
+                android:fillColor="#FFD54F"
+                android:pathData="M24,6L25.1,9.1L28.2,9.1L25.7,11.1L26.6,14.2L24,12.3L21.4,14.2L22.3,11.1L19.8,9.1L22.9,9.1Z" />
+        </group>
+    </group>
+</vector>

@@ -369,8 +369,9 @@ public class MainActivity extends BaseActivity {
         }
 
         TextView tvMonth = dialogView.findViewById(R.id.tvMonth);
+        TextView tvHallTitle = dialogView.findViewById(R.id.tvHallTitle);
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-        tvMonth.setText(sdf.format(month.getTime()).toUpperCase());
+        tvMonth.setText(sdf.format(month.getTime()).toUpperCase(Locale.getDefault()));
 
         ((TextView) dialogView.findViewById(R.id.tvWinnerName)).setText(winner);
         ((TextView) dialogView.findViewById(R.id.tvWinnerMeals)).setText(getString(R.string.award_meals_tracked, maxMeals));
@@ -379,64 +380,149 @@ public class MainActivity extends BaseActivity {
 
         TextView tvDuckLabel = dialogView.findViewById(R.id.tvDuckLabel);
         ImageView ivDuck = dialogView.findViewById(R.id.ivDuck);
+        View duckHalo = dialogView.findViewById(R.id.duckHalo);
+        View winnerHalo = dialogView.findViewById(R.id.winnerHalo);
+        ImageView ivWinner = dialogView.findViewById(R.id.ivWinner);
         
         if (minMeals == 0) {
             tvDuckLabel.setText(R.string.award_golden_duck);
             tvDuckLabel.setTextColor(Color.parseColor("#FFD700"));
-            if (ivDuck != null) ivDuck.setImageResource(R.drawable.ic_golden_duck);
+            if (ivDuck != null) {
+                ivDuck.setImageResource(R.drawable.ic_award_golden_duck_animated);
+            }
+            if (duckHalo != null) {
+                duckHalo.setBackgroundResource(R.drawable.bg_award_golden_halo);
+            }
         }
 
-        if (ivDuck != null && ivDuck.getDrawable() instanceof android.graphics.drawable.AnimatedVectorDrawable) {
-            ((android.graphics.drawable.AnimatedVectorDrawable) ivDuck.getDrawable()).start();
-        }
+        startAnimatedVector(ivWinner);
+        startAnimatedVector(ivDuck);
 
         dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
 
         View winnerLayout = dialogView.findViewById(R.id.winnerLayout);
         View duckLayout = dialogView.findViewById(R.id.duckLayout);
         View btnClose = dialogView.findViewById(R.id.btnClose);
-        View ivWinner = dialogView.findViewById(R.id.ivWinner);
-        
+
+        tvMonth.setAlpha(0f);
+        tvMonth.setTranslationY(-24f);
+        tvHallTitle.setAlpha(0f);
+        tvHallTitle.setTranslationY(-16f);
+
         winnerLayout.setAlpha(0f);
-        winnerLayout.setScaleX(0.8f);
-        winnerLayout.setScaleY(0.8f);
-        
+        winnerLayout.setScaleX(0.92f);
+        winnerLayout.setScaleY(0.92f);
+        winnerLayout.setTranslationY(24f);
+
         duckLayout.setAlpha(0f);
-        duckLayout.setTranslationX(-100f);
-        
+        duckLayout.setTranslationX(-80f);
+
         btnClose.setAlpha(0f);
-        btnClose.setTranslationY(50f);
+        btnClose.setTranslationY(40f);
+
+        if (winnerHalo != null) {
+            winnerHalo.setScaleX(0.6f);
+            winnerHalo.setScaleY(0.6f);
+            winnerHalo.setAlpha(0f);
+        }
+        if (duckHalo != null) {
+            duckHalo.setScaleX(0.6f);
+            duckHalo.setScaleY(0.6f);
+            duckHalo.setAlpha(0f);
+        }
 
         dialog.show();
-        
+
+        tvMonth.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(500)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+
+        tvHallTitle.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay(120)
+                .setDuration(550)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+
         winnerLayout.animate()
                 .alpha(1f)
                 .scaleX(1f)
                 .scaleY(1f)
-                .setDuration(1000)
-                .setStartDelay(300)
-                .setInterpolator(new OvershootInterpolator(1.2f))
+                .translationY(0f)
+                .setDuration(700)
+                .setStartDelay(260)
+                .setInterpolator(new OvershootInterpolator(0.9f))
                 .start();
 
-        ivWinner.animate()
-                .rotationY(360f)
-                .setDuration(1500)
-                .setStartDelay(500)
-                .start();
+        if (winnerHalo != null) {
+            winnerHalo.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(900)
+                    .setStartDelay(420)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> pulseAwardHalo(winnerHalo))
+                    .start();
+        }
 
         duckLayout.animate()
                 .alpha(1f)
                 .translationX(0f)
-                .setDuration(1200)
-                .setStartDelay(1000)
-                .setInterpolator(new DecelerateInterpolator())
+                .setDuration(650)
+                .setStartDelay(680)
+                .setInterpolator(new OvershootInterpolator(0.75f))
                 .start();
+
+        if (duckHalo != null) {
+            duckHalo.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(800)
+                    .setStartDelay(820)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> pulseAwardHalo(duckHalo))
+                    .start();
+        }
 
         btnClose.animate()
                 .alpha(1f)
                 .translationY(0f)
-                .setDuration(600)
-                .setStartDelay(1800)
+                .setDuration(450)
+                .setStartDelay(980)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+    }
+
+    private void startAnimatedVector(ImageView imageView) {
+        if (imageView == null) return;
+        android.graphics.drawable.Drawable drawable = imageView.getDrawable();
+        if (drawable instanceof android.graphics.drawable.AnimatedVectorDrawable) {
+            ((android.graphics.drawable.AnimatedVectorDrawable) drawable).start();
+        }
+    }
+
+    private void pulseAwardHalo(View halo) {
+        if (halo == null) return;
+        halo.animate()
+                .scaleX(1.08f)
+                .scaleY(1.08f)
+                .alpha(0.85f)
+                .setDuration(900)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> halo.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .alpha(1f)
+                        .setDuration(900)
+                        .setInterpolator(new DecelerateInterpolator())
+                        .withEndAction(() -> pulseAwardHalo(halo))
+                        .start())
                 .start();
     }
 

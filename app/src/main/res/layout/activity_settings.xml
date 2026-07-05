@@ -248,10 +248,10 @@
                         android:textStyle="bold"/>
 
                     <TextView
+                        android:id="@+id/tvAppVersion"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
-                        android:text="Version 1.0.0"
-                        android:textColor="#9E9E9E"/>
+                        android:textColor="#9E9E9E" />
 
                     <TextView
                         android:layout_height="wrap_content"

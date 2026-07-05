@@ -12,10 +12,15 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.utils.AppUpdateManager;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseActivity {
@@ -23,7 +28,7 @@ public class SplashActivity extends BaseActivity {
     private final Handler splashHandler = new Handler(Looper.getMainLooper());
     private final Runnable splashRunnable = () -> {
         if (isFinishing() || isDestroyed()) return;
-        if (isDeviceRooted() || (!com.srtech.messwise.BuildConfig.DEBUG && isEmulator())) {
+        if (isDeviceRooted() || (!BuildConfig.DEBUG && isEmulator())) {
             Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
             finish();
             return;
@@ -39,13 +44,11 @@ public class SplashActivity extends BaseActivity {
         View logoContainer = findViewById(R.id.logoContainer);
         View progressBar = findViewById(R.id.progressBar);
 
-        // Initial states
         logoContainer.setAlpha(0f);
         logoContainer.setScaleX(0.8f);
         logoContainer.setScaleY(0.8f);
         progressBar.setAlpha(0f);
 
-        // Animations
         logoContainer.animate()
                 .alpha(1f)
                 .scaleX(1f)
@@ -70,48 +73,46 @@ public class SplashActivity extends BaseActivity {
     }
 
     private void checkAppVersion() {
-        com.google.firebase.database.FirebaseDatabase.getInstance().getReference().child("version_control")
-                .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+        FirebaseDatabase.getInstance()
+                .getReference()
+                .child("version_control")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@androidx.annotation.NonNull com.google.firebase.database.DataSnapshot snapshot) {
-                        if (snapshot.exists()) {
-                            long minVersion = snapshot.child("min_version_code").getValue(Long.class) != null ? 
-                                    snapshot.child("min_version_code").getValue(Long.class) : 0;
-                            String updateUrl = snapshot.child("update_url").getValue(String.class);
-                            
-                            int currentVersion = 0;
-                            try {
-                                currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
-                            } catch (Exception ignored) {}
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (isFinishing() || isDestroyed()) return;
 
-                            if (currentVersion < minVersion) {
-                                showUpdateDialog(updateUrl != null ? updateUrl : "https://mess-wise.web.app");
-                            } else {
-                                proceedToLogin();
+                        if (!snapshot.exists()) {
+                            proceedToLogin();
+                            return;
+                        }
+
+                        if (AppUpdateManager.isForcedUpdateRequired(SplashActivity.this, snapshot)) {
+                            AppUpdateManager.showForcedUpdateDialog(SplashActivity.this, snapshot);
+                            return;
+                        }
+
+                        if (AppUpdateManager.isOptionalUpdateAvailable(SplashActivity.this, snapshot)) {
+                            long latestVersion = AppUpdateManager.readRemoteVersion(snapshot, "latest_version_code");
+                            if (!AppUpdateManager.wasOptionalUpdateDismissed(SplashActivity.this, latestVersion)) {
+                                AppUpdateManager.showOptionalUpdateDialog(
+                                        SplashActivity.this,
+                                        snapshot,
+                                        latestVersion,
+                                        SplashActivity.this::proceedToLogin);
+                                return;
                             }
-                        } else {
+                        }
+
+                        proceedToLogin();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        if (!isFinishing() && !isDestroyed()) {
                             proceedToLogin();
                         }
                     }
-
-                    @Override
-                    public void onCancelled(@androidx.annotation.NonNull com.google.firebase.database.DatabaseError error) {
-                        proceedToLogin();
-                    }
                 });
-    }
-
-    private void showUpdateDialog(String url) {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.update_required_title)
-                .setMessage(R.string.update_required_msg)
-                .setCancelable(false)
-                .setPositiveButton(R.string.update_now, (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
-                    startActivity(intent);
-                    finish();
-                })
-                .show();
     }
 
     private void proceedToLogin() {

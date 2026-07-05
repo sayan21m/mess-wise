@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | MessWise</title>
+    <meta name="description" content="MessWise privacy policy — how we collect, use, and protect your data.">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="overflow-x-hidden antialiased">
+
+    <nav id="site-nav" class="fixed w-full z-50 py-4 transition-all duration-300">
+        <div class="nav-shell site-container flex justify-between items-center glass rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300">
+            <a href="index.html" class="flex items-center gap-2.5 shrink-0" aria-label="MessWise home">
+                <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
+                    <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
+                </div>
+                <span class="text-lg sm:text-xl font-bold tracking-tight">Mess<span class="text-teal-400">Wise</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="index.html#features" class="nav-link">Features</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <a href="privacy.html" class="nav-link active">Privacy</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex btn-secondary glass px-4 py-2 rounded-xl text-sm font-semibold text-slate-200 items-center gap-2">
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    GitHub
+                </a>
+                <button type="button" onclick="downloadApk()" class="hidden sm:inline-flex bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5">Download APK</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="fixed top-0 left-0 w-full h-1 z-[100]" aria-hidden="true">
+        <div id="scroll-progress" class="h-full bg-gradient-to-r from-teal-500 to-blue-500 w-0 transition-all duration-100"></div>
+    </div>
+
+    <main class="page-main site-container">
+        <header class="page-hero">
+            <p class="text-teal-400 font-semibold section-kicker text-xs uppercase mb-3">Legal</p>
+            <h1 class="section-title font-bold mb-4">Privacy Policy</h1>
+            <p class="text-slate-400 text-sm sm:text-base">Last updated: June 2026</p>
+        </header>
+
+        <article class="page-card glass legal-content border border-white/5">
+            <h2>Overview</h2>
+            <p>MessWise ("we", "our", "the app") is developed by SR Tech. This policy explains what information we collect, how it is used, and the choices you have when using the MessWise Android application and website.</p>
+
+            <h2>Information we collect</h2>
+            <ul>
+                <li><strong>Account data:</strong> Name, email address, and mess membership details when you register or join a mess.</li>
+                <li><strong>Mess data:</strong> Meal attendance, expenses, cash-in records, dues, and admin settings stored in Firebase Realtime Database for your mess group.</li>
+                <li><strong>Device data:</strong> Basic app version and crash reports via Firebase Crashlytics to improve stability.</li>
+            </ul>
+
+            <h2>How we use your information</h2>
+            <p>We use collected data solely to operate mess management features — tracking meals, calculating dues, generating reports, and syncing data between mess members. We do not sell your personal data to third parties.</p>
+
+            <h2>Data storage & security</h2>
+            <p>Data is stored on Google Firebase infrastructure. Sensitive preferences on your device are encrypted using Android EncryptedSharedPreferences. Financial screens use anti-screenshot protection where enabled.</p>
+
+            <h2>Data sharing</h2>
+            <p>Your mess data is visible to other members and admins within the same mess. We do not share data outside your mess except as required by law or to provide core Firebase hosting services.</p>
+
+            <h2>Your rights</h2>
+            <p>You may request correction or deletion of your account data by contacting us. Mess admins may remove member records from their mess.</p>
+
+            <h2>Contact</h2>
+            <p>Questions about this policy? Email <a href="mailto:srtechfly85@gmail.com" class="text-teal-400 hover:underline">srtechfly85@gmail.com</a> or use our <a href="contact.html" class="text-teal-400 hover:underline">contact form</a>.</p>
+        </article>
+    </main>
+
+    <footer class="py-12 sm:py-14 border-t border-slate-800/60">
+        <div class="site-container">
+            <div class="footer-grid mb-10">
+                <div>
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center">
+                            <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <span class="text-lg font-bold">MessWise</span>
+                    </div>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, and monthly settlement in one app.</p>
+                    <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
+                        <i data-lucide="github" class="w-4 h-4"></i>
+                        github.com/sayan21m/mess-wise
+                    </a>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Product</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="index.html#features" class="hover:text-teal-400 transition">Features</a></li>
+                        <li><a href="index.html#how-it-works" class="hover:text-teal-400 transition">How it works</a></li>
+                        <li><button type="button" onclick="downloadApk()" class="hover:text-teal-400 transition text-left">Download APK</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Legal</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="privacy.html" class="text-teal-400">Privacy Policy</a></li>
+                        <li><a href="terms.html" class="hover:text-teal-400 transition">Terms & Conditions</a></li>
+                        <li><a href="contact.html" class="hover:text-teal-400 transition">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-sm mb-4 text-slate-200">Open source</h5>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition">GitHub Repository</a></li>
+                        <li><a href="https://github.com/sayan21m/mess-wise/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition">Documentation</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+                <p>© 2026 SR Tech. All rights reserved.</p>
+                <p>Made with ❤️ by SR Tech</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="download-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 glass px-4 py-3 rounded-xl border border-teal-500/30 shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50 flex items-center gap-3 text-sm" role="status">
+        <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
+            <i data-lucide="download" class="w-4 h-4 text-white"></i>
+        </div>
+        <div>
+            <div class="font-semibold">Download started</div>
+            <div class="text-xs text-slate-400">MessWise.apk is downloading…</div>
+        </div>
+    </div>
+
+    <script src="js/site.js"></script>
+</body>
+</html>
