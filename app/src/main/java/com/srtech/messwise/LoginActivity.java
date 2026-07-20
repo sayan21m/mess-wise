@@ -227,42 +227,93 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void checkMember(String userId, String messId) {
-        db.getReference().child(messId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (!snapshot.exists()) {
+        // Prefer narrow reads: full mess tree often fails under restrictive rules
+        db.getReference().child(messId).child("mess_name").get()
+                .addOnSuccessListener(nameSnap -> {
+                    if (!nameSnap.exists()) {
                         Toast.makeText(this, R.string.toast_mess_not_found, Toast.LENGTH_SHORT).show();
                         resetLoginButton();
                         return;
                     }
 
-                    String messName = snapshot.child("mess_name").getValue(String.class);
-                    boolean isAdmin = userId.equals(snapshot.child("admin_uid").getValue(String.class));
-                    boolean isMember = snapshot.child("member").child(userId).exists();
-
-                    if (isAdmin || isMember) {
-                        Toast.makeText(this, R.string.toast_login_success, Toast.LENGTH_SHORT).show();
-
-                        // Always save session data for fragments to use, 
-                        // but only set isLoggedIn=true if 'Remember Me' is checked
-                        saveLoginState(cbRemember.isChecked(), userId, messId, messName, isAdmin);
-
-                        Intent intent = new Intent(this, MainActivity.class);
-                        intent.putExtra("userId", userId);
-                        intent.putExtra("messId", messId);
-                        intent.putExtra("messName", messName);
-                        intent.putExtra("isAdmin", isAdmin);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
-                        resetLoginButton();
-                    }
+                    String messName = nameSnap.getValue(String.class);
+                    resolveMembership(userId, messId, messName);
                 })
                 .addOnFailureListener(error -> {
-                    Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                    resetLoginButton();
+                    // Fallback: attempt full-tree read for older rule setups
+                    db.getReference().child(messId).get()
+                            .addOnSuccessListener(snapshot -> {
+                                if (!snapshot.exists()) {
+                                    Toast.makeText(this, R.string.toast_mess_not_found, Toast.LENGTH_SHORT).show();
+                                    resetLoginButton();
+                                    return;
+                                }
+                                String messName = snapshot.child("mess_name").getValue(String.class);
+                                boolean isAdminUid = userId.equals(snapshot.child("admin_uid").getValue(String.class));
+                                boolean isMember = snapshot.child("member").child(userId).exists();
+                                Boolean memberAdmin = snapshot.child("member").child(userId)
+                                        .child("is_admin").getValue(Boolean.class);
+                                boolean isAdmin = isAdminUid || Boolean.TRUE.equals(memberAdmin);
+
+                                finishLoginIfAllowed(userId, messId, messName, isAdmin, isAdminUid || isMember);
+                            })
+                            .addOnFailureListener(err -> {
+                                Toast.makeText(this,
+                                        getString(R.string.toast_login_failed) + ": " + err.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                                resetLoginButton();
+                            });
                 });
+    }
+
+    private void resolveMembership(String userId, String messId, String messName) {
+        db.getReference().child(messId).child("admin_uid").get()
+                .addOnCompleteListener(adminTask -> {
+                    boolean isAdminUid = false;
+                    if (adminTask.isSuccessful() && adminTask.getResult() != null) {
+                        isAdminUid = userId.equals(adminTask.getResult().getValue(String.class));
+                    }
+
+                    final boolean adminByUid = isAdminUid;
+                    db.getReference().child(messId).child("member").child(userId).get()
+                            .addOnSuccessListener(memberSnap -> {
+                                boolean isMember = memberSnap.exists();
+                                Boolean memberAdmin = memberSnap.child("is_admin").getValue(Boolean.class);
+                                boolean isAdmin = adminByUid || Boolean.TRUE.equals(memberAdmin);
+                                finishLoginIfAllowed(userId, messId, messName, isAdmin, adminByUid || isMember);
+                            })
+                            .addOnFailureListener(error -> {
+                                // If member node isn't readable but user is admin_uid, allow login
+                                if (adminByUid) {
+                                    finishLoginIfAllowed(userId, messId, messName, true, true);
+                                } else {
+                                    Toast.makeText(this,
+                                            getString(R.string.toast_login_failed) + ": " + error.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                    resetLoginButton();
+                                }
+                            });
+                });
+    }
+
+    private void finishLoginIfAllowed(String userId, String messId, String messName,
+                                      boolean isAdmin, boolean allowed) {
+        if (!allowed) {
+            Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
+            resetLoginButton();
+            return;
+        }
+
+        Toast.makeText(this, R.string.toast_login_success, Toast.LENGTH_SHORT).show();
+        saveLoginState(cbRemember.isChecked(), userId, messId, messName, isAdmin);
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("userId", userId);
+        intent.putExtra("messId", messId);
+        intent.putExtra("messName", messName);
+        intent.putExtra("isAdmin", isAdmin);
+        startActivity(intent);
+        finish();
     }
 
     private void showForgotPasswordDialog() {

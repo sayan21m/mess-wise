@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +23,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -32,10 +30,13 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.utils.FormUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class CreateAccountActivity extends BaseActivity {
@@ -134,32 +135,44 @@ public class CreateAccountActivity extends BaseActivity {
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
             if (managerName.isEmpty()) {
-                etManagerName.setError("Manager name is required");
+                etManagerName.setError(getString(R.string.error_name_required));
                 return;
             }
 
             if (managerMail.isEmpty()) {
-                etManagerMail.setError("Email is required");
+                etManagerMail.setError(getString(R.string.error_email_required));
+                return;
+            }
+
+            if (!Patterns.EMAIL_ADDRESS.matcher(managerMail).matches()) {
+                etManagerMail.setError(getString(R.string.error_invalid_email));
                 return;
             }
 
             if (messName.isEmpty()) {
-                etMessName.setError("Mess Name is required");
+                etMessName.setError(isAdmin
+                        ? getString(R.string.error_mess_name_required)
+                        : getString(R.string.label_mess_id) + " is required");
                 return;
             }
 
             if (password.isEmpty()) {
-                etCreatePassword.setError("Password is required");
+                etCreatePassword.setError(getString(R.string.error_password_required));
+                return;
+            }
+
+            if (password.length() < 6) {
+                etCreatePassword.setError(getString(R.string.error_password_short));
                 return;
             }
 
             if (confirmPassword.isEmpty()) {
-                etConfirmPassword.setError("Confirm password is required");
+                etConfirmPassword.setError(getString(R.string.error_confirm_password_required));
                 return;
             }
 
             if (!password.equals(confirmPassword)) {
-                etConfirmPassword.setError("Passwords do not match");
+                etConfirmPassword.setError(getString(R.string.error_password_mismatch));
                 return;
             }
 
@@ -179,6 +192,7 @@ public class CreateAccountActivity extends BaseActivity {
                     }
                 });
             } else {
+                // Member: messName field holds the existing Mess ID
                 messIdExistance(messName, exist -> {
                     if (!exist) {
                         Toast.makeText(this, R.string.toast_id_not_exists, Toast.LENGTH_SHORT).show();
@@ -241,83 +255,138 @@ public class CreateAccountActivity extends BaseActivity {
 
         firebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    createAccountBtn.setEnabled(true);
-                    createAccountBtn.setText(R.string.label_create_account);
-
                     if (task.isSuccessful()) {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
                         handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
                     } else {
                         Exception e = task.getException();
 
-                        if (e instanceof com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                        if (e instanceof FirebaseAuthUserCollisionException) {
+                            // Email already registered — sign in and attach to this mess
                             firebaseAuth.signInWithEmailAndPassword(email, password)
                                     .addOnCompleteListener(this, loginTask -> {
                                         if (loginTask.isSuccessful()) {
                                             FirebaseUser user = firebaseAuth.getCurrentUser();
                                             handleMessJoinAfterAuth(user, messId, name, email, messName, rememberMe);
                                         } else {
-                                            String error = loginTask.getException() != null ? loginTask.getException().getMessage() : "Unknown";
-                                            Toast.makeText(this, getString(R.string.toast_login_failed) + ": " + error, Toast.LENGTH_LONG).show();
+                                            resetCreateButton();
+                                            String error = loginTask.getException() != null
+                                                    ? loginTask.getException().getMessage() : "Unknown";
+                                            Toast.makeText(this,
+                                                    getString(R.string.toast_login_failed) + ": " + error,
+                                                    Toast.LENGTH_LONG).show();
                                         }
                                     });
                         } else {
-                            Toast.makeText(this, getString(R.string.toast_update_failed) + ": " + (e != null ? e.getMessage() : ""), Toast.LENGTH_SHORT).show();
+                            resetCreateButton();
+                            String msg = e != null ? e.getMessage() : "";
+                            Toast.makeText(this,
+                                    getString(R.string.toast_account_create_failed)
+                                            + (msg.isEmpty() ? "" : ": " + msg),
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
     }
 
+    private void resetCreateButton() {
+        createAccountBtn.setEnabled(true);
+        createAccountBtn.setText(R.string.label_create_account);
+    }
+
+    /**
+     * After Firebase Auth succeeds, write membership.
+     * Do NOT pre-read member/{uid} — security rules often deny that read until the user
+     * is already a member, which caused "Update failed" when joining an existing mess.
+     */
     private void handleMessJoinAfterAuth(FirebaseUser user, String messId, String name, String email, String messNameInput, boolean rememberMe) {
         if (user == null) {
+            resetCreateButton();
             Toast.makeText(this, R.string.toast_user_null, Toast.LENGTH_SHORT).show();
             return;
         }
 
         String uid = user.getUid();
 
-        // 1. First fetch the actual mess name (this is allowed by the public '.read' on mess_name)
-        db.getReference().child(messId).child("mess_name").get().addOnSuccessListener(nameSnapshot -> {
-            String actualMessName = nameSnapshot.getValue(String.class);
-            if (actualMessName == null) actualMessName = messNameInput;
+        if (isAdmin) {
+            // Creating a new mess — write admin fields + member profile
+            saveMembership(messId, uid, name, email, uMessName != null ? uMessName : messNameInput, rememberMe);
+            return;
+        }
 
-            final String finalMessName = actualMessName;
-
-            // 2. Then check if user is already a member
-            db.getReference().child(messId).child("member").child(uid).get()
-                    .addOnSuccessListener(snapshot -> {
-                        if (snapshot.exists()) {
-                            Toast.makeText(this, R.string.toast_already_member, Toast.LENGTH_SHORT).show();
-                        } else {
-                            saveToDatabase(messId, user, name, email);
-                            saveLoginState(rememberMe, uid, messId, finalMessName, isAdmin);
-                            navigateToMain(uid, messId, finalMessName, isAdmin);
-                        }
-                    })
-                    .addOnFailureListener(error -> {
-                        Log.e("SGT", "Membership check failed: " + error.getMessage());
-                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
-                    });
-
-        }).addOnFailureListener(e -> {
-            Log.e("SGT", "Name fetch failed: " + e.getMessage());
-            Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
-        });
+        // Joining existing mess — resolve display name from public mess_name, then write profile
+        db.getReference().child(messId).child("mess_name").get()
+                .addOnSuccessListener(nameSnapshot -> {
+                    String actualMessName = nameSnapshot.getValue(String.class);
+                    if (actualMessName == null || actualMessName.trim().isEmpty()) {
+                        actualMessName = messNameInput;
+                    }
+                    saveMembership(messId, uid, name, email, actualMessName, rememberMe);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("SGT", "Name fetch failed: " + e.getMessage());
+                    // Mess ID was already verified; proceed with the typed value as display name
+                    saveMembership(messId, uid, name, email, messNameInput, rememberMe);
+                });
     }
 
-    private void saveToDatabase(String messId, FirebaseUser user, String name, String mail) {
+    private void saveMembership(String messId, String uid, String name, String mail, String messDisplayName, boolean rememberMe) {
+        Map<String, Object> updates = new HashMap<>();
+
         if (isAdmin) {
-            db.getReference().child(messId).child("admin_uid").setValue(user.getUid());
-            db.getReference().child(messId).child("mess_name").setValue(uMessName);
+            updates.put(messId + "/admin_uid", uid);
+            updates.put(messId + "/mess_name", messDisplayName);
+            updates.put(messId + "/member/" + uid + "/role", "Admin");
+            updates.put(messId + "/member/" + uid + "/meal_count", 0);
+        } else {
+            updates.put(messId + "/member/" + uid + "/role", "Member");
+            // meal_count is set below only when missing — avoid wiping an existing member's count
         }
-        db.getReference().child(messId).child("member").child(user.getUid())
-                .child("name").setValue(name);
-        db.getReference().child(messId).child("member").child(user.getUid())
-                .child("mail").setValue(mail);
-        db.getReference().child(messId).child("member").child(user.getUid())
-                .child("is_admin").setValue(isAdmin);
-        db.getReference().child(messId).child("member").child(user.getUid())
-                .child("meal_count").setValue(0);
+
+        updates.put(messId + "/member/" + uid + "/name", name);
+        updates.put(messId + "/member/" + uid + "/mail", mail);
+        updates.put(messId + "/member/" + uid + "/is_admin", isAdmin);
+
+        db.getReference().updateChildren(updates)
+                .addOnSuccessListener(unused -> {
+                    if (isAdmin) {
+                        finishAccountCreation(uid, messId, messDisplayName, rememberMe);
+                        return;
+                    }
+                    ensureMealCount(messId, uid, () ->
+                            finishAccountCreation(uid, messId, messDisplayName, rememberMe));
+                })
+                .addOnFailureListener(error -> {
+                    resetCreateButton();
+                    Log.e("SGT", "Membership write failed: " + error.getMessage());
+                    Toast.makeText(this,
+                            getString(R.string.toast_join_failed)
+                                    + (error.getMessage() != null ? "\n" + error.getMessage() : ""),
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void ensureMealCount(String messId, String uid, Runnable onDone) {
+        db.getReference().child(messId).child("member").child(uid).child("meal_count").get()
+                .addOnCompleteListener(task -> {
+                    boolean missing = !task.isSuccessful()
+                            || task.getResult() == null
+                            || !task.getResult().exists();
+                    if (missing) {
+                        db.getReference().child(messId).child("member").child(uid)
+                                .child("meal_count").setValue(0)
+                                .addOnCompleteListener(ignored -> onDone.run());
+                    } else {
+                        onDone.run();
+                    }
+                });
+    }
+
+    private void finishAccountCreation(String uid, String messId, String messDisplayName, boolean rememberMe) {
+        resetCreateButton();
+        Toast.makeText(this, R.string.toast_account_created, Toast.LENGTH_SHORT).show();
+        saveLoginState(rememberMe, uid, messId, messDisplayName, isAdmin);
+        navigateToMain(uid, messId, messDisplayName, isAdmin);
     }
 
     private interface MessExistanceCallback {

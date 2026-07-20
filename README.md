@@ -6,7 +6,7 @@
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717?style=flat-square&logo=github)](https://github.com/sayan21m/mess-wise)
 [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/sayan21m/mess-wise)
 
-**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.1
+**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.2
 
 ---
 
@@ -77,7 +77,7 @@
    - Optional — for forced updates, set in Realtime Database:
      ```json
      {
-       "min_version_code": 2,
+       "min_version_code": 3,
        "update_url": "https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk"
      }
      ```

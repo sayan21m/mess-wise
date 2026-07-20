@@ -197,6 +197,9 @@
     <string name="toast_id_not_exists">Mess ID not exists</string>
     <string name="toast_user_null">User is null</string>
     <string name="toast_already_member">You are already a member of this mess</string>
+    <string name="toast_account_created">Account created successfully!</string>
+    <string name="toast_join_failed">Could not join mess. Please check the Mess ID and try again.</string>
+    <string name="toast_account_create_failed">Account creation failed</string>
     <string name="toast_user_mess_not_found">User or mess not found</string>
     <string name="toast_id_gen_failed">Failed to generate transaction ID</string>
     <string name="toast_balance_update_failed">Balance update failed</string>
