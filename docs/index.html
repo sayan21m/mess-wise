@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MessWise | Modern Mess Management Simplified</title>
-    <meta name="description" content="Manage meals, track expenses, and settle mess accounts — built for student messes.">
+    <meta name="description" content="Manage meals, track expenses, and settle mess accounts — built for student messes. Download MessWise v1.3.">
     <meta name="copyright" content="© 2026 SR Tech. All rights reserved.">
+    <link rel="icon" href="asset/icons/logo.svg" type="image/svg+xml">
+    <link rel="icon" type="image/png" sizes="32x32" href="asset/icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="asset/icons/apple-touch-icon.png">
     <link rel="stylesheet" href="css/site.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,9 +23,9 @@
     <nav id="site-nav" class="fixed w-full z-50 py-4 transition-all duration-300">
         <div class="nav-shell site-container flex justify-between items-center glass rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300">
             <a href="index.html" class="flex items-center gap-2.5 shrink-0" aria-label="MessWise home">
-                <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-                    <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
-                </div>
+                <span class="brand-mark">
+                    <img src="asset/icons/logo.svg" alt="MessWise" width="36" height="36">
+                </span>
                 <span class="text-base sm:text-lg md:text-xl font-bold tracking-tight">Mess<span class="text-teal-400">Wise</span></span>
             </a>
             <div class="hidden lg:flex items-center gap-7 text-sm font-medium">
@@ -39,7 +42,7 @@
                     GitHub
                 </a>
                 <button onclick="downloadApk()" class="hidden sm:inline-flex bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-teal-500/25 transition-all hover:-translate-y-0.5">
-                    Download APK
+                    Download APK · v1.3
                 </button>
                 <button id="mobile-menu-btn" class="lg:hidden text-slate-300 hover:text-white p-2 rounded-lg" aria-label="Open menu">
                     <i data-lucide="menu" class="w-6 h-6"></i>
@@ -70,10 +73,16 @@
     <section id="hero" class="relative hero-section">
         <div class="site-container grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-10 items-center">
             <div class="text-center lg:text-left min-w-0">
-                <p class="reveal inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium text-teal-300 mb-5 section-kicker uppercase">
-                    <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
-                    Built for student messes
-                </p>
+                <div class="reveal hero-badges">
+                    <p class="inline-flex items-center gap-2 px-3 rounded-full glass text-xs font-medium text-teal-300 section-kicker uppercase">
+                        <span class="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span>
+                        Built for student messes
+                    </p>
+                    <p class="version-badge">
+                        <img src="asset/icons/logo.svg" alt="" width="16" height="16">
+                        <span>Latest release · v1.3</span>
+                    </p>
+                </div>
                 <h1 class="reveal hero-title font-extrabold mb-5">
                     Manage Meals.<br>
                     Track Expenses.<br>
@@ -85,7 +94,7 @@
                 <div class="reveal hero-actions justify-center lg:justify-start">
                     <button type="button" onclick="downloadApk()" class="btn-primary px-7 py-3.5 rounded-2xl font-bold text-base inline-flex items-center gap-2">
                         <i data-lucide="download" class="w-5 h-5"></i>
-                        Download APK
+                        Download APK · v1.3
                     </button>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="btn-secondary glass px-7 py-3.5 rounded-2xl font-bold text-base text-slate-100 inline-flex items-center gap-2">
                         <i data-lucide="github" class="w-5 h-5"></i>
@@ -438,11 +447,11 @@
     <section id="download" class="section-block">
         <div class="site-container max-w-4xl reveal cta-gradient glass rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 text-center border border-white/8">
             <h2 class="text-xl sm:text-4xl font-bold mb-4 tracking-tight">Ready to simplify your mess management?</h2>
-            <p class="text-slate-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">Download MessWise free and replace spreadsheets with a mess app your whole group will actually use.</p>
+            <p class="text-slate-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">Download MessWise <span class="text-teal-400 font-semibold">v1.3</span> free and replace spreadsheets with a mess app your whole group will actually use.</p>
             <div class="cta-actions">
                 <button onclick="downloadApk()" class="btn-primary px-8 py-3.5 rounded-2xl font-bold inline-flex items-center justify-center gap-2">
                     <i data-lucide="download" class="w-5 h-5"></i>
-                    Download APK
+                    Download APK · v1.3
                 </button>
                 <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="btn-secondary glass px-8 py-3.5 rounded-2xl font-bold text-slate-100 inline-flex items-center justify-center gap-2">
                     <i data-lucide="github" class="w-5 h-5"></i>
@@ -458,12 +467,13 @@
             <div class="footer-grid mb-10">
                 <div>
                     <div class="flex items-center gap-2.5 mb-4">
-                        <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center">
-                            <i data-lucide="utensils" class="w-4 h-4 text-white"></i>
-                        </div>
+                        <span class="brand-mark brand-mark--sm">
+                            <img src="asset/icons/logo.svg" alt="MessWise" width="32" height="32">
+                        </span>
                         <span class="text-lg font-bold">MessWise</span>
                     </div>
                     <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, and monthly settlement in one app.</p>
+                    <p class="text-xs text-slate-500 mt-3">Current version <span class="text-teal-400 font-semibold">v1.3</span></p>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
                         <i data-lucide="github" class="w-4 h-4"></i>
                         github.com/sayan21m/mess-wise
@@ -511,7 +521,7 @@
             <i data-lucide="download" class="w-4 h-4 text-white"></i>
         </div>
         <div>
-            <div class="font-semibold">Download started</div>
+            <div class="font-semibold">Download started · v1.3</div>
             <div class="text-xs text-slate-400">MessWise.apk is downloading…</div>
         </div>
     </div>

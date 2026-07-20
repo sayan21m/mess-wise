@@ -21,6 +21,66 @@ body {
     color: #F8FAFC;
     line-height: 1.65;
 }
+.brand-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(1, 105, 111, 0.35);
+}
+.brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.brand-mark--sm {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.55rem;
+}
+.hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.hero-badges > * {
+    margin: 0;
+    flex: 0 0 auto;
+    min-height: 2rem;
+}
+@media (min-width: 1024px) {
+    .hero-badges { justify-content: flex-start; }
+}
+.version-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2rem;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #99f6e4;
+    background: rgba(0, 191, 165, 0.12);
+    border: 1px solid rgba(0, 191, 165, 0.28);
+    width: max-content;
+    max-width: 100%;
+}
+.version-badge img {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    display: block;
+    object-fit: cover;
+}
 .site-container {
     width: 100%;
     max-width: 80rem;
