@@ -155,11 +155,11 @@ public final class MealSelectionEngine {
         return meal.getCost();
     }
 
+    /**
+     * Menu bank stores cost per plate. Return as-is for rate comparisons.
+     */
     public static double toPerPersonUnitCost(MenuItem meal, int takingCount) {
-        if (takingCount <= 0) {
-            return meal.getCost();
-        }
-        return meal.getCost() / takingCount;
+        return meal.getCost();
     }
 
     public static double average(List<Double> values) {

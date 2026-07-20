@@ -40,6 +40,7 @@ import com.srtech.messwise.BuildConfig;
 import com.srtech.messwise.LoginActivity;
 import com.srtech.messwise.R;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -196,6 +197,14 @@ public class SettingsActivity extends BaseActivity {
             }
         });
 
+        View itemMealBank = findViewById(R.id.itemMealBank);
+        setupItem(itemMealBank, R.drawable.ic_meal, getString(R.string.setting_meal_bank), getString(R.string.setting_meal_bank_desc));
+        itemMealBank.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MealBankActivity.class);
+            intent.putExtra("messId", messId);
+            startActivity(intent);
+        });
+
         View itemGoalRate = findViewById(R.id.itemGoalRate);
         setupItem(itemGoalRate, R.drawable.bar_chart, getString(R.string.setting_goal_rate), getString(R.string.setting_goal_rate_desc));
         itemGoalRate.setOnClickListener(v -> {
@@ -247,8 +256,12 @@ public class SettingsActivity extends BaseActivity {
         EditText etName = dialog.findViewById(R.id.etMenuName);
         EditText etDesc = dialog.findViewById(R.id.etMenuDesc);
         EditText etCost = dialog.findViewById(R.id.etPlateCost);
+        TextView tvTodayHint = dialog.findViewById(R.id.tvTodayCostHint);
+        MaterialButton btnUseToday = dialog.findViewById(R.id.btnUseTodayCost);
         MaterialButton btnSave = dialog.findViewById(R.id.btnUpdate);
         MaterialButton btnCancel = dialog.findViewById(R.id.btnCancel);
+
+        btnUseToday.setOnClickListener(v -> fillTodayEstimatedCost(etCost, tvTodayHint, btnUseToday));
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
         btnSave.setOnClickListener(v -> {
@@ -278,7 +291,7 @@ public class SettingsActivity extends BaseActivity {
             }
 
             String menuId = FirebaseDatabase.getInstance().getReference().child(messId).child("menu_bank").push().getKey();
-            
+
             java.util.Map<String, Object> menuMap = new java.util.HashMap<>();
             menuMap.put("menuName", name);
             menuMap.put("description", desc);
@@ -297,6 +310,69 @@ public class SettingsActivity extends BaseActivity {
         });
 
         dialog.show();
+    }
+
+    /**
+     * Fills Cost per plate from today's expenses ÷ total mess members.
+     * Name/description fields are left for the user to fill.
+     */
+    private void fillTodayEstimatedCost(EditText etCost, TextView tvHint, MaterialButton btnUseToday) {
+        if (messId == null) {
+            Toast.makeText(this, R.string.menu_today_estimate_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btnUseToday.setEnabled(false);
+        FirebaseDatabase.getInstance().getReference().child(messId).get()
+                .addOnSuccessListener(snapshot -> {
+                    btnUseToday.setEnabled(true);
+
+                    Calendar now = Calendar.getInstance();
+                    int day = now.get(Calendar.DAY_OF_MONTH);
+                    int month = now.get(Calendar.MONTH);
+                    int year = now.get(Calendar.YEAR);
+
+                    double todayExpenses = 0;
+                    DataSnapshot expensesSnap = snapshot.child("expenses");
+                    if (expensesSnap.exists()) {
+                        for (DataSnapshot expDs : expensesSnap.getChildren()) {
+                            Long ts = expDs.child("timestampMillis").getValue(Long.class);
+                            Double amt = expDs.child("amount").getValue(Double.class);
+                            if (ts == null || amt == null) continue;
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTimeInMillis(ts);
+                            if (cal.get(Calendar.DAY_OF_MONTH) == day
+                                    && cal.get(Calendar.MONTH) == month
+                                    && cal.get(Calendar.YEAR) == year) {
+                                todayExpenses += amt;
+                            }
+                        }
+                    }
+
+                    int memberCount = 0;
+                    DataSnapshot membersSnap = snapshot.child("member");
+                    if (membersSnap.exists()) {
+                        memberCount = (int) membersSnap.getChildrenCount();
+                    }
+                    if (memberCount <= 0) memberCount = 1;
+
+                    if (todayExpenses <= 0) {
+                        tvHint.setVisibility(View.VISIBLE);
+                        tvHint.setText(R.string.menu_today_no_expenses);
+                        etCost.setText("");
+                        Toast.makeText(this, R.string.menu_today_no_expenses, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    double perPlate = todayExpenses / memberCount;
+                    etCost.setText(String.format(Locale.ENGLISH, "%.0f", perPlate));
+                    tvHint.setVisibility(View.VISIBLE);
+                    tvHint.setText(getString(R.string.menu_today_cost_hint, todayExpenses, memberCount, perPlate));
+                })
+                .addOnFailureListener(e -> {
+                    btnUseToday.setEnabled(true);
+                    Toast.makeText(this, R.string.menu_today_estimate_failed, Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void showSetGoalRateDialog() {

@@ -30,6 +30,7 @@
             app:tint="@color/nav_selected" />
 
         <TextView
+            android:id="@+id/tvMenuDialogTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -39,10 +40,11 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvMenuDialogSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Create a reusable menu with estimated cost"
+            android:text="Create a reusable menu with cost per plate"
             android:textColor="@color/dark_text_muted"
             android:textSize="14sp" />
 
@@ -94,11 +96,50 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/menu_cost_helper_title"
+                android:textColor="@color/dark_text_muted"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUseTodayCost"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="16dp"
+                android:text="@string/menu_use_today"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                app:backgroundTint="#1E3A3A"
+                app:cornerRadius="20dp"
+                android:textColor="@color/teal_accent" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvTodayCostHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/dark_text_muted"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             app:boxBackgroundColor="#111111"
             app:boxCornerRadiusBottomEnd="16dp"
             app:boxCornerRadiusBottomStart="16dp"
@@ -106,7 +147,7 @@
             app:boxCornerRadiusTopStart="16dp"
             app:boxStrokeColor="@color/nav_selected"
             app:hintTextColor="@color/nav_selected"
-            android:hint="Estimated Total Cost"
+            android:hint="Cost per plate"
             app:prefixText="₹ "
             app:prefixTextColor="@color/white">
 

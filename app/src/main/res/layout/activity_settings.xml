@@ -196,6 +196,7 @@
 
                     <include layout="@layout/item_setting" android:id="@+id/itemNotification"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemFood"/>
+                    <include layout="@layout/item_setting" android:id="@+id/itemMealBank"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemGoalRate"/>
 
                 </LinearLayout>
