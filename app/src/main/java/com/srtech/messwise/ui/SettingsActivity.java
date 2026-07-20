@@ -93,6 +93,7 @@ public class SettingsActivity extends BaseActivity {
                             String name = snapshot.child("name").getValue(String.class);
                             String mail = snapshot.child("mail").getValue(String.class);
                             Boolean admin = snapshot.child("is_admin").getValue(Boolean.class);
+                            String role = snapshot.child("role").getValue(String.class);
 
                             if (name != null) tvName.setText(name);
 
@@ -106,13 +107,16 @@ public class SettingsActivity extends BaseActivity {
                             } else if (mail != null) {
                                 tvEmail.setText(mail);
                             }
-                            
-                            com.google.android.material.chip.Chip chip = findViewById(R.id.chipMemberType);
-                            if (admin != null && admin) {
-                                chip.setText(R.string.label_administrator);
-                                chip.setChipBackgroundColorResource(R.color.dark_error);
-                            } else {
-                                chip.setText(R.string.label_mess_member);
+
+                            TextView tvRole = findViewById(R.id.tvProfileRole);
+                            if (tvRole != null) {
+                                String roleDisplay = role;
+                                if (roleDisplay == null || roleDisplay.trim().isEmpty()) {
+                                    roleDisplay = (admin != null && admin)
+                                            ? getString(R.string.common_admin)
+                                            : getString(R.string.common_member);
+                                }
+                                tvRole.setText(roleDisplay);
                             }
                         }
                     }

@@ -888,18 +888,13 @@ public class MemberAdminActivity extends BaseActivity {
 
             Member member = list.get(position);
             holder.tvName.setText(member.getName());
+            holder.tvRole.setText(member.getRole());
+            holder.tvRole.setVisibility(View.VISIBLE);
             
             // Set initials
             holder.tvInitials.setText(getInitials(member.getName()));
 
             holder.itemView.setOnClickListener(v -> showMemberDetailsPopup(member));
-
-            // Admin Tag
-            if (member.getIs_admin() != null && member.getIs_admin()) {
-                holder.tvAdminTag.setVisibility(View.VISIBLE);
-            } else {
-                holder.tvAdminTag.setVisibility(View.GONE);
-            }
 
             holder.btnDelete.setOnClickListener(v -> {
                 new AlertDialog.Builder(MemberAdminActivity.this)
@@ -923,14 +918,14 @@ public class MemberAdminActivity extends BaseActivity {
         }
 
         class MemberViewHolder extends RecyclerView.ViewHolder {
-            TextView tvInitials, tvName, tvAdminTag;
+            TextView tvInitials, tvName, tvRole;
             ImageView btnDelete;
 
             public MemberViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvInitials = itemView.findViewById(R.id.tvInitials);
                 tvName = itemView.findViewById(R.id.tvName);
-                tvAdminTag = itemView.findViewById(R.id.tvAdminTag);
+                tvRole = itemView.findViewById(R.id.tvRole);
                 btnDelete = itemView.findViewById(R.id.btnDelete);
             }
         }
