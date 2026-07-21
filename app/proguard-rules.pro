@@ -22,7 +22,14 @@
 
 # Firebase Realtime Database
 -keep class com.google.firebase.** { *; }
+
+# Firebase POJO models (deserialized via reflection - must keep no-arg ctor + accessors)
 -keep class com.srtech.messwise.data_models.** { *; }
+-keep class com.srtech.messwise.admin_ui.MealSlot { *; }
+# Safety net: never strip no-arg constructors used by Firebase getValue(Class)
+-keepclassmembers class com.srtech.messwise.** {
+    public <init>();
+}
 
 # Glide
 -keep public class * extends com.bumptech.glide.module.AppGlideModule
