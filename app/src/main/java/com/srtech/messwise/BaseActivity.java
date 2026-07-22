@@ -44,6 +44,7 @@ public class BaseActivity extends AppCompatActivity {
         if (this instanceof SplashActivity) {
             return;
         }
+        AppUpdateManager.onAppForeground(this);
         if (isDeviceRooted() || (!BuildConfig.DEBUG && isEmulator())) {
             Toast.makeText(this, R.string.error_device_rooted, Toast.LENGTH_LONG).show();
             finishAffinity();

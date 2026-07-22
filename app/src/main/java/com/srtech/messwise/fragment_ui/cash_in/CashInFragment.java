@@ -66,12 +66,17 @@ public class CashInFragment extends Fragment {
     private MaterialButton btnAddMoney;
     private TextView tvAmountPreview, tvWalletBalance;
     private TextView chip500, chip1000, chip2000, chip5000;
-    private LinearLayout layoutEmptyTransactions;
+    private LinearLayout layoutEmptyTransactions, layoutMemberPicker, btnSelectMember;
+    private TextView tvSelectedMember, tvSelectedMemberInitials;
     private RecyclerView rvRecentTransactions;
     private View btnViewAll;
     private FirebaseDatabase db;
     private double totalCashIn = 0, totalExpenses = 0, settledExpenses = 0;
     private ValueEventListener balanceListener, expensesListener, settledListener, cashInListener;
+
+    private final List<MemberOption> memberOptions = new ArrayList<>();
+    private String targetUserId;
+    private String targetUserName;
 
     public CashInFragment() {
         // Required empty public constructor
@@ -117,6 +122,10 @@ public class CashInFragment extends Fragment {
         layoutEmptyTransactions = view.findViewById(R.id.layoutEmptyTransactions);
         rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
         btnViewAll = view.findViewById(R.id.btnViewAll);
+        layoutMemberPicker = view.findViewById(R.id.layoutMemberPicker);
+        btnSelectMember = view.findViewById(R.id.btnSelectMember);
+        tvSelectedMember = view.findViewById(R.id.tvSelectedMember);
+        tvSelectedMemberInitials = view.findViewById(R.id.tvSelectedMemberInitials);
 
         cashInAdapter = new CashInAdapter();
         rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -141,14 +150,112 @@ public class CashInFragment extends Fragment {
                 .addOnSuccessListener(v -> {
                     userName = v.getValue(String.class);
                     if (userName == null) userName = getString(R.string.common_unknown);
+                    if (targetUserId == null || targetUserId.equals(userId)) {
+                        setTargetMember(userId, userName);
+                    }
                     Log.d(TAG, "Fetched userName: " + userName);
                 })
                 .addOnFailureListener(e -> {
                     userName = getString(R.string.common_unknown);
+                    if (targetUserId == null) {
+                        setTargetMember(userId, userName);
+                    }
                     Log.e(TAG, "Error fetching name: " + e.getMessage());
                 });
 
+        setupMemberPicker();
         Log.d(TAG, "Init " + SUBTAG + "- userId: " + userId + ", messId: " + messId + ", messName: " + messName + ", isAdmin: " + isAdmin);
+    }
+
+    private void setupMemberPicker() {
+        if (layoutMemberPicker == null) return;
+
+        if (!canAddCashForOthers()) {
+            layoutMemberPicker.setVisibility(View.GONE);
+            setTargetMember(userId, userName != null ? userName : getString(R.string.cash_in_self_label));
+            return;
+        }
+
+        layoutMemberPicker.setVisibility(View.VISIBLE);
+        if (targetUserId == null) {
+            setTargetMember(userId, userName != null ? userName : getString(R.string.cash_in_self_label));
+        }
+        loadMemberOptions();
+
+        if (btnSelectMember != null) {
+            btnSelectMember.setOnClickListener(v -> showMemberPickerDialog());
+        }
+    }
+
+    private void loadMemberOptions() {
+        if (messId == null) return;
+        db.getReference().child(messId).child("member").get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!isAdded()) return;
+                    memberOptions.clear();
+                    for (DataSnapshot ds : snapshot.getChildren()) {
+                        String uid = ds.getKey();
+                        String name = ds.child("name").getValue(String.class);
+                        if (uid == null) continue;
+                        if (name == null || name.trim().isEmpty()) name = getString(R.string.common_unknown);
+                        memberOptions.add(new MemberOption(uid, name));
+                    }
+                    Collections.sort(memberOptions, (a, b) -> a.name.compareToIgnoreCase(b.name));
+                });
+    }
+
+    private void showMemberPickerDialog() {
+        if (memberOptions.isEmpty()) {
+            loadMemberOptions();
+            Toast.makeText(getContext(), R.string.dialog_select_member, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] names = new String[memberOptions.size()];
+        int selectedIndex = 0;
+        for (int i = 0; i < memberOptions.size(); i++) {
+            MemberOption option = memberOptions.get(i);
+            boolean isSelf = option.uid.equals(userId);
+            names[i] = isSelf
+                    ? option.name + " (" + getString(R.string.cash_in_self_label) + ")"
+                    : option.name;
+            if (option.uid.equals(targetUserId)) selectedIndex = i;
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.cash_in_for_member)
+                .setSingleChoiceItems(names, selectedIndex, (dialog, which) -> {
+                    MemberOption selected = memberOptions.get(which);
+                    setTargetMember(selected.uid, selected.name);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.common_cancel, null)
+                .show();
+    }
+
+    private void setTargetMember(String uid, String name) {
+        targetUserId = uid;
+        targetUserName = name != null ? name : getString(R.string.common_unknown);
+        if (tvSelectedMember != null) {
+            if (uid != null && uid.equals(userId)) {
+                tvSelectedMember.setText(targetUserName + " (" + getString(R.string.cash_in_self_label) + ")");
+            } else {
+                tvSelectedMember.setText(targetUserName);
+            }
+        }
+        if (tvSelectedMemberInitials != null) {
+            tvSelectedMemberInitials.setText(getInitials(targetUserName));
+        }
+    }
+
+    private String getInitials(String name) {
+        if (name == null || name.trim().isEmpty()) return "?";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.getDefault());
+        }
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1))
+                .toUpperCase(Locale.getDefault());
     }
 
     private void setupListeners() {
@@ -195,6 +302,7 @@ public class CashInFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadPreferences();
+        setupMemberPicker();
     }
 
     @Override
@@ -399,6 +507,22 @@ public class CashInFragment extends Fragment {
             return;
         }
 
+        final String creditUserId = (targetUserId != null) ? targetUserId : userId;
+        final String creditUserName = (targetUserName != null)
+                ? targetUserName
+                : (userName != null ? userName : getString(R.string.common_unknown));
+
+        if (creditUserId == null) {
+            Toast.makeText(getContext(), R.string.dialog_select_member, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Only permitted users may credit another member
+        if (!creditUserId.equals(userId) && !canAddCashForOthers()) {
+            Toast.makeText(getContext(), R.string.common_access_denied, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String tempAmt = etAmount.getText().toString().trim();
 
         if (tempAmt.isEmpty()) {
@@ -444,7 +568,7 @@ public class CashInFragment extends Fragment {
         db.getReference()
                 .child(messId)
                 .child("member")
-                .child(userId)
+                .child(creditUserId)
                 .child("monthly_balance")
                 .child(currentMonthKey)
                 .runTransaction(new com.google.firebase.database.Transaction.Handler() {
@@ -489,8 +613,8 @@ public class CashInFragment extends Fragment {
 
                         Map<String, Object> cashInData = new HashMap<>();
                         cashInData.put("transactionId", transactionId);
-                        cashInData.put("userId", userId);
-                        cashInData.put("userName", userName != null ? userName : "Unknown");
+                        cashInData.put("userId", creditUserId);
+                        cashInData.put("userName", creditUserName);
                         cashInData.put("amount", finalAmountToAdd);
                         cashInData.put("timestamp", timestamp);
                         cashInData.put("timestampMillis", timestampMillis);
@@ -506,7 +630,13 @@ public class CashInFragment extends Fragment {
                                 .setValue(cashInData)
                                 .addOnSuccessListener(aVoid -> {
                                     btnAddMoney.setEnabled(true);
-                                    Toast.makeText(getContext(), R.string.toast_cash_added, Toast.LENGTH_SHORT).show();
+                                    if (creditUserId.equals(userId)) {
+                                        Toast.makeText(getContext(), R.string.toast_cash_added, Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getContext(),
+                                                getString(R.string.cash_in_added_for, creditUserName),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
                                     etAmount.setText("");
                                     FinanceUtils.updateAllMemberDues(messId);
                                 })
@@ -514,7 +644,7 @@ public class CashInFragment extends Fragment {
                                     btnAddMoney.setEnabled(true);
                                     Toast.makeText(getContext(), getString(R.string.toast_trans_save_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                                     Log.e(TAG, "cash_in save error: " + e.getMessage());
-                                    rollbackBalance(finalAmountToAdd, currentMonthKey);
+                                    rollbackBalance(creditUserId, finalAmountToAdd, currentMonthKey);
                                 });
                     }
                 });
@@ -621,6 +751,14 @@ public class CashInFragment extends Fragment {
 
     private boolean canManageFinances() {
         return isAdmin || prefs.getBoolean("perm_manage_finances", false);
+    }
+
+    /**
+     * Separate from manage_finances: allows adding cash-in for other members,
+     * but does not grant edit/delete of transactions.
+     */
+    private boolean canAddCashForOthers() {
+        return isAdmin || prefs.getBoolean("perm_add_member_cash_in", false);
     }
 
     private void showDeleteConfirmationDialog(CashInModel model) {
@@ -743,12 +881,12 @@ public class CashInFragment extends Fragment {
                 });
     }
 
-    private void rollbackBalance(double amount, String monthKey) {
-        if (messId == null || userId == null) return;
+    private void rollbackBalance(String memberUserId, double amount, String monthKey) {
+        if (messId == null || memberUserId == null) return;
         db.getReference()
                 .child(messId)
                 .child("member")
-                .child(userId)
+                .child(memberUserId)
                 .child("monthly_balance")
                 .child(monthKey)
                 .runTransaction(new com.google.firebase.database.Transaction.Handler() {
@@ -776,5 +914,15 @@ public class CashInFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+    private static class MemberOption {
+        final String uid;
+        final String name;
+
+        MemberOption(String uid, String name) {
+            this.uid = uid;
+            this.name = name;
+        }
     }
 }

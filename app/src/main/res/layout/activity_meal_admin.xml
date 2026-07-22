@@ -6,632 +6,474 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_bg"
+    android:background="@color/bg_dark"
     tools:context=".admin_ui.MealAdminActivity">
 
-    <!-- Header -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="@drawable/bg_meal_header_glow"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/card_background"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_profile_circle"
+            android:backgroundTint="@color/color_surface"
             android:src="@drawable/ic_arrow_back"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/dark_text_primary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:gravity="center"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:tint="@color/white" />
+            app:layout_constraintEnd_toStartOf="@id/btnMonthNav"
+            app:layout_constraintStart_toEndOf="@id/btnBack"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MEAL MANAGEMENT"
-            android:textColor="@color/dark_text_muted"
-            android:textSize="10sp"
-            android:letterSpacing="0.1"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.12"
+                android:text="MEAL MANAGEMENT"
+                android:textAllCaps="true"
+                android:textColor="@color/teal_accent"
+                android:textSize="10sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Meal Count"
-            android:textColor="@color/white"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSubtitle" />
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Attendance"
+                android:textColor="@color/dark_text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnStats"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/card_background"
-            android:src="@drawable/bar_chart"
+            android:id="@+id/btnMonthNav"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_profile_circle"
+            android:backgroundTint="@color/color_surface"
+            android:contentDescription="@string/dialog_select_date"
+            android:src="@drawable/ic_summary"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:tint="@color/teal_accent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/headerLayout"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerLayout">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:paddingBottom="80dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="96dp">
 
-            <!-- Input Card -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <!-- Member Selection -->
-                <TextView
-                    android:id="@+id/labelMember"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Member"
-                    android:textColor="@color/dark_text_muted"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/spinnerMemberLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/card_background"
-                    android:paddingHorizontal="12dp"
-                    app:layout_constraintEnd_toStartOf="@id/layoutMealsInput"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/labelMember"
-                    app:layout_constraintHorizontal_weight="0.6">
-
-                    <ImageView
-                        android:id="@+id/iconMember"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_profile"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/teal_accent" />
-
-                    <Spinner
-                        android:id="@+id/spinnerMember"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="8dp"
-                        android:background="@android:color/transparent"
-                        android:spinnerMode="dropdown"
-                        android:dropDownVerticalOffset="52dp"
-                        app:layout_constraintEnd_toStartOf="@id/arrowMember"
-                        app:layout_constraintStart_toEndOf="@id/iconMember" />
-
-                    <ImageView
-                        android:id="@+id/arrowMember"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:rotation="90"
-                        android:src="@drawable/ic_chevron_right"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/dark_text_muted" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Meals Count Selection -->
-                <TextView
-                    android:id="@+id/labelMeals"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Meals"
-                    android:textColor="@color/dark_text_muted"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="@id/layoutMealsInput"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/layoutMealsInput"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/card_background"
-                    android:paddingHorizontal="12dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/spinnerMemberLayout"
-                    app:layout_constraintTop_toBottomOf="@id/labelMeals"
-                    app:layout_constraintHorizontal_weight="0.4">
-
-                    <ImageView
-                        android:id="@+id/iconMeal"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_meal"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="#4CAF50" />
-
-                    <EditText
-                        android:id="@+id/etMeals"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="8dp"
-                        android:background="@android:color/transparent"
-                        android:hint="1"
-                        android:inputType="numberDecimal"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/dark_text_muted"
-                        android:textSize="14sp"
-                        android:imeOptions="actionNext"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@id/iconMeal" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <!-- Date Picker -->
-                <TextView
-                    android:id="@+id/labelDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Date"
-                    android:textColor="@color/dark_text_muted"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/spinnerMemberLayout" />
-
-                <LinearLayout
-                    android:id="@+id/btnDate"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/card_background"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
-                    app:layout_constraintTop_toBottomOf="@id/labelDate">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_summary"
-                        app:tint="@color/teal_accent" />
-
-                    <TextView
-                        android:id="@+id/tvDate"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:text="Select Date"
-                        android:textColor="@color/white"
-                        android:textSize="14sp" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_summary"
-                        app:tint="@color/dark_text_muted" />
-                </LinearLayout>
-
-                <!-- Note Field -->
-                <TextView
-                    android:id="@+id/labelNote"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Note (Optional)"
-                    android:textColor="@color/dark_text_muted"
-                    android:textSize="14sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/btnDate" />
-
-                <LinearLayout
-                    android:id="@+id/layoutNote"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/card_background"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
-                    app:layout_constraintTop_toBottomOf="@id/labelNote">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_terms"
-                        app:tint="@color/teal_accent" />
-
-                    <EditText
-                        android:id="@+id/etNote"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="12dp"
-                        android:background="@android:color/transparent"
-                        android:hint="Lunch + Dinner"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/dark_text_muted"
-                        android:textSize="14sp"
-                        android:imeOptions="actionDone"
-                        android:inputType="text" />
-                </LinearLayout>
-
-                <!-- Action Buttons -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSetMeal"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="24dp"
-                    android:text="SET MEAL COUNT"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_summary"
-                    app:iconGravity="textStart"
-                    app:backgroundTint="@null"
-                    android:background="@drawable/bg_btn_teal_gradient"
-                    app:layout_constraintTop_toBottomOf="@id/layoutNote" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnMarkPresent"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="12dp"
-                    android:text="MARK PRESENT (+1 MEAL)"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_profile"
-                    app:iconGravity="textStart"
-                    app:backgroundTint="#2E7D32"
-                    app:layout_constraintTop_toBottomOf="@id/btnSetMeal" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <!-- Stats Row 1: Finance -->
             <LinearLayout
+                android:id="@+id/hintBanner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="horizontal">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/card_background"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/iconTotalDue"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_profile_circle"
-                        android:backgroundTint="#1AD55467"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_receipt"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/dark_error" />
-
-                    <TextView
-                        android:id="@+id/labelTotalDue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="TOTAL DUE"
-                        android:textColor="@color/dark_error"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconTotalDue"
-                        app:layout_constraintTop_toTopOf="@id/iconTotalDue" />
-
-                    <TextView
-                        android:id="@+id/tvTotalDueCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="₹0"
-                        android:textColor="@color/white"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconTotalDue"
-                        app:layout_constraintTop_toBottomOf="@id/labelTotalDue"
-                        android:layout_marginStart="12dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/mtDueDesc"
-                        android:text="All time"
-                        android:textColor="@color/dark_text_muted"
-                        android:textSize="10sp"
-                        app:layout_constraintStart_toStartOf="@id/tvTotalDueCount"
-                        app:layout_constraintTop_toBottomOf="@id/tvTotalDueCount"
-                        />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/card_background"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/iconUpcoming"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_profile_circle"
-                        android:backgroundTint="#1AF59E0B"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_summary"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="#F59E0B" />
-
-                    <TextView
-                        android:id="@+id/labelUpcoming"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="UPCOMING"
-                        android:textColor="#F59E0B"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconUpcoming"
-                        app:layout_constraintTop_toTopOf="@id/iconUpcoming" />
-
-                    <TextView
-                        android:id="@+id/tvUpcomingDueCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@color/white"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconUpcoming"
-                        app:layout_constraintTop_toBottomOf="@id/labelUpcoming"
-                        android:layout_marginStart="12dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/mtUpcomingDesc"
-                        android:text="Pending Dues"
-                        android:textColor="@color/dark_text_muted"
-                        android:textSize="10sp"
-                        app:layout_constraintStart_toStartOf="@id/tvUpcomingDueCount"
-                        app:layout_constraintTop_toBottomOf="@id/tvUpcomingDueCount" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </LinearLayout>
-
-            <!-- Stats Row 2: Attendance -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="horizontal">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/card_background"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/iconMonth"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_profile_circle"
-                        android:backgroundTint="#1A6200EE"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_meal"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="#7C4DFF" />
-
-                    <TextView
-                        android:id="@+id/labelCurrentMonth"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="CURRENT MONTH"
-                        android:textColor="@color/teal_accent"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconMonth"
-                        app:layout_constraintTop_toTopOf="@id/iconMonth" />
-
-                    <TextView
-                        android:id="@+id/tvMealsTaken"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="156"
-                        android:textColor="@color/white"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconMonth"
-                        app:layout_constraintTop_toBottomOf="@id/labelCurrentMonth"
-                        android:layout_marginStart="12dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/mt1"
-                        android:text="Meals Taken"
-                        android:textColor="@color/dark_text_muted"
-                        android:textSize="10sp"
-                        app:layout_constraintStart_toStartOf="@id/tvMealsTaken"
-                        app:layout_constraintTop_toBottomOf="@id/tvMealsTaken"
-                        />
-
-                    <TextView
-                        android:id="@+id/show_date"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/card_background"
-                        android:gravity="center"
-                        android:padding="6dp"
-                        android:text="June 2025"
-                        android:textColor="@color/teal_accent"
-                        android:textSize="10sp"
-                        app:drawableStartCompat="@drawable/ic_summary"
-                        app:drawableTint="@color/teal_accent"
-                        app:layout_constraintTop_toBottomOf="@id/mt1"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:drawablePadding="6dp"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/card_background"
-                    android:padding="12dp">
-
-                    <ImageView
-                        android:id="@+id/iconMembers"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_profile_circle"
-                        android:backgroundTint="#1A2E7D32"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_group"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="#4CAF50" />
-
-                    <TextView
-                        android:id="@+id/labelActiveMembers"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="ACTIVE MEMBERS"
-                        android:textColor="#4CAF50"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconMembers"
-                        app:layout_constraintTop_toTopOf="@id/iconMembers" />
-
-                    <TextView
-                        android:id="@+id/tvParticipating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="18"
-                        android:textColor="@color/white"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toEndOf="@id/iconMembers"
-                        app:layout_constraintTop_toBottomOf="@id/labelActiveMembers"
-                        android:layout_marginStart="12dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/mt2"
-                        android:text="Participating"
-                        android:textColor="@color/dark_text_muted"
-                        android:textSize="10sp"
-                        app:layout_constraintStart_toStartOf="@id/tvParticipating"
-                        app:layout_constraintTop_toBottomOf="@id/tvParticipating" />
-
-                    <TextView
-                        android:id="@+id/show_date_2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/card_background"
-                        android:gravity="center"
-                        android:padding="6dp"
-                        android:text="June 2025"
-                        android:textColor="#4CAF50"
-                        android:textSize="10sp"
-                        app:drawableStartCompat="@drawable/ic_summary"
-                        app:drawableTint="#4CAF50"
-                        app:layout_constraintTop_toBottomOf="@id/mt2"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:drawablePadding="6dp"/>
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </LinearLayout>
-
-            <!-- Distribution Card -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/card_background"
-                android:padding="16dp">
+                android:background="@drawable/bg_meal_hint_banner"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="12dp">
 
                 <ImageView
-                    android:id="@+id/iconDistribution"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:src="@drawable/ic_summary"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:tint="#7C4DFF" />
+                    android:src="@drawable/ic_meal"
+                    app:tint="@color/teal_accent" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Meal Distribution"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toBottomOf="@id/iconDistribution"
-                    app:layout_constraintStart_toEndOf="@id/iconDistribution"
-                    app:layout_constraintTop_toTopOf="@id/iconDistribution" />
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="@string/meal_tap_member_hint"
+                    android:textColor="@color/dark_text_primary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Stats -->
+            <LinearLayout
+                android:id="@+id/statsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="7dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/color_surface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="#33D55467"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <FrameLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_profile_circle"
+                            android:backgroundTint="#26D55467">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_receipt"
+                                app:tint="@color/dark_error" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:letterSpacing="0.08"
+                            android:text="TOTAL DUE"
+                            android:textColor="@color/dark_error"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvTotalDueCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="₹0"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="All time"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/color_surface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="#33F59E0B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <FrameLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_profile_circle"
+                            android:backgroundTint="#26F59E0B">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_summary"
+                                app:tint="#F59E0B" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:letterSpacing="0.08"
+                            android:text="PENDING"
+                            android:textColor="#F59E0B"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvUpcomingDueCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Members with dues"
+                            android:textColor="@color/dark_text_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/attendanceStatsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="7dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/color_surface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="#3300BFA5"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <FrameLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_profile_circle"
+                            android:backgroundTint="#2600BFA5">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_meal"
+                                app:tint="@color/teal_accent" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:letterSpacing="0.08"
+                            android:text="MEALS THIS MONTH"
+                            android:textColor="@color/teal_accent"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMealsTaken"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/show_date"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_meal_count_chip"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="5dp"
+                            android:text="July 2026"
+                            android:textColor="@color/teal_accent"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/color_surface"
+                    app:cardCornerRadius="20dp"
+                    app:strokeColor="#3322C55E"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <FrameLayout
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_profile_circle"
+                            android:backgroundTint="#2622C55E">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_group"
+                                app:tint="@color/dark_success" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:letterSpacing="0.08"
+                            android:text="ACTIVE MEMBERS"
+                            android:textColor="@color/dark_success"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvParticipating"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0"
+                            android:textColor="@color/dark_text_primary"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/show_date_2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_meal_success_chip"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="5dp"
+                            android:text="July 2026"
+                            android:textColor="@color/dark_success"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Distribution -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/distributionCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                app:cardBackgroundColor="@color/color_surface"
+                app:cardCornerRadius="22dp"
+                app:strokeColor="@color/color_border"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
-                    android:id="@+id/distributionList"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:orientation="vertical"
-                    app:layout_constraintTop_toBottomOf="@id/iconDistribution">
+                    android:padding="16dp">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_profile_circle"
+                            android:backgroundTint="#267C4DFF">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/bar_chart"
+                                app:tint="#A78BFA" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Meal Distribution"
+                                android:textColor="@color/dark_text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tap anyone to open their calendar"
+                                android:textColor="@color/dark_text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/distributionList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/tvEmptyMembers"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingVertical="28dp"
+                        android:text="No members yet"
+                        android:textColor="@color/dark_text_muted"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
                 </LinearLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

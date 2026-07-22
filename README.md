@@ -36,7 +36,22 @@
 
 ### 📦 Distribution & Updates
 - **Direct APK distribution** via Firebase Hosting and GitHub
+- **In-app APK updates** — downloads the APK from Firebase `apk_url` / GitHub, then prompts install (no Play Store)
 - **Forced updates** — `AppUpdateManager` checks Firebase `min_version_code` against the installed app
+
+Firebase `version_control` example:
+
+```json
+{
+  "min_version_code": 4,
+  "latest_version_code": 5,
+  "apk_url": "https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk",
+  "update_url": "https://mess-wise.web.app",
+  "update_message": "Bug fixes and improvements"
+}
+```
+
+Use a **direct `.apk` link** in `apk_url` (recommended). Website links alone cannot be installed in-app.
 
 ---
 

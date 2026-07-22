@@ -32,7 +32,7 @@ public final class PermissionUtils {
         }
 
         if (isAdmin || "Admin".equals(role)) {
-            savePermissions(prefs, true, true, true, true);
+            savePermissions(prefs, true, true, true, true, true);
             return;
         }
 
@@ -40,8 +40,9 @@ public final class PermissionUtils {
         boolean members = Boolean.TRUE.equals(permSnap.child("manage_members").getValue(Boolean.class));
         boolean meals = Boolean.TRUE.equals(permSnap.child("manage_meals").getValue(Boolean.class));
         boolean finances = Boolean.TRUE.equals(permSnap.child("manage_finances").getValue(Boolean.class));
+        boolean addMemberCashIn = Boolean.TRUE.equals(permSnap.child("add_member_cash_in").getValue(Boolean.class));
         boolean summary = Boolean.TRUE.equals(permSnap.child("view_meal_summary").getValue(Boolean.class));
-        savePermissions(prefs, members, meals, finances, summary);
+        savePermissions(prefs, members, meals, finances, addMemberCashIn, summary);
     }
 
     public static void savePermissions(
@@ -49,12 +50,14 @@ public final class PermissionUtils {
             boolean members,
             boolean meals,
             boolean finances,
+            boolean addMemberCashIn,
             boolean summary) {
 
         prefs.edit()
                 .putBoolean("perm_manage_members", members)
                 .putBoolean("perm_manage_meals", meals)
                 .putBoolean("perm_manage_finances", finances)
+                .putBoolean("perm_add_member_cash_in", addMemberCashIn)
                 .putBoolean("perm_view_meal_summary", summary)
                 .apply();
     }

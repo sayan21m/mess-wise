@@ -79,6 +79,14 @@
                 android:textSize="16sp" />
 
             <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchAddMemberCashIn"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Add Cash In for Members"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switchSummary"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"

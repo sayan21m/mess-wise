@@ -73,6 +73,8 @@ public class SplashActivity extends BaseActivity {
     }
 
     private void checkAppVersion() {
+        AppUpdateManager.cleanupInstalledUpdate(this);
+
         FirebaseDatabase.getInstance()
                 .getReference()
                 .child("version_control")

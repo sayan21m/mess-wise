@@ -687,7 +687,7 @@ public class MainActivity extends BaseActivity {
 
     private void fetchPermissionsAndAct(String role) {
         if (role.equals("Admin")) { 
-            savePermissions(true, true, true, true); 
+            savePermissions(true, true, true, true, true); 
             // Admins can see the summary if they want, but the automatic pop-up 
             // is primarily for the Meal Manager as requested.
             // If you want Admin to see it too, uncomment the line below.
@@ -699,8 +699,9 @@ public class MainActivity extends BaseActivity {
                 boolean members = snapshot.child("manage_members").getValue(Boolean.class) != null && snapshot.child("manage_members").getValue(Boolean.class);
                 boolean meals = snapshot.child("manage_meals").getValue(Boolean.class) != null && snapshot.child("manage_meals").getValue(Boolean.class);
                 boolean finances = snapshot.child("manage_finances").getValue(Boolean.class) != null && snapshot.child("manage_finances").getValue(Boolean.class);
+                boolean addMemberCashIn = snapshot.child("add_member_cash_in").getValue(Boolean.class) != null && snapshot.child("add_member_cash_in").getValue(Boolean.class);
                 boolean summary = snapshot.child("view_meal_summary").getValue(Boolean.class) != null && snapshot.child("view_meal_summary").getValue(Boolean.class);
-                savePermissions(members, meals, finances, summary);
+                savePermissions(members, meals, finances, addMemberCashIn, summary);
                 
                 // Only show the automatic pop-up if the role is specifically "Meal Manager"
                 if (role.equals("Meal Manager") && summary) {
@@ -711,8 +712,8 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    private void savePermissions(boolean members, boolean meals, boolean finances, boolean summary) {
-        PermissionUtils.savePermissions(prefs, members, meals, finances, summary);
+    private void savePermissions(boolean members, boolean meals, boolean finances, boolean addMemberCashIn, boolean summary) {
+        PermissionUtils.savePermissions(prefs, members, meals, finances, addMemberCashIn, summary);
     }
 
     private void startPermissionListener() {

@@ -441,10 +441,12 @@ public class MemberAdminActivity extends BaseActivity {
                                         if (newRole.equals("Meal Manager")) {
                                             perms.put("manage_meals", true);
                                             perms.put("view_meal_summary", true);
+                                            perms.put("add_member_cash_in", false);
                                         } else if (newRole.equals("Admin")) {
                                             perms.put("manage_members", true);
                                             perms.put("manage_meals", true);
                                             perms.put("manage_finances", true);
+                                            perms.put("add_member_cash_in", true);
                                             perms.put("view_meal_summary", true);
                                         }
                                         db.getReference().child(messId).child("config").child("role_permissions").child(newRole).setValue(perms);
@@ -468,6 +470,7 @@ public class MemberAdminActivity extends BaseActivity {
         com.google.android.material.materialswitch.MaterialSwitch sMembers = dialogView.findViewById(R.id.switchMembers);
         com.google.android.material.materialswitch.MaterialSwitch sMeals = dialogView.findViewById(R.id.switchMeals);
         com.google.android.material.materialswitch.MaterialSwitch sFinances = dialogView.findViewById(R.id.switchFinances);
+        com.google.android.material.materialswitch.MaterialSwitch sAddMemberCashIn = dialogView.findViewById(R.id.switchAddMemberCashIn);
         com.google.android.material.materialswitch.MaterialSwitch sSummary = dialogView.findViewById(R.id.switchSummary);
 
         // Fetch existing permissions
@@ -479,6 +482,7 @@ public class MemberAdminActivity extends BaseActivity {
                             sMembers.setChecked(snapshot.child("manage_members").getValue(Boolean.class) != null && snapshot.child("manage_members").getValue(Boolean.class));
                             sMeals.setChecked(snapshot.child("manage_meals").getValue(Boolean.class) != null && snapshot.child("manage_meals").getValue(Boolean.class));
                             sFinances.setChecked(snapshot.child("manage_finances").getValue(Boolean.class) != null && snapshot.child("manage_finances").getValue(Boolean.class));
+                            sAddMemberCashIn.setChecked(snapshot.child("add_member_cash_in").getValue(Boolean.class) != null && snapshot.child("add_member_cash_in").getValue(Boolean.class));
                             sSummary.setChecked(snapshot.child("view_meal_summary").getValue(Boolean.class) != null && snapshot.child("view_meal_summary").getValue(Boolean.class));
                         } else {
                             // Default for Meal Manager
@@ -489,6 +493,7 @@ public class MemberAdminActivity extends BaseActivity {
                                 sMembers.setChecked(true);
                                 sMeals.setChecked(true);
                                 sFinances.setChecked(true);
+                                sAddMemberCashIn.setChecked(true);
                                 sSummary.setChecked(true);
                             }
                         }
@@ -504,6 +509,7 @@ public class MemberAdminActivity extends BaseActivity {
             perms.put("manage_members", sMembers.isChecked());
             perms.put("manage_meals", sMeals.isChecked());
             perms.put("manage_finances", sFinances.isChecked());
+            perms.put("add_member_cash_in", sAddMemberCashIn.isChecked());
             perms.put("view_meal_summary", sSummary.isChecked());
 
             db.getReference().child(messId).child("config").child("role_permissions").child(roleName)
