@@ -38,7 +38,7 @@ public class FinanceUtils {
                 if (expensesSnap.exists()) {
                     for (DataSnapshot expDs : expensesSnap.getChildren()) {
                         Long ts = expDs.child("timestampMillis").getValue(Long.class);
-                        Double amt = expDs.child("amount").getValue(Double.class);
+                        Double amt = parseAmountOrNull(expDs.child("amount").getValue());
                         if (ts != null && amt != null) {
                             Calendar expCal = Calendar.getInstance();
                             expCal.setTimeInMillis(ts);
@@ -86,12 +86,7 @@ public class FinanceUtils {
                     for (DataSnapshot memberSnap : membersSnap.getChildren()) {
                         long memberMeals = memberMealCounts.getOrDefault(memberSnap.getKey(), 0L);
 
-                        double monthlyBalance = 0;
-                        DataSnapshot balSnap = memberSnap.child("monthly_balance").child(currentMonthKey);
-                        if (balSnap.exists()) {
-                            Object balObj = balSnap.getValue();
-                            if (balObj instanceof Number) monthlyBalance = ((Number) balObj).doubleValue();
-                        }
+                        double monthlyBalance = parseAmount(memberSnap.child("monthly_balance").child(currentMonthKey).getValue());
 
                         double currentDue = (rate * memberMeals) - monthlyBalance;
                         memberSnap.getRef().child("due_history").child(currentMonthKey).setValue(currentDue);
@@ -104,5 +99,23 @@ public class FinanceUtils {
                 Log.e("FinanceUtils", "Database error: " + error.getMessage());
             }
         });
+    }
+
+    /** Safely read Firebase number fields that may be Double, Long, or String. */
+    public static double parseAmount(Object value) {
+        Double parsed = parseAmountOrNull(value);
+        return parsed != null ? parsed : 0;
+    }
+
+    public static Double parseAmountOrNull(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        try {
+            String text = String.valueOf(value).trim();
+            if (text.isEmpty()) return null;
+            return Double.parseDouble(text);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

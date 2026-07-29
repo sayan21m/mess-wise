@@ -21,7 +21,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -55,7 +60,7 @@ public class SummaryFragment extends Fragment {
     private TextView tvTotalCashIn, tvTotalExpenses, tvTotalBalance, tvAvgExpense, tvMemberCount, tvBalanceStatus, tvCategoryTotal;
     private TextView tvInsightBudget, tvInsightMembers, tvInsightMembersSub, tvInsightDues, tvInsightDuesSub;
     private LinearLayout categoryContainer, contributorContainer;
-    private View btnExport;
+    private View btnExport, btnViewAllContributors;
 
     private String messId;
     private FirebaseDatabase db;
@@ -111,9 +116,8 @@ public class SummaryFragment extends Fragment {
         tvInsightDues = v.findViewById(R.id.tvInsightDues);
         tvInsightDuesSub = v.findViewById(R.id.tvInsightDuesSub);
         
-        v.findViewById(R.id.btnViewAllContributors).setOnClickListener(view -> {
-            Toast.makeText(getContext(), "Showing all " + topContributors.size() + " contributors", Toast.LENGTH_SHORT).show();
-        });
+        btnViewAllContributors = v.findViewById(R.id.btnViewAllContributors);
+        btnViewAllContributors.setOnClickListener(view -> showAllContributorsDialog());
         
         btnExport = v.findViewById(R.id.btnExportReport);
         btnExport.setOnClickListener(v1 -> generateAndShareReport());
@@ -182,15 +186,13 @@ public class SummaryFragment extends Fragment {
 
         double totalCash = 0;
         double totalExp = 0;
-        double settledExp = 0;
-        Double settledVal = messSnapshot.child("finance").child("settled_expenses").getValue(Double.class);
-        if (settledVal != null) settledExp = settledVal;
+        double settledExp = parseAmount(messSnapshot.child("finance").child("settled_expenses").getValue());
 
         // Process Expenses
         DataSnapshot expNode = messSnapshot.child("expenses");
         for (DataSnapshot ds : expNode.getChildren()) {
             Long ts = ds.child("timestampMillis").getValue(Long.class);
-            Double amount = ds.child("amount").getValue(Double.class);
+            Double amount = parseAmountOrNull(ds.child("amount").getValue());
             String category = ds.child("category").getValue(String.class);
 
             if (ts != null && amount != null) {
@@ -215,8 +217,8 @@ public class SummaryFragment extends Fragment {
             String name = mSnap.child("name").getValue(String.class);
             double mTotal = 0;
             
-            // Current month balance
-            Double b = mSnap.child("monthly_balance").child(currentMonth).getValue(Double.class);
+            // Current month balance (may be Long/Double/String)
+            Double b = parseAmountOrNull(mSnap.child("monthly_balance").child(currentMonth).getValue());
             if (b != null) {
                 mTotal += b;
                 totalCash += b;
@@ -227,13 +229,11 @@ public class SummaryFragment extends Fragment {
             }
         }
 
-        // For simplicity, we'll map cash_in to days if we had a cash_in_history. 
-        // Since we only have current balance, let's assume it was all added today for the chart or spread it.
-        // In a real app, you'd have a transaction history node.
+        // Cash-in history for daily chart — amount may be String after older edits
         DataSnapshot cashInNode = messSnapshot.child("cash_in");
         for (DataSnapshot ds : cashInNode.getChildren()) {
             Long ts = ds.child("timestampMillis").getValue(Long.class);
-            Double amount = ds.child("amount").getValue(Double.class);
+            Double amount = parseAmountOrNull(ds.child("amount").getValue());
             if (ts != null && amount != null) {
                 Calendar cal = Calendar.getInstance();
                 cal.setTimeInMillis(ts);
@@ -296,21 +296,88 @@ public class SummaryFragment extends Fragment {
 
         int rank = 1;
         for (MemberContribution mc : topContributors) {
-            if (rank > 5) break; // Top 5
-            View row = LayoutInflater.from(getContext()).inflate(R.layout.item_summary_contributor, contributorContainer, false);
-            ((TextView) row.findViewById(R.id.tvRank)).setText(String.valueOf(rank));
-            ((TextView) row.findViewById(R.id.tvName)).setText(mc.name);
-            ((TextView) row.findViewById(R.id.tvAmount)).setText(String.format(Locale.getDefault(), "₹%,.0f", mc.amount));
-            
-            String initials = mc.name.length() >= 2 ? mc.name.substring(0, 2).toUpperCase() : mc.name.toUpperCase();
-            ((TextView) row.findViewById(R.id.tvInitials)).setText(initials);
-
-            int percent = total > 0 ? (int) ((mc.amount / total) * 100) : 0;
-            ((TextView) row.findViewById(R.id.tvPercent)).setText(percent + "%");
-            
-            contributorContainer.addView(row);
+            if (rank > 5) break; // Top 5 on summary card
+            bindContributorRow(
+                    LayoutInflater.from(getContext()).inflate(R.layout.item_summary_contributor, contributorContainer, false),
+                    mc, rank, total, true);
             rank++;
         }
+
+        if (btnViewAllContributors != null) {
+            btnViewAllContributors.setVisibility(topContributors.size() > 5 ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void bindContributorRow(View row, MemberContribution mc, int rank, double total, boolean attachToCard) {
+        ((TextView) row.findViewById(R.id.tvRank)).setText(String.valueOf(rank));
+        ((TextView) row.findViewById(R.id.tvName)).setText(mc.name);
+        ((TextView) row.findViewById(R.id.tvAmount)).setText(String.format(Locale.getDefault(), "₹%,.0f", mc.amount));
+
+        String initials = mc.name.length() >= 2 ? mc.name.substring(0, 2).toUpperCase() : mc.name.toUpperCase();
+        ((TextView) row.findViewById(R.id.tvInitials)).setText(initials);
+
+        int percent = total > 0 ? (int) ((mc.amount / total) * 100) : 0;
+        ((TextView) row.findViewById(R.id.tvPercent)).setText(percent + "%");
+
+        if (attachToCard) {
+            contributorContainer.addView(row);
+        }
+    }
+
+    private void showAllContributorsDialog() {
+        if (!isAdded()) return;
+        if (topContributors.isEmpty()) {
+            Toast.makeText(getContext(), R.string.summary_no_contributors, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Collections.sort(topContributors, (c1, c2) -> Double.compare(c2.amount, c1.amount));
+        final double total = monthlyTotalCash;
+        final List<MemberContribution> all = new ArrayList<>(topContributors);
+
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_transaction_history, null);
+        android.app.Dialog dialog = new android.app.Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(dialogView);
+
+        ViewCompat.setOnApplyWindowInsetsListener(dialogView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(
+                    systemBars.left + v.getPaddingLeft(),
+                    systemBars.top + v.getPaddingTop(),
+                    systemBars.right + v.getPaddingRight(),
+                    systemBars.bottom + v.getPaddingBottom());
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        TextView title = dialogView.findViewById(R.id.tvDialogTitle);
+        if (title != null) {
+            title.setText(R.string.summary_all_contributors);
+        }
+
+        RecyclerView rv = dialogView.findViewById(R.id.rvFullHistory);
+        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rv.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View row = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.item_summary_contributor, parent, false);
+                return new RecyclerView.ViewHolder(row) {};
+            }
+
+            @Override
+            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                bindContributorRow(holder.itemView, all.get(position), position + 1, total, false);
+            }
+
+            @Override
+            public int getItemCount() {
+                return all.size();
+            }
+        });
+
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void updateStatsUI(DataSnapshot snapshot) {
@@ -422,7 +489,7 @@ public class SummaryFragment extends Fragment {
                 DataSnapshot expNode = snapshot.child("expenses");
                 for (DataSnapshot ds : expNode.getChildren()) {
                     Long ts = ds.child("timestampMillis").getValue(Long.class);
-                    Double amount = ds.child("amount").getValue(Double.class);
+                    Double amount = parseAmountOrNull(ds.child("amount").getValue());
                     if (ts != null && amount != null) {
                         Calendar cal = Calendar.getInstance();
                         cal.setTimeInMillis(ts);
@@ -458,8 +525,8 @@ public class SummaryFragment extends Fragment {
                     totalMeals += count;
                     report.append(getString(R.string.report_member_meal_count, name, count)).append("\n");
 
-                    Double given = mSnap.child("monthly_balance").child(currentMonth).getValue(Double.class);
-                    memberGiven.put(name, given != null ? given : 0.0);
+                    double given = parseAmount(mSnap.child("monthly_balance").child(currentMonth).getValue());
+                    memberGiven.put(name, given);
                 }
 
                 double rate = totalMeals > 0 ? totalExpenses / totalMeals : 0;
@@ -515,6 +582,25 @@ public class SummaryFragment extends Fragment {
         intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_subject));
         intent.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(intent, getString(R.string.report_chooser)));
+    }
+
+    /** Safely read Firebase number fields that may be Double, Long, or String. */
+    private static double parseAmount(Object value) {
+        Double parsed = parseAmountOrNull(value);
+        return parsed != null ? parsed : 0;
+    }
+
+    @Nullable
+    private static Double parseAmountOrNull(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        try {
+            String text = String.valueOf(value).trim();
+            if (text.isEmpty()) return null;
+            return Double.parseDouble(text);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static class MemberContribution {

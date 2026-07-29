@@ -47,7 +47,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
         ExpenseModel expense = expenseList.get(position);
         holder.tvTitle.setText(expense.getCategory());
         holder.tvDesc.setText(expense.getDescription());
-        holder.tvAmount.setText("₹" + (int)expense.getAmount());
+        holder.tvAmount.setText("₹" + (int) expense.getAmountValue());
         holder.tvDate.setText(expense.getDate());
 
         // Dynamic icon and color based on category

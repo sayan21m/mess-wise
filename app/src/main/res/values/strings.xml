@@ -99,6 +99,8 @@
     <string name="summary_top_contributors">Top Contributors</string>
     <string name="summary_quick_insights">Quick Insights</string>
     <string name="summary_view_all_contributors">View All Contributors</string>
+    <string name="summary_all_contributors">All Contributors</string>
+    <string name="summary_no_contributors">No contributors yet</string>
     <string name="summary_from_members">From %1$d Members</string>
     <string name="summary_surplus">Surplus</string>
     <string name="summary_deficit">Deficit</string>

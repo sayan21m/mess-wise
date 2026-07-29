@@ -48,7 +48,7 @@ public class CashInAdapter extends RecyclerView.Adapter<CashInAdapter.CashInView
         CashInModel item = list.get(position);
 
         String name = item.getUserName() != null ? item.getUserName() : holder.itemView.getContext().getString(R.string.common_unknown);
-        String amount = item.getAmount() != null ? item.getAmount() : "0";
+        String amount = item.getAmountText();
         String time = item.getTimestamp() != null ? item.getTimestamp() : "--";
         String status = item.getStatus() != null ? item.getStatus() : "success";
 

@@ -3,7 +3,7 @@ package com.srtech.messwise.data_models;
 public class ExpenseModel {
     private String expenseId;
     private String category;
-    private double amount;
+    private Object amount;
     private String description;
     private String date;
     private long timestampMillis;
@@ -40,12 +40,26 @@ public class ExpenseModel {
         this.category = category;
     }
 
-    public double getAmount() {
+    public Object getAmount() {
         return amount;
+    }
+
+    public void setAmount(Object amount) {
+        this.amount = amount;
     }
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public double getAmountValue() {
+        if (amount == null) return 0;
+        if (amount instanceof Number) return ((Number) amount).doubleValue();
+        try {
+            return Double.parseDouble(String.valueOf(amount).trim());
+        } catch (Exception ignored) {
+            return 0;
+        }
     }
 
     public String getDescription() {

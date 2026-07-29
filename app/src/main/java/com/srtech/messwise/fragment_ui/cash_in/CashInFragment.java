@@ -360,7 +360,7 @@ public class CashInFragment extends Fragment {
                 if (!isAdded()) return;
                 double expenses = 0;
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    Double amt = ds.child("amount").getValue(Double.class);
+                    Double amt = FinanceUtils.parseAmountOrNull(ds.child("amount").getValue());
                     if (amt != null) {
                         expenses += amt;
                     }
@@ -379,8 +379,7 @@ public class CashInFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
-                Double settled = snapshot.getValue(Double.class);
-                settledExpenses = (settled != null) ? settled : 0;
+                settledExpenses = FinanceUtils.parseAmount(snapshot.getValue());
                 updateBalanceUI();
             }
 
@@ -672,7 +671,7 @@ public class CashInFragment extends Fragment {
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
 
         tvMemberName.setText(model.getUserName());
-        etAmount.setText(model.getAmount());
+        etAmount.setText(model.getAmountText());
         etAmount.setSelection(etAmount.getText().length());
         
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
@@ -708,7 +707,7 @@ public class CashInFragment extends Fragment {
     }
 
     private void updateCashIn(CashInModel model, double newAmount) {
-        double oldAmount = Double.parseDouble(model.getAmount());
+        double oldAmount = model.getAmountValue();
         double diff = newAmount - oldAmount;
         String monthKey = DateUtils.formatMonthKey(model.getTimestampMillis());
 
@@ -732,8 +731,12 @@ public class CashInFragment extends Fragment {
                     public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
                         if (!isAdded()) return;
                         if (committed && error == null) {
-                            model.setAmount(newAmount);
-                            db.getReference().child(messId).child("cash_in").child(model.getTransactionId()).setValue(model)
+                            // Write amount as a number (not String) so Summary can read Double.
+                            model.setAmountValue(newAmount);
+                            java.util.Map<String, Object> updates = new java.util.HashMap<>();
+                            updates.put("amount", newAmount);
+                            db.getReference().child(messId).child("cash_in").child(model.getTransactionId())
+                                    .updateChildren(updates)
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(getContext(), R.string.common_updated, Toast.LENGTH_SHORT).show();
                                         FinanceUtils.updateAllMemberDues(messId);
@@ -767,7 +770,7 @@ public class CashInFragment extends Fragment {
         View btnDelete = dialogView.findViewById(R.id.btnDelete);
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
 
-        tvMsg.setText(getString(R.string.dialog_delete_cash_in_msg, model.getAmount(), model.getUserName()));
+        tvMsg.setText(getString(R.string.dialog_delete_cash_in_msg, model.getAmountText(), model.getUserName()));
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -790,12 +793,7 @@ public class CashInFragment extends Fragment {
     private void deleteTransaction(CashInModel model) {
         if (messId == null || model.getTransactionId() == null || model.getUserId() == null) return;
 
-        double amountToDeduct;
-        try {
-            amountToDeduct = Double.parseDouble(model.getAmount());
-        } catch (NumberFormatException e) {
-            amountToDeduct = 0;
-        }
+        double amountToDeduct = model.getAmountValue();
 
         final double finalAmount = amountToDeduct;
         String transactionMonthKey = DateUtils.formatMonthKey(model.getTimestampMillis());

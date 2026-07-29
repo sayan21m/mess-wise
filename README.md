@@ -6,7 +6,7 @@
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717?style=flat-square&logo=github)](https://github.com/sayan21m/mess-wise)
 [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/sayan21m/mess-wise)
 
-**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.3
+**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.5
 
 ---
 
@@ -44,7 +44,7 @@ Firebase `version_control` example:
 ```json
 {
   "min_version_code": 4,
-  "latest_version_code": 5,
+  "latest_version_code": 6,
   "apk_url": "https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk",
   "update_url": "https://mess-wise.web.app",
   "update_message": "Bug fixes and improvements"

@@ -176,7 +176,7 @@ public class ExpensesFragment extends Fragment {
         View btnUpdate = dialogView.findViewById(R.id.btnUpdate);
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
         
-        etAmount.setText(String.valueOf(model.getAmount()));
+        etAmount.setText(String.valueOf(model.getAmountValue()));
         etDesc.setText(model.getDescription());
         tvCategory.setText(model.getCategory());
 
@@ -198,20 +198,24 @@ public class ExpensesFragment extends Fragment {
             
             if (!newAmount.isEmpty()) {
                 try {
-                    model.setAmount(Double.parseDouble(newAmount));
+                    double parsedAmount = Double.parseDouble(newAmount);
+                    model.setAmount(parsedAmount);
+                    model.setDescription(newDesc);
+                    java.util.Map<String, Object> updates = new java.util.HashMap<>();
+                    updates.put("amount", parsedAmount);
+                    updates.put("description", newDesc);
+                    db.getReference().child(messId).child("expenses").child(model.getExpenseId())
+                            .updateChildren(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                if (isAdded()) {
+                                    Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
+                                    com.srtech.messwise.utils.FinanceUtils.updateAllMemberDues(messId);
+                                }
+                            });
+                    dialog.dismiss();
                 } catch (NumberFormatException e) {
                     etAmount.setError("Invalid amount");
-                    return;
                 }
-                model.setDescription(newDesc);
-                db.getReference().child(messId).child("expenses").child(model.getExpenseId()).setValue(model)
-                        .addOnSuccessListener(aVoid -> {
-                            if (isAdded()) {
-                                Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
-                                com.srtech.messwise.utils.FinanceUtils.updateAllMemberDues(messId);
-                            }
-                        });
-                dialog.dismiss();
             } else {
                 etAmount.setError("Required");
             }
@@ -227,7 +231,7 @@ public class ExpensesFragment extends Fragment {
         View btnDelete = dialogView.findViewById(R.id.btnDelete);
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
 
-        tvMsg.setText("Are you sure you want to delete this expense of ₹" + model.getAmount() + "?");
+        tvMsg.setText("Are you sure you want to delete this expense of ₹" + model.getAmountValue() + "?");
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -367,7 +371,7 @@ public class ExpensesFragment extends Fragment {
                         Calendar expCal = Calendar.getInstance();
                         expCal.setTimeInMillis(expense.getTimestampMillis());
                         if (expCal.get(Calendar.MONTH) == currentMonth && expCal.get(Calendar.YEAR) == currentYear) {
-                            monthlyTotal += expense.getAmount();
+                            monthlyTotal += expense.getAmountValue();
                         }
                     }
                 }

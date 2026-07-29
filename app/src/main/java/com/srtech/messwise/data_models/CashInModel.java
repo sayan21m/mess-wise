@@ -1,22 +1,27 @@
 package com.srtech.messwise.data_models;
 
+/**
+ * Cash-in ledger entry.
+ * Amount is stored as Object so Firebase can deserialize historic String values
+ * as well as numeric doubles. Always write numbers via {@link #setAmountValue(double)}.
+ */
 public class CashInModel {
     private String transactionId;
     private String userId;
     private String userName;
-    private Object amount; // Using Object to handle both String and Long from Firebase
+    private Object amount;
     private String timestamp;
     private long timestampMillis;
     private String status;
     private String type;
-    private long updatedBalance;
+    private Object updatedBalance;
     private String messId;
 
     public CashInModel() {
     }
 
     public CashInModel(String transactionId, String userId, String userName,
-                       Object amount, String timestamp, long timestampMillis, String status) {
+                       double amount, String timestamp, long timestampMillis, String status) {
         this.transactionId = transactionId;
         this.userId = userId;
         this.userName = userName;
@@ -50,12 +55,28 @@ public class CashInModel {
         this.userName = userName;
     }
 
-    public String getAmount() {
-        return amount != null ? String.valueOf(amount) : "0";
+    public Object getAmount() {
+        return amount;
     }
 
     public void setAmount(Object amount) {
         this.amount = amount;
+    }
+
+    public void setAmountValue(double value) {
+        this.amount = value;
+    }
+
+    public double getAmountValue() {
+        return parseNumber(amount);
+    }
+
+    public String getAmountText() {
+        double value = getAmountValue();
+        if (value == Math.rint(value)) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
     }
 
     public String getTimestamp() {
@@ -90,12 +111,16 @@ public class CashInModel {
         this.type = type;
     }
 
-    public long getUpdatedBalance() {
+    public Object getUpdatedBalance() {
         return updatedBalance;
     }
 
-    public void setUpdatedBalance(long updatedBalance) {
+    public void setUpdatedBalance(Object updatedBalance) {
         this.updatedBalance = updatedBalance;
+    }
+
+    public double getUpdatedBalanceValue() {
+        return parseNumber(updatedBalance);
     }
 
     public String getMessId() {
@@ -104,5 +129,15 @@ public class CashInModel {
 
     public void setMessId(String messId) {
         this.messId = messId;
+    }
+
+    private static double parseNumber(Object value) {
+        if (value == null) return 0;
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        try {
+            return Double.parseDouble(String.valueOf(value).trim());
+        } catch (Exception ignored) {
+            return 0;
+        }
     }
 }
