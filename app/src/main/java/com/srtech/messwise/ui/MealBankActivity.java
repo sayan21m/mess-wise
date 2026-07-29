@@ -37,6 +37,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.BaseActivity;
 import com.srtech.messwise.R;
+import com.srtech.messwise.utils.FinanceUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -110,7 +111,7 @@ public class MealBankActivity extends BaseActivity {
                     String name = ds.child("menuName").getValue(String.class);
                     if (name == null || name.trim().isEmpty()) continue;
                     String description = ds.child("description").getValue(String.class);
-                    Double cost = ds.child("cost").getValue(Double.class);
+                    Double cost = FinanceUtils.parseAmountOrNull(ds.child("cost").getValue());
                     Long timestamp = ds.child("timestamp").getValue(Long.class);
                     entries.add(new BankEntry(
                             ds.getKey(),
@@ -243,7 +244,7 @@ public class MealBankActivity extends BaseActivity {
                     if (expensesSnap.exists()) {
                         for (DataSnapshot expDs : expensesSnap.getChildren()) {
                             Long ts = expDs.child("timestampMillis").getValue(Long.class);
-                            Double amt = expDs.child("amount").getValue(Double.class);
+                            Double amt = FinanceUtils.parseAmountOrNull(expDs.child("amount").getValue());
                             if (ts == null || amt == null) continue;
                             Calendar cal = Calendar.getInstance();
                             cal.setTimeInMillis(ts);

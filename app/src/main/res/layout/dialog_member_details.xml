@@ -223,67 +223,87 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Update member role or financial records below." android:textColor="@color/mw_secondary" android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- 3 Action Buttons Footer -->
+    <!-- Clear previous month carry -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClearPrevCarry"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/member_clear_prev_carry"
+        android:textAllCaps="false"
+        android:textColor="@color/dark_text_muted"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/ic_calendar_clock"
+        app:iconGravity="textStart"
+        app:iconSize="16dp"
+        app:iconTint="@color/dark_text_muted"
+        app:layout_constraintTop_toBottomOf="@id/noteBox"
+        app:strokeColor="@color/mw_border" />
+
+    <!-- Action Buttons Footer -->
     <LinearLayout
         android:id="@+id/footerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/noteBox"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnClearPrevCarry">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnManageRole"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_weight="1"
             android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="4dp"
             android:text="Role"
             android:textColor="#F59E0B"
             android:textSize="11sp"
             android:textStyle="bold"
-            app:strokeColor="#F59E0B"
             app:cornerRadius="10dp"
             app:icon="@drawable/ic_admin"
-            app:iconTint="#F59E0B"
-            app:iconSize="14dp"
             app:iconGravity="textStart"
-            android:paddingHorizontal="4dp"/>
+            app:iconSize="14dp"
+            app:iconTint="#F59E0B"
+            app:strokeColor="#F59E0B" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearDue"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_weight="1"
             android:layout_marginHorizontal="3dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="4dp"
             android:text="Clear Due"
             android:textColor="@color/teal_accent"
             android:textSize="11sp"
             android:textStyle="bold"
-            app:strokeColor="@color/teal_accent"
             app:cornerRadius="10dp"
             app:icon="@drawable/ic_summary"
-            app:iconTint="@color/teal_accent"
-            app:iconSize="14dp"
             app:iconGravity="textStart"
-            android:paddingHorizontal="4dp"/>
+            app:iconSize="14dp"
+            app:iconTint="@color/teal_accent"
+            app:strokeColor="@color/teal_accent" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDelete"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_weight="0.8"
             android:layout_marginStart="6dp"
+            android:layout_weight="0.8"
+            android:paddingHorizontal="4dp"
             android:text="Remove"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"
             app:backgroundTint="@color/dark_error"
-            app:cornerRadius="10dp"
-            android:paddingHorizontal="4dp"/>
+            app:cornerRadius="10dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

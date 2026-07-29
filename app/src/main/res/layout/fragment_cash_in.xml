@@ -465,7 +465,7 @@
                         android:layout_marginStart="9dp"
                         android:layout_weight="1"
                         android:letterSpacing="0.1"
-                        android:text="@string/cash_in_recent"
+                        android:text="@string/cash_in_recent_this_month"
                         android:textAllCaps="true"
                         android:textColor="@color/dark_primary"
                         android:textSize="10sp"
@@ -513,9 +513,9 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_card_dark"
                         android:clipToPadding="false"
-                        android:padding="10dp"
                         android:nestedScrollingEnabled="false"
                         android:overScrollMode="never"
+                        android:paddingHorizontal="12dp"
                         android:paddingVertical="6dp"
                         tools:itemCount="5"
                         tools:listitem="@layout/item_transaction" />
@@ -606,8 +606,6 @@
             app:icon="@drawable/ic_add_money"
             app:iconGravity="textStart"
             app:iconPadding="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
             app:iconSize="20dp"
             app:iconTint="@color/bg_dark"
             app:rippleColor="#33000000" />

@@ -93,7 +93,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
                 android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
@@ -111,12 +111,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
+                        android:letterSpacing="0.06"
                         android:maxLines="1"
                         android:text="@string/dashboard_next_meal"
                         android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
-                        android:textSize="11sp"
-                        android:letterSpacing="0.06" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvNextMealName"
@@ -147,7 +147,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
@@ -165,12 +165,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
+                        android:letterSpacing="0.06"
                         android:maxLines="1"
                         android:text="@string/dashboard_meal_status"
                         android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
-                        android:textSize="11sp"
-                        android:letterSpacing="0.06" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvMealStatus"
@@ -206,10 +206,15 @@
             android:weightSum="2">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPendingDue"
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
                 app:strokeColor="@color/color_border"
@@ -217,23 +222,30 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="14dp">
 
                     <TextView
                         android:id="@+id/tvDueLabel"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:letterSpacing="0.06"
+                        android:maxLines="1"
                         android:text="@string/due_pending"
+                        android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/pendingDue"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="₹1,250"
                         android:textColor="@color/dark_error"
                         android:textSize="22sp"
@@ -241,20 +253,24 @@
 
                     <TextView
                         android:id="@+id/dueDeadline"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
                         android:text="@string/due_pay_soon"
                         android:textColor="@color/dark_text_muted"
-                        android:textSize="14sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/mealAttendance"
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
+                android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
                 app:strokeColor="@color/color_border"
@@ -262,33 +278,43 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="14dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:letterSpacing="0.06"
+                        android:maxLines="1"
                         android:text="@string/dashboard_this_month"
+                        android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/totalMeal"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="0 Meals"
                         android:textColor="@color/dark_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="@string/due_attendance_tracked"
                         android:textColor="@color/dark_text_muted"
-                        android:textSize="14sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -302,9 +328,10 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
+                android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
                 app:strokeColor="@color/color_border"
@@ -312,22 +339,29 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="14dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:letterSpacing="0.06"
+                        android:maxLines="1"
                         android:text="@string/summary_total_cash_in"
+                        android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvTotalCashIn"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="₹1,250"
                         android:textColor="#4DC753"
                         android:textSize="22sp"
@@ -337,9 +371,10 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="110dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
+                android:minHeight="118dp"
                 app:cardBackgroundColor="@color/color_surface"
                 app:cardCornerRadius="18dp"
                 app:strokeColor="@color/color_border"
@@ -347,22 +382,29 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="14dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:letterSpacing="0.06"
+                        android:maxLines="1"
                         android:text="@string/dashboard_meal_rate"
+                        android:textAllCaps="true"
                         android:textColor="@color/dark_text_muted"
                         android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvMealRate"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="₹0.00"
                         android:textColor="#E2A861"
                         android:textSize="22sp"

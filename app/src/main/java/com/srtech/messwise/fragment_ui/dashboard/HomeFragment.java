@@ -21,10 +21,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
@@ -36,18 +32,21 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.srtech.messwise.BaseActivity;
 import com.srtech.messwise.R;
 import com.srtech.messwise.admin_ui.MealSlot;
 import com.srtech.messwise.ui.AttendanceActivity;
 import com.srtech.messwise.ui.SettingsActivity;
-
-import com.srtech.messwise.BaseActivity;
 import com.srtech.messwise.utils.DateUtils;
+import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.utils.MenuPlanner;
 import com.srtech.messwise.utils.PermissionUtils;
 import com.srtech.messwise.utils.SecurityUtils;
+import com.srtech.messwise.utils.SettlementDialogHelper;
+
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -67,6 +66,7 @@ public class HomeFragment extends Fragment {
     private boolean menuCommitInFlight = false;
     private int menuPlanningAttempts = 0;
     private static final int MAX_MENU_PLANNING_ATTEMPTS = 3;
+    private View cardPendingDue;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -93,6 +93,7 @@ public class HomeFragment extends Fragment {
         tvMemberDue = view.findViewById(R.id.pendingDue);
         tvDueLabel = view.findViewById(R.id.tvDueLabel);
         tvDueDeadline = view.findViewById(R.id.dueDeadline);
+        cardPendingDue = view.findViewById(R.id.cardPendingDue);
         tvMealRate = view.findViewById(R.id.tvMealRate);
         tvTodayMenu = view.findViewById(R.id.tvTodayMenu);
         tvMenuDescription = view.findViewById(R.id.tvMenuDescription);
@@ -124,7 +125,17 @@ public class HomeFragment extends Fragment {
             });
         }
 
+        if (cardPendingDue != null) {
+            cardPendingDue.setOnClickListener(v -> openSettlementFromDueCard());
+        }
+
         return view;
+    }
+
+    private void openSettlementFromDueCard() {
+        if (!isAdded() || messId == null || userId == null || getActivity() == null) return;
+        // Opens the best ended month with pending rows (amount on card = all past months)
+        SettlementDialogHelper.showForSettleableMonth(requireActivity(), messId, userId);
     }
 
     private void setNextMeal() {
@@ -389,7 +400,8 @@ public class HomeFragment extends Fragment {
                 tvMealRate.setText(String.format(Locale.getDefault(), "₹%.2f", dbRate));
 
                 // Check against goal rate and update color
-                Double goalRate = snapshot.child("config").child("goal_meal_rate").getValue(Double.class);
+                Double goalRate = FinanceUtils.parseAmountOrNull(
+                        snapshot.child("config").child("goal_meal_rate").getValue());
                 
                 // Smart Menu Logic - Always visible
                 cardTodayMenu.setVisibility(View.VISIBLE);
@@ -440,14 +452,13 @@ public class HomeFragment extends Fragment {
                     tvMealRate.setTextColor(requireContext().getColor(R.color.white)); // Default color
                 }
 
-                // Calculate and display total all-time pending due from history
+                // Due up to today = all due_history including the in-progress current month
                 DataSnapshot memberSnap = snapshot.child("member").child(userId);
                 if (memberSnap.exists() && tvMemberDue != null) {
                     double totalDue = 0;
                     DataSnapshot historySnap = memberSnap.child("due_history");
                     for (DataSnapshot monthSnap : historySnap.getChildren()) {
-                        Double mDue = getDoubleValue(monthSnap);
-                        if (mDue != null) totalDue += mDue;
+                        totalDue += FinanceUtils.parseAmount(monthSnap.getValue());
                     }
 
                     tvMemberDue.setText(String.format(Locale.getDefault(), "₹%.2f", Math.abs(totalDue)));
@@ -460,6 +471,10 @@ public class HomeFragment extends Fragment {
                         tvMemberDue.setTextColor(requireContext().getColor(R.color.dark_success));
                         if (tvDueLabel != null) tvDueLabel.setText(R.string.due_advance);
                         if (tvDueDeadline != null) tvDueDeadline.setText(R.string.due_surplus);
+                    }
+                    if (cardPendingDue != null) {
+                        cardPendingDue.setClickable(true);
+                        cardPendingDue.setFocusable(true);
                     }
                 }
 
@@ -503,14 +518,6 @@ public class HomeFragment extends Fragment {
             detail = detail + String.format(Locale.getDefault(), " • target ₹%.2f", menuResult.getTargetUnitCost());
         }
         tvMenuDescription.setText(detail);
-    }
-
-    private Double getDoubleValue(DataSnapshot snapshot) {
-        Object value = snapshot.getValue();
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        }
-        return null;
     }
 
     private void setupNotificationButton(View view) {

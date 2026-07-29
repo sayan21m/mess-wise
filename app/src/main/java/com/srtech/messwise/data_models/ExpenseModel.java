@@ -1,5 +1,10 @@
 package com.srtech.messwise.data_models;
 
+/**
+ * Expense ledger entry.
+ * Amount uses a single Object setter so Firebase can deserialize String/Long/Double
+ * without conflicting setters (which crash CustomClassMapper).
+ */
 public class ExpenseModel {
     private String expenseId;
     private String category;
@@ -44,11 +49,8 @@ public class ExpenseModel {
         return amount;
     }
 
+    /** Single setter required by Firebase — accepts Number or String. */
     public void setAmount(Object amount) {
-        this.amount = amount;
-    }
-
-    public void setAmount(double amount) {
         this.amount = amount;
     }
 

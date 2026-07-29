@@ -371,7 +371,7 @@ public final class MenuPlanner {
             return null;
         }
 
-        Double storedTarget = entrySnap.child("targetRate").getValue(Double.class);
+        Double storedTarget = FinanceUtils.parseAmountOrNull(entrySnap.child("targetRate").getValue());
         double targetUnitCost = storedTarget != null
                 ? storedTarget
                 : computeTargetRate(
@@ -720,7 +720,7 @@ public final class MenuPlanner {
                 continue;
             }
             String description = ds.child("description").getValue(String.class);
-            Double cost = ds.child("cost").getValue(Double.class);
+            Double cost = FinanceUtils.parseAmountOrNull(ds.child("cost").getValue());
             meals.add(new MenuItem(
                     ds.getKey(),
                     name,
@@ -745,7 +745,8 @@ public final class MenuPlanner {
     }
 
     private static double readGoalRate(DataSnapshot messSnapshot, double fallback) {
-        Double goal = messSnapshot.child("config").child("goal_meal_rate").getValue(Double.class);
+        Double goal = FinanceUtils.parseAmountOrNull(
+                messSnapshot.child("config").child("goal_meal_rate").getValue());
         if (goal != null && goal > 0) {
             return goal;
         }
@@ -903,7 +904,7 @@ public final class MenuPlanner {
         }
 
         String description = entrySnap.child("description").getValue(String.class);
-        Double cost = entrySnap.child("cost").getValue(Double.class);
+        Double cost = FinanceUtils.parseAmountOrNull(entrySnap.child("cost").getValue());
         return new MenuItem(menuId != null ? menuId : name, name, description, cost != null ? cost : 0);
     }
 

@@ -22,6 +22,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/itemValueLayout"
@@ -30,8 +31,10 @@
 
         <TextView
             android:id="@+id/tvExpenseTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="Food Purchase"
             android:textColor="@color/white"
             android:textSize="15sp"
@@ -39,8 +42,10 @@
 
         <TextView
             android:id="@+id/tvExpenseDesc"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="Groceries and vegetables"
             android:textColor="@color/mw_secondary"
             android:textSize="12sp" />

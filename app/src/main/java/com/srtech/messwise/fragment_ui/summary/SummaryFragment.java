@@ -37,6 +37,8 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.srtech.messwise.utils.SecurityUtils;
+import com.srtech.messwise.utils.SettlementDialogHelper;
+import com.srtech.messwise.utils.SettlementUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -59,10 +61,11 @@ public class SummaryFragment extends Fragment {
     private LineChart lineChart;
     private TextView tvTotalCashIn, tvTotalExpenses, tvTotalBalance, tvAvgExpense, tvMemberCount, tvBalanceStatus, tvCategoryTotal;
     private TextView tvInsightBudget, tvInsightMembers, tvInsightMembersSub, tvInsightDues, tvInsightDuesSub;
-    private LinearLayout categoryContainer, contributorContainer;
-    private View btnExport, btnViewAllContributors;
+    private LinearLayout categoryContainer, contributorContainer, settlementContainer;
+    private View btnExport, btnViewAllContributors, btnOpenSettlement;
+    private TextView tvSettlementSubtitle, tvSettlementEmpty;
 
-    private String messId;
+    private String messId, userId;
     private FirebaseDatabase db;
     private SharedPreferences prefs;
 
@@ -73,6 +76,7 @@ public class SummaryFragment extends Fragment {
     private ValueEventListener dataListener;
     private double monthlyTotalCash = 0;
     private double monthlyTotalExpenses = 0;
+    private String settlementMonthKey;
 
     public SummaryFragment() {}
 
@@ -109,6 +113,10 @@ public class SummaryFragment extends Fragment {
         
         categoryContainer = v.findViewById(R.id.categoryContainer);
         contributorContainer = v.findViewById(R.id.contributorContainer);
+        settlementContainer = v.findViewById(R.id.settlementContainer);
+        tvSettlementSubtitle = v.findViewById(R.id.tvSettlementSubtitle);
+        tvSettlementEmpty = v.findViewById(R.id.tvSettlementEmpty);
+        btnOpenSettlement = v.findViewById(R.id.btnOpenSettlement);
         
         tvInsightBudget = v.findViewById(R.id.tvInsightBudget);
         tvInsightMembers = v.findViewById(R.id.tvInsightMembers);
@@ -118,6 +126,14 @@ public class SummaryFragment extends Fragment {
         
         btnViewAllContributors = v.findViewById(R.id.btnViewAllContributors);
         btnViewAllContributors.setOnClickListener(view -> showAllContributorsDialog());
+
+        btnOpenSettlement.setOnClickListener(view -> {
+            if (messId == null || userId == null || getActivity() == null) return;
+            String key = settlementMonthKey != null
+                    ? settlementMonthKey
+                    : SettlementDialogHelper.previousMonthKey();
+            SettlementDialogHelper.show(requireActivity(), messId, userId, key);
+        });
         
         btnExport = v.findViewById(R.id.btnExportReport);
         btnExport.setOnClickListener(v1 -> generateAndShareReport());
@@ -127,6 +143,7 @@ public class SummaryFragment extends Fragment {
         db = FirebaseDatabase.getInstance();
         prefs = SecurityUtils.getSecurePrefs(requireContext());
         messId = prefs.getString("messId", null);
+        userId = prefs.getString("userId", null);
     }
 
     private void setupChart() {
@@ -163,6 +180,7 @@ public class SummaryFragment extends Fragment {
                 if (!isAdded()) return;
 
                 processFinanceData(snapshot);
+                populateSettlement(snapshot);
                 updateStatsUI(snapshot);
                 updateInsights(snapshot);
                 updateChart();
@@ -268,6 +286,67 @@ public class SummaryFragment extends Fragment {
 
         populateCategories(totalExp);
         populateContributors(totalCash);
+    }
+
+    private void populateSettlement(DataSnapshot messSnapshot) {
+        if (settlementContainer == null) return;
+
+        // Always show previous (ended) month settlement — not the current in-progress month
+        settlementMonthKey = SettlementDialogHelper.previousMonthKey();
+
+        SettlementUtils.SettlementSnapshot snap =
+                SettlementUtils.fromMessSnapshot(messSnapshot, settlementMonthKey, userId);
+
+        settlementContainer.removeAllViews();
+        if (tvSettlementSubtitle != null) {
+            tvSettlementSubtitle.setText(getString(R.string.settlement_month_title,
+                    SettlementDialogHelper.monthDisplay(settlementMonthKey)));
+        }
+
+        List<SettlementUtils.Payee> preview = snap.rowsForMe();
+        if (preview.isEmpty()) {
+            if (tvSettlementEmpty != null) tvSettlementEmpty.setVisibility(View.VISIBLE);
+            if (btnOpenSettlement != null) {
+                // Still allow opening if mess has any settlement activity
+                btnOpenSettlement.setVisibility(snap.hasPending() ? View.VISIBLE : View.GONE);
+            }
+            return;
+        }
+        if (tvSettlementEmpty != null) tvSettlementEmpty.setVisibility(View.GONE);
+        if (btnOpenSettlement != null) btnOpenSettlement.setVisibility(View.VISIBLE);
+
+        int shown = 0;
+        for (SettlementUtils.Payee p : preview) {
+            if (shown >= 3) break;
+            View row = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_settlement_payee, settlementContainer, false);
+            ((TextView) row.findViewById(R.id.tvName)).setText(p.name);
+            ((TextView) row.findViewById(R.id.tvAmount))
+                    .setText(String.format(Locale.getDefault(), "₹%,.0f", p.amount));
+            String initials = p.name.length() >= 2
+                    ? p.name.substring(0, 2).toUpperCase(Locale.getDefault())
+                    : p.name.toUpperCase(Locale.getDefault());
+            ((TextView) row.findViewById(R.id.tvInitials)).setText(initials);
+
+            View btnPay = row.findViewById(R.id.btnPayUpi);
+            TextView hint = row.findViewById(R.id.tvHint);
+            btnPay.setVisibility(View.GONE);
+            if (snap.myDue > 0.5) {
+                String localUpi = com.srtech.messwise.utils.UpiLocalStore.getContactUpi(requireContext(), p.uid);
+                if (localUpi != null) {
+                    hint.setVisibility(View.VISIBLE);
+                    hint.setText(localUpi);
+                } else {
+                    hint.setVisibility(View.VISIBLE);
+                    hint.setText(R.string.summary_no_upi_hint);
+                }
+            } else {
+                hint.setVisibility(View.VISIBLE);
+                hint.setText(R.string.settlement_expected_from);
+            }
+            settlementContainer.addView(row);
+            shown++;
+        }
     }
 
     private void populateCategories(double total) {

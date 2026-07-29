@@ -1,6 +1,7 @@
 package com.srtech.messwise.fragment_ui.expenses;
 
 import com.srtech.messwise.utils.FinanceUtils;
+import com.srtech.messwise.utils.DateUtils;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -49,7 +50,7 @@ public class ExpensesFragment extends Fragment {
     private SharedPreferences prefs;
     private FirebaseDatabase db;
 
-    private TextView tvTotalExpense, tvCategoryName, tvExpenseDate;
+    private TextView tvTotalExpense, tvAllTimeExpense, tvCategoryName, tvExpenseDate;
     private EditText etExpenseAmount, etExpenseDescription;
     private ImageView ivCategoryIcon;
     private LinearLayout btnSelectCategory, btnSelectDate, btnViewAllExpenses, layoutEmptyExpenses;
@@ -116,6 +117,7 @@ public class ExpensesFragment extends Fragment {
 
     private void initViews(View view) {
         tvTotalExpense = view.findViewById(R.id.tvTotalExpense);
+        tvAllTimeExpense = view.findViewById(R.id.tvAllTimeExpense);
         tvCategoryName = view.findViewById(R.id.tvCategoryName);
         tvExpenseDate = view.findViewById(R.id.tvExpenseDate);
         ivCategoryIcon = view.findViewById(R.id.ivCategoryIcon);
@@ -209,7 +211,8 @@ public class ExpensesFragment extends Fragment {
                             .addOnSuccessListener(aVoid -> {
                                 if (isAdded()) {
                                     Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
-                                    com.srtech.messwise.utils.FinanceUtils.updateAllMemberDues(messId);
+                                    String monthKey = DateUtils.formatMonthKey(model.getTimestampMillis());
+                                    FinanceUtils.refreshDuesForMonth(messId, monthKey);
                                 }
                             });
                     dialog.dismiss();
@@ -247,7 +250,8 @@ public class ExpensesFragment extends Fragment {
                     .addOnSuccessListener(aVoid -> {
                         if (isAdded()) {
                             Toast.makeText(getContext(), "Deleted", Toast.LENGTH_SHORT).show();
-                            FinanceUtils.updateAllMemberDues(messId);
+                            FinanceUtils.refreshDuesForMonth(messId,
+                                    DateUtils.formatMonthKey(model.getTimestampMillis()));
                         }
                     });
             dialog.dismiss();
@@ -340,7 +344,7 @@ public class ExpensesFragment extends Fragment {
                     etExpenseAmount.setText("");
                     etExpenseDescription.setText("");
                     Toast.makeText(getContext(), "Expense added successfully", Toast.LENGTH_SHORT).show();
-                    FinanceUtils.updateAllMemberDues(messId);
+                    FinanceUtils.refreshDuesForMonth(messId, DateUtils.formatMonthKey(timestamp));
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
@@ -358,36 +362,54 @@ public class ExpensesFragment extends Fragment {
                 if (!isAdded()) return;
                 fullExpenseList.clear();
                 double monthlyTotal = 0;
+                double allTimeTotal = 0;
+                List<ExpenseModel> thisMonthList = new ArrayList<>();
 
                 Calendar now = Calendar.getInstance();
                 int currentMonth = now.get(Calendar.MONTH);
                 int currentYear = now.get(Calendar.YEAR);
 
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    ExpenseModel expense = ds.getValue(ExpenseModel.class);
+                    ExpenseModel expense;
+                    try {
+                        expense = ds.getValue(ExpenseModel.class);
+                    } catch (Exception e) {
+                        Log.e("ExpensesFragment", "Skip bad expense " + ds.getKey(), e);
+                        expense = parseExpenseFallback(ds);
+                    }
+                    if (expense == null) {
+                        expense = parseExpenseFallback(ds);
+                    }
                     if (expense != null) {
+                        if (expense.getExpenseId() == null) expense.setExpenseId(ds.getKey());
                         fullExpenseList.add(expense);
-                        
+                        allTimeTotal += expense.getAmountValue();
+
                         Calendar expCal = Calendar.getInstance();
                         expCal.setTimeInMillis(expense.getTimestampMillis());
                         if (expCal.get(Calendar.MONTH) == currentMonth && expCal.get(Calendar.YEAR) == currentYear) {
                             monthlyTotal += expense.getAmountValue();
+                            thisMonthList.add(expense);
                         }
                     }
                 }
 
-                String formattedTotal = String.format(Locale.getDefault(), "₹%,.0f", monthlyTotal);
-                tvTotalExpense.setText(formattedTotal);
-                
-                Collections.sort(fullExpenseList, (o1, o2) -> Long.compare(o2.getTimestampMillis(), o1.getTimestampMillis()));
-                
-                List<ExpenseModel> recentExpenses = new ArrayList<>();
-                if (fullExpenseList.size() > 10) {
-                    recentExpenses.addAll(fullExpenseList.subList(0, 10));
-                } else {
-                    recentExpenses.addAll(fullExpenseList);
+                tvTotalExpense.setText(String.format(Locale.getDefault(), "₹%,.0f", monthlyTotal));
+                if (tvAllTimeExpense != null) {
+                    tvAllTimeExpense.setText(String.format(Locale.getDefault(), "₹%,.0f", allTimeTotal));
                 }
-                
+
+                Collections.sort(thisMonthList, (o1, o2) -> Long.compare(o2.getTimestampMillis(), o1.getTimestampMillis()));
+                Collections.sort(fullExpenseList, (o1, o2) -> Long.compare(o2.getTimestampMillis(), o1.getTimestampMillis()));
+
+                // Recent list = this month only (up to 10)
+                List<ExpenseModel> recentExpenses = new ArrayList<>();
+                if (thisMonthList.size() > 10) {
+                    recentExpenses.addAll(thisMonthList.subList(0, 10));
+                } else {
+                    recentExpenses.addAll(thisMonthList);
+                }
+
                 expenseAdapter.setData(recentExpenses);
                 updateEmptyState(recentExpenses.isEmpty());
             }
@@ -397,6 +419,25 @@ public class ExpensesFragment extends Fragment {
                 Log.e("ExpensesFragment", "Database error: " + error.getMessage());
             }
         });
+    }
+
+    @Nullable
+    private ExpenseModel parseExpenseFallback(DataSnapshot ds) {
+        try {
+            ExpenseModel expense = new ExpenseModel();
+            expense.setExpenseId(ds.getKey());
+            expense.setCategory(ds.child("category").getValue(String.class));
+            expense.setAmount(ds.child("amount").getValue());
+            expense.setDescription(ds.child("description").getValue(String.class));
+            expense.setDate(ds.child("date").getValue(String.class));
+            Long ts = ds.child("timestampMillis").getValue(Long.class);
+            expense.setTimestampMillis(ts != null ? ts : 0L);
+            expense.setAddedBy(ds.child("addedBy").getValue(String.class));
+            expense.setMessId(ds.child("messId").getValue(String.class));
+            return expense;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void updateEmptyState(boolean isEmpty) {

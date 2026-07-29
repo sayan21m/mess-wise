@@ -41,6 +41,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.R;
 import com.srtech.messwise.data_models.Member;
 import com.srtech.messwise.utils.DateUtils;
+import com.srtech.messwise.utils.FinanceUtils;
+import com.srtech.messwise.utils.SettlementDialogHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -347,6 +349,11 @@ public class MemberAdminActivity extends BaseActivity {
             dialog.dismiss();
             showClearDuePopup(member);
         });
+
+        dialogView.findViewById(R.id.btnClearPrevCarry).setOnClickListener(v -> {
+            dialog.dismiss();
+            showClearPreviousCarryDialog(member);
+        });
         
         View btnManageRole = dialogView.findViewById(R.id.btnManageRole);
         btnManageRole.setVisibility(View.GONE);
@@ -645,6 +652,50 @@ public class MemberAdminActivity extends BaseActivity {
         });
 
         dialog.show();
+    }
+
+    /** Write off previous month due_history (carry) for this member. */
+    private void showClearPreviousCarryDialog(Member member) {
+        if (messId == null || member.getUid() == null) return;
+
+        String prevMonthKey = SettlementDialogHelper.previousMonthKey();
+        String monthLabel = SettlementDialogHelper.monthDisplay(prevMonthKey);
+
+        db.getReference().child(messId).child("member").child(member.getUid())
+                .child("due_history").child(prevMonthKey)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    double carry = FinanceUtils.parseAmount(snap.getValue());
+                    if (Math.abs(carry) < 0.5) {
+                        Toast.makeText(this, R.string.member_clear_prev_carry_none, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String amt = String.format(Locale.getDefault(), "%.0f", Math.abs(carry));
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.member_clear_prev_carry_title)
+                            .setMessage(getString(R.string.member_clear_prev_carry_msg,
+                                    member.getName() != null ? member.getName() : "Member",
+                                    monthLabel,
+                                    amt))
+                            .setPositiveButton(R.string.member_clear_prev_carry_confirm, (d, w) ->
+                                    clearPreviousMonthCarry(member.getUid(), prevMonthKey))
+                            .setNegativeButton(R.string.common_cancel, null)
+                            .show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
+    }
+
+    private void clearPreviousMonthCarry(String memberUid, String prevMonthKey) {
+        db.getReference().child(messId).child("member").child(memberUid)
+                .child("due_history").child(prevMonthKey)
+                .setValue(0)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(this, R.string.member_clear_prev_carry_done, Toast.LENGTH_SHORT).show();
+                    // Current-month dues stay managed by FinanceUtils; previous carry is intentionally written off
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
     }
 
     private void showClearDuePopup(Member member) {

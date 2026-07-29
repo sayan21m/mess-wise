@@ -32,6 +32,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.utils.FormUtils;
 
@@ -183,22 +184,34 @@ public class CreateAccountActivity extends BaseActivity {
 
             String messID = makeMessId(messName);
             if (isAdmin) {
-                messIdExistance(messID, exist -> {
-                    if (exist) {
-                        Toast.makeText(this, R.string.toast_id_exists, Toast.LENGTH_SHORT).show();
+                messIdExistance(messID, new MessCheckCallback() {
+                    @Override public void onExists() {
+                        Toast.makeText(CreateAccountActivity.this, R.string.toast_id_exists, Toast.LENGTH_SHORT).show();
                         etMessName.setError(getString(R.string.toast_id_exists));
-                    } else {
+                    }
+                    @Override public void onNotExists() {
                         createAccount(managerMail, password, messID, managerName, messName, cbRemember());
+                    }
+                    @Override public void onError(String message) {
+                        Toast.makeText(CreateAccountActivity.this,
+                                getString(R.string.toast_mess_check_failed, message),
+                                Toast.LENGTH_LONG).show();
                     }
                 });
             } else {
                 // Member: messName field holds the existing Mess ID
-                messIdExistance(messName, exist -> {
-                    if (!exist) {
-                        Toast.makeText(this, R.string.toast_id_not_exists, Toast.LENGTH_SHORT).show();
-                        etMessName.setError(getString(R.string.toast_id_not_exists));
-                    } else {
+                messIdExistance(messName, new MessCheckCallback() {
+                    @Override public void onExists() {
                         createAccount(managerMail, password, messName, managerName, messName, cbRemember());
+                    }
+                    @Override public void onNotExists() {
+                        Toast.makeText(CreateAccountActivity.this, R.string.toast_id_not_exists, Toast.LENGTH_SHORT).show();
+                        etMessName.setError(getString(R.string.toast_id_not_exists));
+                    }
+                    @Override public void onError(String message) {
+                        Toast.makeText(CreateAccountActivity.this,
+                                getString(R.string.toast_mess_check_failed, message),
+                                Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -331,30 +344,64 @@ public class CreateAccountActivity extends BaseActivity {
     }
 
     private void saveMembership(String messId, String uid, String name, String mail, String messDisplayName, boolean rememberMe) {
-        Map<String, Object> updates = new HashMap<>();
-
         if (isAdmin) {
+            Map<String, Object> updates = new HashMap<>();
             updates.put(messId + "/admin_uid", uid);
             updates.put(messId + "/mess_name", messDisplayName);
             updates.put(messId + "/member/" + uid + "/role", "Admin");
             updates.put(messId + "/member/" + uid + "/meal_count", 0);
-        } else {
-            updates.put(messId + "/member/" + uid + "/role", "Member");
-            // meal_count is set below only when missing — avoid wiping an existing member's count
+            updates.put(messId + "/member/" + uid + "/name", name);
+            updates.put(messId + "/member/" + uid + "/mail", mail);
+            updates.put(messId + "/member/" + uid + "/is_admin", true);
+            applyMembershipUpdates(messId, uid, messDisplayName, rememberMe, updates, true);
+            return;
         }
 
-        updates.put(messId + "/member/" + uid + "/name", name);
-        updates.put(messId + "/member/" + uid + "/mail", mail);
-        updates.put(messId + "/member/" + uid + "/is_admin", isAdmin);
+        // Joining: never demote an existing admin / admin_uid owner
+        db.getReference().child(messId).get().addOnSuccessListener(messSnap -> {
+            String adminUid = messSnap.child("admin_uid").getValue(String.class);
+            DataSnapshot existing = messSnap.child("member").child(uid);
+            boolean preserveAdmin = uid.equals(adminUid)
+                    || Boolean.TRUE.equals(existing.child("is_admin").getValue(Boolean.class));
+            String existingRole = existing.child("role").getValue(String.class);
 
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(messId + "/member/" + uid + "/name", name);
+            updates.put(messId + "/member/" + uid + "/mail", mail);
+            if (preserveAdmin) {
+                updates.put(messId + "/member/" + uid + "/is_admin", true);
+                if (existingRole == null || existingRole.trim().isEmpty()) {
+                    updates.put(messId + "/member/" + uid + "/role", "Admin");
+                }
+                // Keep existing role when present
+            } else {
+                updates.put(messId + "/member/" + uid + "/is_admin", false);
+                if (!existing.exists() || existingRole == null || existingRole.trim().isEmpty()) {
+                    updates.put(messId + "/member/" + uid + "/role", "Member");
+                }
+            }
+            applyMembershipUpdates(messId, uid, messDisplayName, rememberMe, updates, preserveAdmin);
+        }).addOnFailureListener(error -> {
+            resetCreateButton();
+            Log.e("SGT", "Membership read failed: " + error.getMessage());
+            Toast.makeText(this,
+                    getString(R.string.toast_join_failed)
+                            + (error.getMessage() != null ? "\n" + error.getMessage() : ""),
+                    Toast.LENGTH_LONG).show();
+        });
+    }
+
+    private void applyMembershipUpdates(String messId, String uid, String messDisplayName,
+                                        boolean rememberMe, Map<String, Object> updates,
+                                        boolean finishAsAdmin) {
         db.getReference().updateChildren(updates)
                 .addOnSuccessListener(unused -> {
-                    if (isAdmin) {
-                        finishAccountCreation(uid, messId, messDisplayName, rememberMe);
+                    if (isAdmin || finishAsAdmin) {
+                        finishAccountCreation(uid, messId, messDisplayName, rememberMe, finishAsAdmin || isAdmin);
                         return;
                     }
                     ensureMealCount(messId, uid, () ->
-                            finishAccountCreation(uid, messId, messDisplayName, rememberMe));
+                            finishAccountCreation(uid, messId, messDisplayName, rememberMe, false));
                 })
                 .addOnFailureListener(error -> {
                     resetCreateButton();
@@ -382,26 +429,34 @@ public class CreateAccountActivity extends BaseActivity {
                 });
     }
 
-    private void finishAccountCreation(String uid, String messId, String messDisplayName, boolean rememberMe) {
+    private void finishAccountCreation(String uid, String messId, String messDisplayName,
+                                       boolean rememberMe, boolean adminSession) {
         resetCreateButton();
         Toast.makeText(this, R.string.toast_account_created, Toast.LENGTH_SHORT).show();
-        saveLoginState(rememberMe, uid, messId, messDisplayName, isAdmin);
-        navigateToMain(uid, messId, messDisplayName, isAdmin);
+        saveLoginState(rememberMe, uid, messId, messDisplayName, adminSession);
+        navigateToMain(uid, messId, messDisplayName, adminSession);
     }
 
-    private interface MessExistanceCallback {
-        void onResult(boolean exist);
+    private interface MessCheckCallback {
+        void onExists();
+        void onNotExists();
+        void onError(String message);
     }
 
-    private void messIdExistance(String messId, MessExistanceCallback callback) {
+    private void messIdExistance(String messId, MessCheckCallback callback) {
         // We check for the 'mess_name' field specifically, which we'll make publicly readable
         db.getReference().child(messId).child("mess_name").get()
                 .addOnSuccessListener(snapshot -> {
-                    callback.onResult(snapshot.exists());
+                    if (snapshot.exists()) {
+                        callback.onExists();
+                    } else {
+                        callback.onNotExists();
+                    }
                 })
                 .addOnFailureListener(error -> {
                     Log.e("SGT", "Mess existence check failed: " + error.getMessage());
-                    callback.onResult(false);
+                    String msg = error.getMessage() != null ? error.getMessage() : "Unknown error";
+                    callback.onError(msg);
                 });
     }
 

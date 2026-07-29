@@ -15,7 +15,8 @@
 ### 📊 Analytics & Reporting
 - **Interactive dashboard** — monthly cash flow and expense charts via MPAndroidChart
 - **Category breakdown** — Food, LPG, rent, and more with live progress indicators
-- **Monthly reports** — debt vs. surplus lists, exportable and shareable via WhatsApp or email
+- **Contributors** — top contributors with a full member list view
+- **Monthly reports** — exportable and shareable via WhatsApp or email
 
 ### 🍱 Meal Management
 - **Real-time attendance** — meal booking and status sync instantly across members
@@ -24,12 +25,15 @@
 - **Monthly awards** — Meal Champion and Golden Duck badges to keep the mess engaged
 
 ### 💰 Finance
-- **Cash-in & expenses** — role-based permissions for treasurers and admins
-- **Due reminders** — automatic alerts so pending dues don't pile up
-- **Settlement** — end-of-month calculations with exportable summaries
+- **Cash-in & expenses** — role-based permissions for treasurers and admins; this-month and all-time expense totals
+- **Pending due (Home)** — live balance of dues up to today across due history
+- **Due reminders** — background alerts plus an app-open prompt until last month’s settlement is cleared
+- **Month-end settlement** — previous-month dues matched debtor → creditor (who you pay / who pays you)
+- **Pay via UPI** — optional UPI IDs stored **only on this device** (never uploaded to Firebase); confirm after payment to update balances
+- **Admin tools** — clear previous-month carry per member; clear mess wallet & expenses (with dues reset)
 
 ### 🛡️ Security
-- **Encrypted storage** — EncryptedSharedPreferences backed by the Android Keystore
+- **Encrypted storage** — EncryptedSharedPreferences backed by the Android Keystore (including local UPI preferences)
 - **Anti-screenshot** — blocks captures on sensitive financial and admin screens
 - **Root detection** — integrity checks on compromised devices
 - **R8 obfuscation** — hardened release builds
@@ -142,10 +146,23 @@ docs/
 
 ```
 app/src/main/java/com/srtech/messwise/
-├── fragment_ui/        # Feature screens (home, cash-in, expenses, admin, …)
-├── ui/                 # Activities (settings, auth, …)
-└── utils/              # AppUpdateManager, MenuPlanner, PermissionUtils, …
+├── fragment_ui/        # Home, cash-in, expenses, summary, …
+├── admin_ui/           # Member / meal admin
+├── ui/                 # Settings, auth, meal bank, …
+├── data_models/        # Firebase models
+├── workers/            # Due reminder WorkManager jobs
+└── utils/              # FinanceUtils, SettlementUtils, MenuPlanner,
+                        # PermissionUtils, UpiLocalStore, AppUpdateManager, …
 ```
+
+### How dues & settlement work (short)
+
+| Concept | Behavior |
+| --- | --- |
+| Current month due | `(meal rate × meals) − monthly cash-in` for the calendar month |
+| Home pending due | Sum of `due_history` **up to today** (all months including current) |
+| Settlement | Previous (ended) month only — matched who-pays-whom; not the in-progress month |
+| UPI | Optional; saved locally per device; payment apps open via UPI intent |
 
 ---
 

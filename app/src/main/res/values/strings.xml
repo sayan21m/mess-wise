@@ -26,6 +26,19 @@
     <string name="setting_meal_bank_desc">View saved menus and costs</string>
     <string name="setting_goal_rate">Goal Meal Rate</string>
     <string name="setting_goal_rate_desc">Set monthly target rate</string>
+    <string name="expense_this_month">This month</string>
+    <string name="expense_this_month_hint">Current month total</string>
+    <string name="expense_all_time">All time</string>
+    <string name="expense_all_time_hint">Lifetime total</string>
+    <string name="expense_recent_this_month">This month</string>
+    <string name="cash_in_recent_this_month">This month</string>
+    <string name="setting_clear_wallet">Clear wallet &amp; expenses</string>
+    <string name="setting_clear_wallet_desc">Reset mess balance and expense ledger</string>
+    <string name="setting_clear_wallet_title">Clear mess wallet?</string>
+    <string name="setting_clear_wallet_msg">This permanently deletes all expenses, cash-in history, and member wallet balances for this mess. Member dues will be recalculated. This cannot be undone.</string>
+    <string name="setting_clear_wallet_confirm">Clear everything</string>
+    <string name="setting_clear_wallet_done">Mess wallet and expenses cleared</string>
+    <string name="setting_clear_wallet_denied">Only admin or finance managers can do this</string>
     <string name="menu_use_today">Today</string>
     <string name="menu_cost_helper_title">Estimate per-plate rate from today</string>
     <string name="menu_today_cost_hint">Today\'s expenses ₹%1$.0f ÷ %2$d members = ₹%3$.0f / plate</string>
@@ -83,8 +96,9 @@
 
     <string name="due_pending">PENDING DUE</string>
     <string name="due_advance">ADVANCE BALANCE</string>
-    <string name="due_pay_soon">Please pay soon</string>
-    <string name="due_surplus">Account in surplus</string>
+    <string name="due_pay_soon">Up to today · Tap to settle</string>
+    <string name="due_surplus">Tap to view</string>
+    <string name="due_settle_none">No settlement needed right now</string>
     <string name="due_attendance_tracked">Attendance tracked</string>
 
     <!-- Summary -->
@@ -105,6 +119,47 @@
     <string name="summary_surplus">Surplus</string>
     <string name="summary_deficit">Deficit</string>
     <string name="summary_total">Total</string>
+    <string name="summary_settlement">Month Settlement</string>
+    <string name="settlement_expected_from">Will pay you</string>
+    <string name="member_clear_prev_carry">Clear previous carry</string>
+    <string name="member_clear_prev_carry_title">Clear previous month carry?</string>
+    <string name="member_clear_prev_carry_msg">This will write off %1$s\'s previous month (%2$s) due of ₹%3$s. It cannot be undone.</string>
+    <string name="member_clear_prev_carry_none">No previous month carry for this member</string>
+    <string name="member_clear_prev_carry_done">Previous carry cleared</string>
+    <string name="member_clear_prev_carry_confirm">Clear carry</string>
+    <string name="settlement_prompt_owe">You still have pending dues from last month to settle. Clear them to stop this reminder.</string>
+    <string name="settlement_prompt_receive">Members still owe you from last month. Open settlement to see who.</string>
+    <string name="summary_settlement_subtitle">Send money to these members to clear dues</string>
+    <string name="summary_settlement_empty">No pending settlements this month</string>
+    <string name="summary_settlement_view">View settlement</string>
+    <string name="summary_pay_via_upi">Pay via UPI</string>
+    <string name="summary_pay_in_person">Pay in person</string>
+    <string name="summary_no_upi_hint">Enter UPI when paying — saved only on this device</string>
+    <string name="settlement_enter_upi_for">Enter %1$s\'s UPI ID (saved on this device only)</string>
+    <string name="settlement_title">Clear Dues</string>
+    <string name="settlement_month_title">Settle %1$s</string>
+    <string name="settlement_you_owe">You owe ₹%1$s</string>
+    <string name="settlement_you_receive">You should receive ₹%1$s</string>
+    <string name="settlement_pay_confirm_title">Payment successful?</string>
+    <string name="settlement_pay_confirm_msg">Confirm only if ₹%1$s was paid to %2$s. This will update dues.</string>
+    <string name="settlement_paid">Yes, paid</string>
+    <string name="settlement_not_paid">Not yet</string>
+    <string name="settlement_cleared">Settlement recorded</string>
+    <string name="settlement_failed">Could not update settlement</string>
+    <string name="settlement_shortfall">₹%1$s cannot be matched (mess shortfall — no surplus left)</string>
+    <string name="settlement_no_surplus">No member has surplus to receive payments this month</string>
+    <string name="settlement_upi_missing_app">No UPI app found</string>
+    <string name="settlement_cannot_pay_self">This is your own surplus</string>
+    <string name="settlement_need_debt">You have no pending debt to settle</string>
+
+    <string name="setting_upi_id">UPI ID</string>
+    <string name="setting_upi_id_desc">Optional — saved only on this device</string>
+    <string name="setting_upi_title">UPI ID</string>
+    <string name="setting_upi_subtitle">Optional. Stored on this device only — never uploaded to the cloud</string>
+    <string name="setting_upi_hint">name@upi</string>
+    <string name="toast_upi_updated">UPI ID saved</string>
+    <string name="toast_upi_cleared">UPI ID removed</string>
+    <string name="toast_upi_invalid">Enter a valid UPI ID (e.g. name@upi)</string>
 
     <string name="insight_cash_healthy">Cash in is healthy</string>
     <string name="insight_cash_exceeding">Expenses exceeding!</string>
@@ -221,6 +276,7 @@
     <string name="toast_agree_terms">Please agree to the terms</string>
     <string name="toast_id_exists">Mess ID already exists</string>
     <string name="toast_id_not_exists">Mess ID not exists</string>
+    <string name="toast_mess_check_failed">Could not verify Mess ID: %1$s</string>
     <string name="toast_user_null">User is null</string>
     <string name="toast_already_member">You are already a member of this mess</string>
     <string name="toast_account_created">Account created successfully!</string>

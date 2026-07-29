@@ -30,6 +30,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,6 +40,7 @@ import com.srtech.messwise.BaseActivity;
 import com.srtech.messwise.BuildConfig;
 import com.srtech.messwise.LoginActivity;
 import com.srtech.messwise.R;
+import com.srtech.messwise.utils.FinanceUtils;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -177,6 +179,10 @@ public class SettingsActivity extends BaseActivity {
         setupItem(itemMobile, R.drawable.ic_phone, "Update Mobile", "Change contact number");
         itemMobile.setOnClickListener(v -> showUpdateMobileDialog());
 
+        View itemUpi = findViewById(R.id.itemUpi);
+        setupItem(itemUpi, R.drawable.ic_wallet_modern, getString(R.string.setting_upi_id), getString(R.string.setting_upi_id_desc));
+        itemUpi.setOnClickListener(v -> showUpdateUpiDialog());
+
         View itemEmail = findViewById(R.id.itemEmail);
         setupItem(itemEmail, R.drawable.ic_email, "Email Address", "Update email address");
         itemEmail.setOnClickListener(v -> showUpdateEmailDialog());
@@ -214,6 +220,22 @@ public class SettingsActivity extends BaseActivity {
                 Toast.makeText(this, R.string.common_access_denied, Toast.LENGTH_SHORT).show();
             }
         });
+
+        View itemClearWallet = findViewById(R.id.itemClearWallet);
+        boolean canManageFinances = isAdmin || prefs.getBoolean("perm_manage_finances", false);
+        if (itemClearWallet != null) {
+            setupItem(itemClearWallet, R.drawable.ic_wallet_modern,
+                    getString(R.string.setting_clear_wallet),
+                    getString(R.string.setting_clear_wallet_desc));
+            itemClearWallet.setVisibility(canManageFinances ? View.VISIBLE : View.GONE);
+            itemClearWallet.setOnClickListener(v -> {
+                if (!(isAdmin || prefs.getBoolean("perm_manage_finances", false))) {
+                    Toast.makeText(this, R.string.setting_clear_wallet_denied, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                showClearWalletConfirmDialog();
+            });
+        }
 
         // Support Section
         View itemFaq = findViewById(R.id.itemFaq);
@@ -337,7 +359,7 @@ public class SettingsActivity extends BaseActivity {
                     if (expensesSnap.exists()) {
                         for (DataSnapshot expDs : expensesSnap.getChildren()) {
                             Long ts = expDs.child("timestampMillis").getValue(Long.class);
-                            Double amt = expDs.child("amount").getValue(Double.class);
+                            Double amt = FinanceUtils.parseAmountOrNull(expDs.child("amount").getValue());
                             if (ts == null || amt == null) continue;
                             Calendar cal = Calendar.getInstance();
                             cal.setTimeInMillis(ts);
@@ -550,6 +572,57 @@ public class SettingsActivity extends BaseActivity {
                     Toast.makeText(this, R.string.toast_mobile_updated, Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
+    }
+
+    private void showClearWalletConfirmDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.setting_clear_wallet_title)
+                .setMessage(R.string.setting_clear_wallet_msg)
+                .setPositiveButton(R.string.setting_clear_wallet_confirm, (d, w) -> {
+                    if (messId == null) {
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Toast.makeText(this, R.string.common_loading, Toast.LENGTH_SHORT).show();
+                    com.srtech.messwise.utils.FinanceUtils.clearMessWalletAndExpenses(
+                            messId,
+                            () -> Toast.makeText(this, R.string.setting_clear_wallet_done, Toast.LENGTH_LONG).show(),
+                            () -> Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton(R.string.common_cancel, null)
+                .show();
+    }
+
+    private void showUpdateUpiDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_update_upi);
+        setupDialogWindow(dialog);
+
+        EditText etUpi = dialog.findViewById(R.id.etUpiId);
+        MaterialButton btnUpdate = dialog.findViewById(R.id.btnUpdate);
+        MaterialButton btnCancel = dialog.findViewById(R.id.btnCancel);
+
+        String existing = com.srtech.messwise.utils.UpiLocalStore.getMyUpi(this);
+        if (existing != null && etUpi != null) {
+            etUpi.setText(existing);
+            etUpi.setSelection(etUpi.getText().length());
+        }
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnUpdate.setOnClickListener(v -> {
+            String upi = etUpi.getText().toString().trim();
+            if (!com.srtech.messwise.utils.SettlementUtils.isValidUpiId(upi)) {
+                etUpi.setError(getString(R.string.toast_upi_invalid));
+                return;
+            }
+            com.srtech.messwise.utils.UpiLocalStore.setMyUpi(this, upi);
+            dialog.dismiss();
+            Toast.makeText(this,
+                    upi.isEmpty() ? R.string.toast_upi_cleared : R.string.toast_upi_updated,
+                    Toast.LENGTH_SHORT).show();
+        });
+
+        dialog.show();
     }
 
     private void showUpdateEmailDialog() {

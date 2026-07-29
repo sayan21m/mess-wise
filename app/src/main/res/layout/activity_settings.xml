@@ -164,6 +164,7 @@
                     <include layout="@layout/item_setting" android:id="@+id/itemProfile"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemPassword"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemMobile"/>
+                    <include layout="@layout/item_setting" android:id="@+id/itemUpi"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemEmail"/>
 
                 </LinearLayout>
@@ -198,6 +199,7 @@
                     <include layout="@layout/item_setting" android:id="@+id/itemFood"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemMealBank"/>
                     <include layout="@layout/item_setting" android:id="@+id/itemGoalRate"/>
+                    <include layout="@layout/item_setting" android:id="@+id/itemClearWallet"/>
 
                 </LinearLayout>
 

@@ -56,15 +56,16 @@
             <h2>Information we collect</h2>
             <ul>
                 <li><strong>Account data:</strong> Name, email address, and mess membership details when you register or join a mess.</li>
-                <li><strong>Mess data:</strong> Meal attendance, expenses, cash-in records, dues, and admin settings stored in Firebase Realtime Database for your mess group.</li>
+                <li><strong>Mess data:</strong> Meal attendance, expenses, cash-in records, dues, settlement confirmations, and admin settings stored in Firebase Realtime Database for your mess group.</li>
+                <li><strong>Device-only data:</strong> Optional UPI IDs you enter for settlement are stored encrypted on your device only. They are not uploaded to Firebase or shared with other members through our servers.</li>
                 <li><strong>Device data:</strong> Basic app version and crash reports via Firebase Crashlytics to improve stability.</li>
             </ul>
 
             <h2>How we use your information</h2>
-            <p>We use collected data solely to operate mess management features — tracking meals, calculating dues, generating reports, and syncing data between mess members. We do not sell your personal data to third parties.</p>
+            <p>We use collected data solely to operate mess management features — tracking meals, calculating dues, matching month-end settlements, generating reports, and syncing data between mess members. We do not sell your personal data to third parties. UPI payments themselves are processed by your chosen UPI app; MessWise only records a settlement after you confirm payment in the app.</p>
 
             <h2>Data storage & security</h2>
-            <p>Data is stored on Google Firebase infrastructure. Sensitive preferences on your device are encrypted using Android EncryptedSharedPreferences. Financial screens use anti-screenshot protection where enabled.</p>
+            <p>Mess data is stored on Google Firebase infrastructure. Sensitive preferences on your device — including optional UPI IDs — are encrypted using Android EncryptedSharedPreferences. Financial screens use anti-screenshot protection where enabled.</p>
 
             <h2>Data sharing</h2>
             <p>Your mess data is visible to other members and admins within the same mess. We do not share data outside your mess except as required by law or to provide core Firebase hosting services.</p>
@@ -87,7 +88,7 @@
                         </span>
                         <span class="text-lg font-bold">MessWise</span>
                     </div>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, and monthly settlement in one app.</p>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, matched settlement, and optional on-device UPI in one app.</p>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
                         <i data-lucide="github" class="w-4 h-4"></i>
                         github.com/sayan21m/mess-wise

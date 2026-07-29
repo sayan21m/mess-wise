@@ -40,6 +40,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -73,6 +74,8 @@ import com.srtech.messwise.workers.DueReminderWorker;
 import java.util.concurrent.TimeUnit;
 import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.PermissionUtils;
+import com.srtech.messwise.utils.SettlementDialogHelper;
+import com.srtech.messwise.utils.SettlementUtils;
 
 public class MainActivity extends BaseActivity {
 
@@ -87,6 +90,8 @@ public class MainActivity extends BaseActivity {
     private ValueEventListener slotsDialogListener;
     private ValueEventListener permissionListener;
     private long lastWheelClickTime = 0;
+    /** Show settlement once per app session; again on next cold open until dues clear. */
+    private boolean settlementPromptShownThisSession = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +135,7 @@ public class MainActivity extends BaseActivity {
         if (!isAdmin) isAdmin = prefs.getBoolean("isAdmin", false);
 
         checkAndShowMonthlyAwards();
+        // Settlement prompt also runs from onResume each session until dues clear
 
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);
@@ -334,7 +340,7 @@ public class MainActivity extends BaseActivity {
                 double totalExpensesForMonth = 0;
                 for (DataSnapshot expDs : expensesSnapshot.getChildren()) {
                     Long timestamp = expDs.child("timestampMillis").getValue(Long.class);
-                    Double amount = expDs.child("amount").getValue(Double.class);
+                    Double amount = FinanceUtils.parseAmountOrNull(expDs.child("amount").getValue());
                     if (timestamp != null && amount != null) {
                         Calendar expCal = Calendar.getInstance();
                         expCal.setTimeInMillis(timestamp);
@@ -356,6 +362,57 @@ public class MainActivity extends BaseActivity {
                 prefs.edit().putString("last_award_shown", currentKey).apply();
             }
         });
+    }
+
+    /**
+     * Prompt on every app open for the previous (ended) month until that due is cleared.
+     * Never prompts for the in-progress current month.
+     */
+    private void checkAndShowMonthSettlement() {
+        if (messId == null || userId == null || settlementPromptShownThisSession) return;
+        if (isFinishing() || isDestroyed()) return;
+        // Don't stack on top of UPI payment confirmation
+        if (SettlementDialogHelper.hasPendingConfirmation(this)) return;
+
+        final String prevKey = SettlementDialogHelper.previousMonthKey();
+
+        db.getReference().child(messId).get().addOnSuccessListener(snapshot -> {
+            if (isFinishing() || isDestroyed() || settlementPromptShownThisSession) return;
+
+            String monthKey = SettlementDialogHelper.resolveSettleableMonthKey(snapshot, userId);
+            if (monthKey == null) monthKey = prevKey;
+
+            SettlementUtils.SettlementSnapshot snap =
+                    SettlementUtils.fromMessSnapshot(snapshot, monthKey, userId);
+            if (snap.rowsForMe().isEmpty() && snap.unmatchedDebt <= 0.5) return;
+
+            showSettlementPrompt(monthKey, snap);
+        });
+    }
+
+    private void showSettlementPrompt(@NonNull String monthKey,
+                                      @NonNull SettlementUtils.SettlementSnapshot snap) {
+        settlementPromptShownThisSession = true;
+        String title = getString(R.string.settlement_month_title,
+                SettlementDialogHelper.monthDisplay(monthKey));
+        String message = snap.myDue > 0.5
+                ? getString(R.string.settlement_prompt_owe)
+                : getString(R.string.settlement_prompt_receive);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.summary_settlement_view, (d, w) ->
+                        SettlementDialogHelper.show(this, messId, userId, monthKey))
+                .setNegativeButton(R.string.common_cancel, null)
+                .setCancelable(true)
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SettlementDialogHelper.checkPendingConfirmation(this);
+        checkAndShowMonthSettlement();
     }
 
     private void showAwardDialog(String winner, int maxMeals, String duck, int minMeals, Calendar month) {
@@ -564,7 +621,7 @@ public class MainActivity extends BaseActivity {
             List<String> keysToDelete = new ArrayList<>();
             for (DataSnapshot ds : snapshot.getChildren()) {
                 Long ts = ds.child("timestampMillis").getValue(Long.class);
-                Double amt = ds.child("amount").getValue(Double.class);
+                Double amt = FinanceUtils.parseAmountOrNull(ds.child("amount").getValue());
                 if (ts != null && amt != null) {
                     Calendar expCal = Calendar.getInstance();
                     expCal.setTimeInMillis(ts);
@@ -669,16 +726,21 @@ public class MainActivity extends BaseActivity {
 
     private void checkUserPermissions() {
         if (messId == null || userId == null) return;
-        db.getReference().child(messId).child("member").child(userId)
+        db.getReference().child(messId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Boolean adminFlag = snapshot.child("is_admin").getValue(Boolean.class);
-                if (adminFlag != null) {
-                    isAdmin = adminFlag;
-                    prefs.edit().putBoolean("isAdmin", isAdmin).apply();
+                String adminUid = snapshot.child("admin_uid").getValue(String.class);
+                Boolean adminFlag = snapshot.child("member").child(userId)
+                        .child("is_admin").getValue(Boolean.class);
+                isAdmin = userId.equals(adminUid) || (adminFlag != null && adminFlag);
+                prefs.edit().putBoolean("isAdmin", isAdmin).apply();
+
+                String role = snapshot.child("member").child(userId).child("role").getValue(String.class);
+                if (userId.equals(adminUid)) {
+                    role = "Admin";
+                } else if (role == null) {
+                    role = isAdmin ? "Admin" : "Member";
                 }
-                String role = snapshot.child("role").getValue(String.class);
-                if (role == null) role = isAdmin ? "Admin" : "Member";
                 fetchPermissionsAndAct(role);
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
@@ -738,6 +800,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        settlementPromptShownThisSession = false;
         if (permissionListener != null && messId != null) {
             db.getReference().child(messId).removeEventListener(permissionListener);
             permissionListener = null;

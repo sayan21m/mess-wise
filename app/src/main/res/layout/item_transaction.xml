@@ -40,8 +40,10 @@
 
             <TextView
                 android:id="@+id/tvMemberName"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:textColor="@color/dark_text_primary"
                 android:textSize="15sp"
                 android:textStyle="bold"
@@ -49,9 +51,11 @@
 
             <TextView
                 android:id="@+id/tvTransactionMeta"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:textColor="@color/dark_text_muted"
                 android:textSize="12sp"
                 tools:text="₹1,000 • UPI • 12 May 2025, 08:45 PM" />
@@ -61,6 +65,7 @@
             android:id="@+id/tvTransactionStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
             android:background="@drawable/bg_success_badge"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"

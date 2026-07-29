@@ -45,16 +45,17 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ExpenseModel expense = expenseList.get(position);
-        holder.tvTitle.setText(expense.getCategory());
-        holder.tvDesc.setText(expense.getDescription());
+        String category = expense.getCategory() != null ? expense.getCategory() : "";
+        holder.tvTitle.setText(category.isEmpty() ? "Expense" : category);
+        holder.tvDesc.setText(expense.getDescription() != null ? expense.getDescription() : "");
         holder.tvAmount.setText("₹" + (int) expense.getAmountValue());
-        holder.tvDate.setText(expense.getDate());
+        holder.tvDate.setText(expense.getDate() != null ? expense.getDate() : "--");
 
         // Dynamic icon and color based on category
         int iconRes = R.drawable.ic_receipt;
         int colorInt = Color.parseColor("#00BFA5"); // Default Teal
 
-        switch (expense.getCategory()) {
+        switch (category) {
             case "Food":
                 iconRes = R.drawable.ic_meal;
                 colorInt = Color.parseColor("#00BFA5");

@@ -407,24 +407,38 @@ public class CashInFragment extends Fragment {
                         fullCashInList.clear();
                         Log.d(TAG, "loadCashIn: Found " + snapshot.getChildrenCount() + " records");
 
+                        Calendar now = Calendar.getInstance();
+                        int currentMonth = now.get(Calendar.MONTH);
+                        int currentYear = now.get(Calendar.YEAR);
+                        List<CashInModel> thisMonthList = new ArrayList<>();
+
                         for (DataSnapshot ds : snapshot.getChildren()) {
                             CashInModel model = ds.getValue(CashInModel.class);
                             if (model != null) {
                                 fullCashInList.add(model);
+                                Calendar cal = Calendar.getInstance();
+                                cal.setTimeInMillis(model.getTimestampMillis());
+                                if (cal.get(Calendar.MONTH) == currentMonth
+                                        && cal.get(Calendar.YEAR) == currentYear) {
+                                    thisMonthList.add(model);
+                                }
                             }
                         }
 
-                        // Reverse to show latest first
+                        // Latest first
                         Collections.reverse(fullCashInList);
+                        Collections.sort(thisMonthList, (a, b) ->
+                                Long.compare(b.getTimestampMillis(), a.getTimestampMillis()));
 
-                        // Only show top 5 in the main fragment
+                        // Recent list = this month only (up to 5)
                         List<CashInModel> recentList = new ArrayList<>();
-                        if (fullCashInList.size() > 5) {
-                            recentList.addAll(fullCashInList.subList(0, 5));
+                        if (thisMonthList.size() > 5) {
+                            recentList.addAll(thisMonthList.subList(0, 5));
                             btnViewAll.setVisibility(View.VISIBLE);
                         } else {
-                            recentList.addAll(fullCashInList);
-                            btnViewAll.setVisibility(View.GONE);
+                            recentList.addAll(thisMonthList);
+                            btnViewAll.setVisibility(fullCashInList.size() > recentList.size()
+                                    ? View.VISIBLE : View.GONE);
                         }
 
                         cashInAdapter.setData(recentList);
@@ -438,13 +452,13 @@ public class CashInFragment extends Fragment {
                             });
                         }
 
-                        updateEmptyState();
+                        updateEmptyState(recentList.isEmpty());
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Log.e(TAG, "Error loading cash_in: " + error.getMessage());
-                        updateEmptyState();
+                        updateEmptyState(true);
                     }
                 };
         db.getReference()
@@ -490,8 +504,8 @@ public class CashInFragment extends Fragment {
         dialog.show();
     }
 
-    private void updateEmptyState() {
-        if (fullCashInList.isEmpty()) {
+    private void updateEmptyState(boolean thisMonthEmpty) {
+        if (thisMonthEmpty) {
             layoutEmptyTransactions.setVisibility(View.VISIBLE);
             rvRecentTransactions.setVisibility(View.GONE);
         } else {
@@ -637,7 +651,7 @@ public class CashInFragment extends Fragment {
                                                 Toast.LENGTH_SHORT).show();
                                     }
                                     etAmount.setText("");
-                                    FinanceUtils.updateAllMemberDues(messId);
+                                    FinanceUtils.refreshDuesForMonth(messId, currentMonthKey);
                                 })
                                 .addOnFailureListener(e -> {
                                     btnAddMoney.setEnabled(true);
@@ -709,7 +723,7 @@ public class CashInFragment extends Fragment {
     private void updateCashIn(CashInModel model, double newAmount) {
         double oldAmount = model.getAmountValue();
         double diff = newAmount - oldAmount;
-        String monthKey = DateUtils.formatMonthKey(model.getTimestampMillis());
+        String monthKey = model.resolveBalanceMonthKey();
 
         // 1. Update member balance
         db.getReference().child(messId).child("member").child(model.getUserId()).child("monthly_balance").child(monthKey)
@@ -739,7 +753,7 @@ public class CashInFragment extends Fragment {
                                     .updateChildren(updates)
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(getContext(), R.string.common_updated, Toast.LENGTH_SHORT).show();
-                                        FinanceUtils.updateAllMemberDues(messId);
+                                        FinanceUtils.refreshDuesForMonth(messId, monthKey);
                                     })
                                     .addOnFailureListener(e -> {
                                         adjustMemberBalance(model.getUserId(), monthKey, -diff);
@@ -796,7 +810,7 @@ public class CashInFragment extends Fragment {
         double amountToDeduct = model.getAmountValue();
 
         final double finalAmount = amountToDeduct;
-        String transactionMonthKey = DateUtils.formatMonthKey(model.getTimestampMillis());
+        String transactionMonthKey = model.resolveBalanceMonthKey();
 
         // 1. Deduct from balance
         db.getReference()
@@ -831,7 +845,7 @@ public class CashInFragment extends Fragment {
                                     .removeValue()
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(getContext(), R.string.toast_trans_deleted, Toast.LENGTH_SHORT).show();
-                                        FinanceUtils.updateAllMemberDues(messId);
+                                        FinanceUtils.refreshDuesForMonth(messId, transactionMonthKey);
                                     })
                                     .addOnFailureListener(e -> {
                                         adjustMemberBalance(model.getUserId(), transactionMonthKey, finalAmount);

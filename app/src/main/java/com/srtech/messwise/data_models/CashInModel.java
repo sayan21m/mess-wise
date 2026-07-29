@@ -16,6 +16,8 @@ public class CashInModel {
     private String type;
     private Object updatedBalance;
     private String messId;
+    /** Month key whose monthly_balance this tx affects (settlement may differ from timestamp month). */
+    private String balanceMonthKey;
 
     public CashInModel() {
     }
@@ -129,6 +131,22 @@ public class CashInModel {
 
     public void setMessId(String messId) {
         this.messId = messId;
+    }
+
+    public String getBalanceMonthKey() {
+        return balanceMonthKey;
+    }
+
+    public void setBalanceMonthKey(String balanceMonthKey) {
+        this.balanceMonthKey = balanceMonthKey;
+    }
+
+    /** Month used for monthly_balance adjustments (settlement month or timestamp month). */
+    public String resolveBalanceMonthKey() {
+        if (balanceMonthKey != null && !balanceMonthKey.trim().isEmpty()) {
+            return balanceMonthKey.trim();
+        }
+        return com.srtech.messwise.utils.DateUtils.formatMonthKey(timestampMillis);
     }
 
     private static double parseNumber(Object value) {
