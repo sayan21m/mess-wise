@@ -8,7 +8,11 @@ package com.srtech.messwise.utils;
 import android.util.Log;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -149,6 +153,84 @@ public class FinanceUtils {
     }
 
     /**
+     * Move expenses older than the previous calendar month into {@code finance/settled_expenses}.
+     * Each expense is claimed via a transaction on {@code finance/settled_expense_ids/{id}} so
+     * concurrent clients cannot double-count the same expense.
+     */
+    public static void archiveOldExpenses(@Nullable String messId) {
+        if (messId == null || messId.isEmpty()) return;
+
+        Calendar cutoff = Calendar.getInstance();
+        cutoff.add(Calendar.MONTH, -1);
+
+        DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(messId);
+        root.child("expenses").get().addOnSuccessListener(snapshot -> {
+            for (DataSnapshot ds : snapshot.getChildren()) {
+                String key = ds.getKey();
+                if (key == null) continue;
+                Long ts = ds.child("timestampMillis").getValue(Long.class);
+                Double amt = parseAmountOrNull(ds.child("amount").getValue());
+                if (ts == null || amt == null || amt <= 0) continue;
+
+                Calendar expCal = Calendar.getInstance();
+                expCal.setTimeInMillis(ts);
+                if (!isExpenseOlderThanCutoff(expCal, cutoff)) continue;
+
+                claimAndArchiveExpense(root, key, amt);
+            }
+        }).addOnFailureListener(e ->
+                Log.e("FinanceUtils", "archiveOldExpenses read failed", e));
+    }
+
+    private static boolean isExpenseOlderThanCutoff(Calendar target, Calendar cutoff) {
+        if (target.get(Calendar.YEAR) < cutoff.get(Calendar.YEAR)) return true;
+        return target.get(Calendar.YEAR) == cutoff.get(Calendar.YEAR)
+                && target.get(Calendar.MONTH) < cutoff.get(Calendar.MONTH);
+    }
+
+    /**
+     * Atomically claim an expense id, then delete it and increment settled_expenses once.
+     * If another client already claimed it, only ensure the expense row is deleted (no second increment).
+     */
+    private static void claimAndArchiveExpense(@NonNull DatabaseReference messRoot,
+                                               @NonNull String expenseId,
+                                               double amount) {
+        DatabaseReference claimRef = messRoot.child("finance").child("settled_expense_ids").child(expenseId);
+        claimRef.runTransaction(new Transaction.Handler() {
+            @NonNull
+            @Override
+            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                if (currentData.getValue() != null) {
+                    return Transaction.abort();
+                }
+                currentData.setValue(amount);
+                return Transaction.success(currentData);
+            }
+
+            @Override
+            public void onComplete(@Nullable DatabaseError error,
+                                   boolean committed,
+                                   @Nullable DataSnapshot currentData) {
+                if (error != null) {
+                    Log.e("FinanceUtils", "claim expense failed: " + expenseId, error.toException());
+                    return;
+                }
+                if (!committed) {
+                    // Another client already counted this expense — just clean up the row if present
+                    messRoot.child("expenses").child(expenseId).removeValue();
+                    return;
+                }
+
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("expenses/" + expenseId, null);
+                updates.put("finance/settled_expenses", ServerValue.increment(amount));
+                messRoot.updateChildren(updates).addOnFailureListener(e ->
+                        Log.e("FinanceUtils", "archive expense write failed: " + expenseId, e));
+            }
+        });
+    }
+
+    /**
      * Admin / manage_finances: wipe expenses, cash-in ledger, settled archive,
      * all member monthly_balance values, and all due_history, then recalculate current dues.
      */
@@ -182,6 +264,7 @@ public class FinanceUtils {
             }
 
             updates.put("finance/settled_expenses", 0);
+            updates.put("finance/settled_expense_ids", null);
 
             DataSnapshot members = snapshot.child("member");
             if (members.exists()) {

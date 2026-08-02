@@ -2,6 +2,7 @@ package com.srtech.messwise.fragment_ui.expenses;
 
 import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.utils.DateUtils;
+import com.srtech.messwise.utils.HistoryMonthNavigator;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -60,6 +61,8 @@ public class ExpensesFragment extends Fragment {
     private ExpenseAdapter expenseAdapter;
     private ExpenseAdapter fullExpenseAdapter;
     private List<ExpenseModel> fullExpenseList = new ArrayList<>();
+    @Nullable private HistoryMonthNavigator expenseHistoryNav;
+    @Nullable private TextView expenseHistoryEmpty;
     
     private String selectedCategory = "Food";
     private Calendar selectedDate = Calendar.getInstance();
@@ -412,6 +415,9 @@ public class ExpensesFragment extends Fragment {
 
                 expenseAdapter.setData(recentExpenses);
                 updateEmptyState(recentExpenses.isEmpty());
+                if (fullExpenseAdapter != null) {
+                    syncExpenseHistoryMonths();
+                }
             }
 
             @Override
@@ -467,20 +473,50 @@ public class ExpensesFragment extends Fragment {
             return WindowInsetsCompat.CONSUMED;
         });
 
+        TextView title = dialogView.findViewById(R.id.tvDialogTitle);
+        if (title != null) title.setText(R.string.expenses_history_title);
+
         RecyclerView rvFullHistory = dialogView.findViewById(R.id.rvFullHistory);
         View btnClose = dialogView.findViewById(R.id.btnClose);
+        expenseHistoryEmpty = dialogView.findViewById(R.id.tvHistoryEmpty);
 
         rvFullHistory.setLayoutManager(new LinearLayoutManager(requireContext()));
         fullExpenseAdapter = new ExpenseAdapter();
         rvFullHistory.setAdapter(fullExpenseAdapter);
-        fullExpenseAdapter.setData(fullExpenseList);
 
         if (canManageFinances()) {
             fullExpenseAdapter.setOnExpenseLongClickListener(this::showExpenseOptionsDialog);
         }
 
+        expenseHistoryNav = HistoryMonthNavigator.bind(dialogView, this::applyExpenseHistoryFilter);
+        expenseHistoryNav.setMonths(
+                HistoryMonthNavigator.collectMonthKeys(fullExpenseList, ExpenseModel::getTimestampMillis),
+                HistoryMonthNavigator.currentMonthKey());
+
         btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.setOnDismissListener(d -> fullExpenseAdapter = null);
+        dialog.setOnDismissListener(d -> {
+            fullExpenseAdapter = null;
+            expenseHistoryNav = null;
+            expenseHistoryEmpty = null;
+        });
         dialog.show();
+    }
+
+    private void syncExpenseHistoryMonths() {
+        if (expenseHistoryNav == null || fullExpenseAdapter == null) return;
+        expenseHistoryNav.setMonths(
+                HistoryMonthNavigator.collectMonthKeys(fullExpenseList, ExpenseModel::getTimestampMillis),
+                expenseHistoryNav.getSelectedMonthKey());
+    }
+
+    private void applyExpenseHistoryFilter(@NonNull String monthKey) {
+        if (fullExpenseAdapter == null) return;
+        List<ExpenseModel> monthList = HistoryMonthNavigator.filterByMonth(
+                fullExpenseList, ExpenseModel::getTimestampMillis, monthKey);
+        Collections.sort(monthList, (o1, o2) -> Long.compare(o2.getTimestampMillis(), o1.getTimestampMillis()));
+        fullExpenseAdapter.setData(monthList);
+        if (expenseHistoryEmpty != null) {
+            expenseHistoryEmpty.setVisibility(monthList.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 }

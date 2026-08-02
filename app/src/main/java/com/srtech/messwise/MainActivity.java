@@ -44,7 +44,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
 import com.srtech.messwise.admin_ui.MealSlot;
@@ -59,6 +58,7 @@ import android.view.animation.DecelerateInterpolator;
 
 import java.text.SimpleDateFormat;
 import com.srtech.messwise.utils.FinanceUtils;
+import com.srtech.messwise.utils.MonthlyReportUtils;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -377,7 +377,12 @@ public class MainActivity extends BaseActivity {
         final String prevKey = SettlementDialogHelper.previousMonthKey();
 
         db.getReference().child(messId).get().addOnSuccessListener(snapshot -> {
-            if (isFinishing() || isDestroyed() || settlementPromptShownThisSession) return;
+            if (isFinishing() || isDestroyed()) return;
+
+            // Snapshot previous-month report before members settle (never overwrites if already saved)
+            MonthlyReportUtils.ensurePreviousMonthArchived(this, messId, snapshot);
+
+            if (settlementPromptShownThisSession) return;
 
             String monthKey = SettlementDialogHelper.resolveSettleableMonthKey(snapshot, userId);
             if (monthKey == null) monthKey = prevKey;
@@ -612,40 +617,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void resetFinance() {
-        if (messId == null) return;
-        Calendar cutoff = Calendar.getInstance();
-        cutoff.add(Calendar.MONTH, -1);
-
-        db.getReference().child(messId).child("expenses").get().addOnSuccessListener(snapshot -> {
-            double amountToSettle = 0;
-            List<String> keysToDelete = new ArrayList<>();
-            for (DataSnapshot ds : snapshot.getChildren()) {
-                Long ts = ds.child("timestampMillis").getValue(Long.class);
-                Double amt = FinanceUtils.parseAmountOrNull(ds.child("amount").getValue());
-                if (ts != null && amt != null) {
-                    Calendar expCal = Calendar.getInstance();
-                    expCal.setTimeInMillis(ts);
-                    if (isOlderThanCutoff(expCal, cutoff)) {
-                        amountToSettle += amt;
-                        keysToDelete.add(ds.getKey());
-                    }
-                }
-            }
-
-            if (!keysToDelete.isEmpty()) {
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("finance/settled_expenses", ServerValue.increment(amountToSettle));
-                for (String key : keysToDelete) {
-                    updates.put("expenses/" + key, null);
-                }
-                db.getReference().child(messId).updateChildren(updates);
-            }
-        });
-    }
-
-    private boolean isOlderThanCutoff(Calendar target, Calendar cutoff) {
-        if (target.get(Calendar.YEAR) < cutoff.get(Calendar.YEAR)) return true;
-        return target.get(Calendar.YEAR) == cutoff.get(Calendar.YEAR) && target.get(Calendar.MONTH) < cutoff.get(Calendar.MONTH);
+        FinanceUtils.archiveOldExpenses(messId);
     }
 
     private void showManageSlotsDialog() {

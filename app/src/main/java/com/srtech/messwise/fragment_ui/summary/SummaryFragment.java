@@ -35,7 +35,10 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.srtech.messwise.utils.HistoryMonthNavigator;
+import com.srtech.messwise.utils.MonthlyReportUtils;
 import com.srtech.messwise.utils.SecurityUtils;
 import com.srtech.messwise.utils.SettlementDialogHelper;
 import com.srtech.messwise.utils.SettlementUtils;
@@ -184,6 +187,8 @@ public class SummaryFragment extends Fragment {
                 updateStatsUI(snapshot);
                 updateInsights(snapshot);
                 updateChart();
+                // Archive previous month once so settlements don't overwrite the saved summary text
+                MonthlyReportUtils.ensurePreviousMonthArchived(requireContext(), messId, snapshot);
             }
 
             @Override
@@ -247,9 +252,12 @@ public class SummaryFragment extends Fragment {
             }
         }
 
-        // Cash-in history for daily chart — amount may be String after older edits
+        // Cash-in history for daily chart — exclude settlement transfers (peer-to-peer,
+        // not mess wallet deposits). Amount may be String after older edits.
         DataSnapshot cashInNode = messSnapshot.child("cash_in");
         for (DataSnapshot ds : cashInNode.getChildren()) {
+            if (isSettlementCashIn(ds)) continue;
+
             Long ts = ds.child("timestampMillis").getValue(Long.class);
             Double amount = parseAmountOrNull(ds.child("amount").getValue());
             if (ts != null && amount != null) {
@@ -329,13 +337,14 @@ public class SummaryFragment extends Fragment {
             ((TextView) row.findViewById(R.id.tvInitials)).setText(initials);
 
             View btnPay = row.findViewById(R.id.btnPayUpi);
+            View btnOffline = row.findViewById(R.id.btnMarkOffline);
             TextView hint = row.findViewById(R.id.tvHint);
             btnPay.setVisibility(View.GONE);
+            if (btnOffline != null) btnOffline.setVisibility(View.GONE);
             if (snap.myDue > 0.5) {
-                String localUpi = com.srtech.messwise.utils.UpiLocalStore.getContactUpi(requireContext(), p.uid);
-                if (localUpi != null) {
+                if (p.hasUpi()) {
                     hint.setVisibility(View.VISIBLE);
-                    hint.setText(localUpi);
+                    hint.setText(p.upiId);
                 } else {
                     hint.setVisibility(View.VISIBLE);
                     hint.setText(R.string.summary_no_upi_hint);
@@ -432,6 +441,7 @@ public class SummaryFragment extends Fragment {
         if (title != null) {
             title.setText(R.string.summary_all_contributors);
         }
+        HistoryMonthNavigator.hide(dialogView);
 
         RecyclerView rv = dialogView.findViewById(R.id.rvFullHistory);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -547,107 +557,57 @@ public class SummaryFragment extends Fragment {
     }
 
     private void generateAndShareReport() {
-        if (messId == null) return;
+        if (messId == null || !isAdded()) return;
+
+        String thisMonth = MonthlyReportUtils.currentMonthKey();
+        String prevMonth = SettlementDialogHelper.previousMonthKey();
+        String[] options = new String[]{
+                getString(R.string.report_pick_this_month, MonthlyReportUtils.monthDisplay(thisMonth)),
+                getString(R.string.report_pick_previous_month, MonthlyReportUtils.monthDisplay(prevMonth))
+        };
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.report_pick_title)
+                .setItems(options, (d, which) -> {
+                    if (which == 0) {
+                        shareMonthReport(thisMonth, true);
+                    } else {
+                        shareMonthReport(prevMonth, false);
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * @param allowOverwrite when true (current month), refresh the archived copy from live data.
+     *                       when false (previous month), prefer the saved archive and never overwrite it.
+     */
+    private void shareMonthReport(@NonNull String monthKey, boolean allowOverwrite) {
+        if (messId == null || !isAdded()) return;
 
         db.getReference().child(messId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String currentMonth = new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(new Date());
-                String monthDisplay = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH).format(new Date()).toUpperCase();
-                SimpleDateFormat entryFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
+                if (!isAdded()) return;
 
-                StringBuilder report = new StringBuilder();
-                report.append(getString(R.string.report_title, monthDisplay)).append("\n\n");
+                String text = null;
+                if (!allowOverwrite) {
+                    text = MonthlyReportUtils.readArchivedText(snapshot, monthKey);
+                }
 
-                Map<String, Integer> memberMeals = new HashMap<>();
-                Map<String, Double> memberGiven = new HashMap<>();
-                int totalMeals = 0;
-                double totalExpenses = 0;
-
-                // 1. Calculate Expenses
-                DataSnapshot expNode = snapshot.child("expenses");
-                for (DataSnapshot ds : expNode.getChildren()) {
-                    Long ts = ds.child("timestampMillis").getValue(Long.class);
-                    Double amount = parseAmountOrNull(ds.child("amount").getValue());
-                    if (ts != null && amount != null) {
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTimeInMillis(ts);
-                        if (new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(cal.getTime()).equals(currentMonth)) {
-                            totalExpenses += amount;
-                        }
+                if (text == null) {
+                    text = MonthlyReportUtils.buildReport(requireContext(), snapshot, monthKey);
+                    if (text.trim().isEmpty()) {
+                        Toast.makeText(requireContext(), R.string.report_previous_unavailable, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    // Save: always for current month; for previous only if not archived yet
+                    if (allowOverwrite || MonthlyReportUtils.readArchivedText(snapshot, monthKey) == null) {
+                        MonthlyReportUtils.saveReport(messId, monthKey, text);
                     }
                 }
 
-                // 2. Process Members
-                DataSnapshot membersNode = snapshot.child("member");
-                report.append(getString(R.string.report_meal_count)).append("\n\n");
-                for (DataSnapshot mSnap : membersNode.getChildren()) {
-                    String name = mSnap.child("name").getValue(String.class);
-                    if (name == null) continue;
-
-                    int count = 0;
-                    DataSnapshot history = mSnap.child("meal_count_history");
-                    for (DataSnapshot entry : history.getChildren()) {
-                        try {
-                            Date d = entryFormat.parse(entry.getKey());
-                            if (d != null) {
-                                Calendar c = Calendar.getInstance();
-                                c.setTime(d);
-                                if (new SimpleDateFormat("yyyy-MM", Locale.ENGLISH).format(c.getTime()).equals(currentMonth)) {
-                                    Integer val = entry.getValue(Integer.class);
-                                    if (val != null) count += val;
-                                }
-                            }
-                        } catch (Exception ignored) {}
-                    }
-                    memberMeals.put(name, count);
-                    totalMeals += count;
-                    report.append(getString(R.string.report_member_meal_count, name, count)).append("\n");
-
-                    double given = parseAmount(mSnap.child("monthly_balance").child(currentMonth).getValue());
-                    memberGiven.put(name, given);
-                }
-
-                double rate = totalMeals > 0 ? totalExpenses / totalMeals : 0;
-
-                report.append("\n").append(getString(R.string.report_total_meal, totalMeals)).append("\n");
-                report.append(getString(R.string.report_total_cash_out, String.format(Locale.ENGLISH, "%.0f", totalExpenses))).append("\n");
-                report.append(getString(R.string.report_meal_rate, String.format(Locale.ENGLISH, "%.2f", rate))).append("\n\n");
-
-                report.append(getString(R.string.report_cost_given_title)).append("\n\n");
-                Map<String, Double> haveToGive = new HashMap<>();
-                Map<String, Double> willGetBack = new HashMap<>();
-
-                for (String name : memberMeals.keySet()) {
-                    double meals = memberMeals.get(name);
-                    double cost = meals * rate;
-                    double given = memberGiven.get(name);
-                    double net = cost - given;
-
-                    report.append(getString(R.string.report_cost_given_item, name, String.format(Locale.ENGLISH, "%.2f", cost), String.format(Locale.ENGLISH, "%.0f", given))).append("\n");
-
-                    if (net > 0.01) {
-                        haveToGive.put(name, net);
-                    } else if (net < -0.01) {
-                        willGetBack.put(name, Math.abs(net));
-                    }
-                }
-
-                if (!haveToGive.isEmpty()) {
-                    report.append("\n\n").append(getString(R.string.report_have_to_give)).append("\n\n");
-                    for (Map.Entry<String, Double> entry : haveToGive.entrySet()) {
-                        report.append(getString(R.string.report_member_net_item, entry.getKey(), String.format(Locale.ENGLISH, "%.2f", entry.getValue()))).append("\n");
-                    }
-                }
-
-                if (!willGetBack.isEmpty()) {
-                    report.append("\n").append(getString(R.string.report_will_get_back)).append("\n\n");
-                    for (Map.Entry<String, Double> entry : willGetBack.entrySet()) {
-                        report.append(getString(R.string.report_member_net_item, entry.getKey(), String.format(Locale.ENGLISH, "%.2f", entry.getValue()))).append("\n");
-                    }
-                }
-
-                shareText(report.toString());
+                shareText(text);
             }
 
             @Override
@@ -661,6 +621,14 @@ public class SummaryFragment extends Fragment {
         intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.report_subject));
         intent.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(intent, getString(R.string.report_chooser)));
+    }
+
+    /** Settlement cash_in rows are peer transfers — not mess wallet deposits for the chart. */
+    private static boolean isSettlementCashIn(@NonNull DataSnapshot ds) {
+        String status = ds.child("status").getValue(String.class);
+        if (status != null && status.equalsIgnoreCase("settlement")) return true;
+        String type = ds.child("type").getValue(String.class);
+        return type != null && type.toLowerCase(Locale.US).startsWith("settlement");
     }
 
     /** Safely read Firebase number fields that may be Double, Long, or String. */

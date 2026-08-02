@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MessWise | Modern Mess Management Simplified</title>
-    <meta name="description" content="Manage meals, track expenses, and settle mess dues with matched payees and optional UPI — built for student messes. Download MessWise v1.5.">
+    <meta name="description" content="Manage meals, track expenses, and settle mess dues with one-tap UPI or offline payments — built for student messes. Download MessWise v1.6.">
     <meta name="copyright" content="© 2026 SR Tech. All rights reserved.">
     <link rel="icon" href="asset/icons/logo.svg" type="image/svg+xml">
     <link rel="icon" type="image/png" sizes="32x32" href="asset/icons/favicon-32.png">
@@ -42,7 +42,7 @@
                     GitHub
                 </a>
                 <button onclick="downloadApk()" class="hidden sm:inline-flex bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-teal-500/25 transition-all hover:-translate-y-0.5">
-                    Download APK · v1.5
+                    Download APK · v1.6
                 </button>
                 <button id="mobile-menu-btn" class="lg:hidden text-slate-300 hover:text-white p-2 rounded-lg" aria-label="Open menu">
                     <i data-lucide="menu" class="w-6 h-6"></i>
@@ -80,7 +80,7 @@
                     </p>
                     <p class="version-badge">
                         <img src="asset/icons/logo.svg" alt="" width="16" height="16">
-                        <span>Latest release · v1.5</span>
+                        <span>Latest release · v1.6</span>
                     </p>
                 </div>
                 <h1 class="reveal hero-title font-extrabold mb-5">
@@ -89,12 +89,12 @@
                     <span class="gradient-text">Run Your Mess Smarter.</span>
                 </h1>
                 <p class="reveal text-slate-400 text-base sm:text-lg max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
-                    Meal attendance, cash-in, expenses, and month-end settlement with matched payees — optional UPI on your device. No spreadsheets. No confusion.
+                    Meal attendance, cash-in, expenses, and month-end settlement with matched payees — one-tap UPI or mark paid offline. No spreadsheets. No confusion.
                 </p>
                 <div class="reveal hero-actions justify-center lg:justify-start">
                     <button type="button" onclick="downloadApk()" class="btn-primary px-7 py-3.5 rounded-2xl font-bold text-base inline-flex items-center gap-2">
                         <i data-lucide="download" class="w-5 h-5"></i>
-                        Download APK · v1.5
+                        Download APK · v1.6
                     </button>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="btn-secondary glass px-7 py-3.5 rounded-2xl font-bold text-base text-slate-100 inline-flex items-center gap-2">
                         <i data-lucide="github" class="w-5 h-5"></i>
@@ -193,7 +193,7 @@
                         <i data-lucide="handshake" class="w-6 h-6 text-violet-400"></i>
                     </div>
                     <h3 class="text-lg font-bold mb-2">Month-end settlement</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed mb-5">See who you should pay (or who pays you). Optional UPI — saved only on your phone, never in the cloud.</p>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-5">See who you should pay (or who pays you). One-tap UPI when the receiver has saved their ID — or mark paid offline for cash. Each transfer is recorded once.</p>
                     <div class="feature-preview">
                         <img src="asset/screenshots/cashIn.jpg" alt="Cash in and settlement preview" loading="lazy" decoding="async">
                     </div>
@@ -252,7 +252,7 @@
                     </div>
                     <div class="timeline-body">
                         <h3>Monthly Settlement</h3>
-                        <p>Clear last month’s dues with matched payees — pay via UPI if you want, then confirm in-app.</p>
+                        <p>Clear last month’s dues with matched payees — pay via UPI in one tap, or mark cash settlements offline.</p>
                     </div>
                 </li>
             </ol>
@@ -266,13 +266,14 @@
                 <p class="text-teal-400 font-semibold section-kicker text-xs uppercase mb-3">Dashboard</p>
                 <h2 class="section-title font-bold mb-5">See where your money goes</h2>
                 <p class="text-slate-400 text-base sm:text-lg leading-relaxed mb-7">
-                    Charts for cash flow, category breakdowns, and member contributions — all in one summary screen.
+                    Charts for cash flow, category breakdowns, member contributions, and shareable monthly reports — all in one summary screen.
                 </p>
                 <ul class="space-y-3.5 text-sm sm:text-base">
                     <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Monthly cash flow charts</li>
                     <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Category-wise expense breakdown</li>
                     <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Month settlement with who-pays-whom</li>
-                    <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Top contributors &amp; exportable reports</li>
+                    <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Top contributors &amp; archived monthly reports</li>
+                    <li class="flex items-center gap-3 text-slate-300"><i data-lucide="check-circle-2" class="w-5 h-5 text-teal-400 shrink-0"></i>Cash-in &amp; expense history by month</li>
                 </ul>
             </div>
             <div class="reveal flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
@@ -427,14 +428,14 @@
                         How does month-end settlement work?
                         <i data-lucide="plus" class="faq-icon w-5 h-5 text-teal-400 shrink-0 transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">After a month ends, MessWise matches members who still owe with members who have surplus. You only see your own payees or expected receipts. Settlement is for the previous month — the current month stays in progress on Home as “up to today.”</p></div>
+                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">After a month ends, MessWise matches members who still owe with members who have surplus. You only see your own payees or expected receipts. Settlement is for the previous month — the current month stays in progress on Home as “up to today.” Pay via UPI when the receiver has a UPI ID on their profile, or use Mark as Paid Offline for cash. Each matched payer–receiver transfer is recorded only once (either side confirming is enough).</p></div>
                 </div>
                 <div class="reveal faq-item glass rounded-2xl border border-white/5 overflow-hidden">
                     <button class="faq-trigger w-full flex items-center justify-between gap-4 p-5 text-left font-semibold" aria-expanded="false">
-                        Are UPI IDs stored on your servers?
+                        Are UPI IDs stored securely?
                         <i data-lucide="plus" class="faq-icon w-5 h-5 text-teal-400 shrink-0 transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">No. Optional UPI IDs are saved only on your device (encrypted local storage). Payments open in your UPI app; you confirm in MessWise after paying so dues and balances update.</p></div>
+                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">UPI IDs are AES-encrypted before sync to your mess profile so they are not stored as plain text in Firebase. Only you or a mess admin can edit your UPI ID. Payments still open in your UPI app; you confirm in MessWise after paying so dues update.</p></div>
                 </div>
                 <div class="reveal faq-item glass rounded-2xl border border-white/5 overflow-hidden">
                     <button class="faq-trigger w-full flex items-center justify-between gap-4 p-5 text-left font-semibold" aria-expanded="false">
@@ -448,7 +449,7 @@
                         Can reports be exported?
                         <i data-lucide="plus" class="faq-icon w-5 h-5 text-teal-400 shrink-0 transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">Yes. The Summary screen lets you generate and share a monthly report with meal counts, expenses, and settlement details.</p></div>
+                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">Yes. On Summary, share this month’s live report or the previous month’s archived summary (saved so it stays available after settlement). Cash-in and expense “View All” screens also let you browse history month by month.</p></div>
                 </div>
                 <div class="reveal faq-item glass rounded-2xl border border-white/5 overflow-hidden">
                     <button class="faq-trigger w-full flex items-center justify-between gap-4 p-5 text-left font-semibold" aria-expanded="false">
@@ -462,7 +463,7 @@
                         Is my data secure?
                         <i data-lucide="plus" class="faq-icon w-5 h-5 text-teal-400 shrink-0 transition-transform duration-300"></i>
                     </button>
-                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">Mess data is stored in Firebase with encrypted local preferences on device. Each mess is isolated. UPI IDs never leave your phone.</p></div>
+                    <div class="faq-panel px-5 pb-0"><p class="pb-5 text-slate-400 text-sm leading-relaxed">Mess data is stored in Firebase with encrypted local preferences on device. Each mess is isolated. UPI IDs are AES-encrypted on your member profile and are only editable by you or an admin.</p></div>
                 </div>
             </div>
         </div>
@@ -472,11 +473,11 @@
     <section id="download" class="section-block">
         <div class="site-container max-w-4xl reveal cta-gradient glass rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 text-center border border-white/8">
             <h2 class="text-xl sm:text-4xl font-bold mb-4 tracking-tight">Ready to simplify your mess management?</h2>
-            <p class="text-slate-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">Download MessWise <span class="text-teal-400 font-semibold">v1.5</span> free and replace spreadsheets with a mess app your whole group will actually use.</p>
+            <p class="text-slate-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">Download MessWise <span class="text-teal-400 font-semibold">v1.6</span> free and replace spreadsheets with a mess app your whole group will actually use.</p>
             <div class="cta-actions">
                 <button onclick="downloadApk()" class="btn-primary px-8 py-3.5 rounded-2xl font-bold inline-flex items-center justify-center gap-2">
                     <i data-lucide="download" class="w-5 h-5"></i>
-                    Download APK · v1.5
+                    Download APK · v1.6
                 </button>
                 <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="btn-secondary glass px-8 py-3.5 rounded-2xl font-bold text-slate-100 inline-flex items-center justify-center gap-2">
                     <i data-lucide="github" class="w-5 h-5"></i>
@@ -497,8 +498,8 @@
                         </span>
                         <span class="text-lg font-bold">MessWise</span>
                     </div>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, matched settlement, and optional on-device UPI in one app.</p>
-                    <p class="text-xs text-slate-500 mt-3">Current version <span class="text-teal-400 font-semibold">v1.5</span></p>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, matched settlement, and one-tap UPI in one app.</p>
+                    <p class="text-xs text-slate-500 mt-3">Current version <span class="text-teal-400 font-semibold">v1.6</span></p>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
                         <i data-lucide="github" class="w-4 h-4"></i>
                         github.com/sayan21m/mess-wise
@@ -546,7 +547,7 @@
             <i data-lucide="download" class="w-4 h-4 text-white"></i>
         </div>
         <div>
-            <div class="font-semibold">Download started · v1.5</div>
+            <div class="font-semibold">Download started · v1.6</div>
             <div class="text-xs text-slate-400">MessWise.apk is downloading…</div>
         </div>
     </div>

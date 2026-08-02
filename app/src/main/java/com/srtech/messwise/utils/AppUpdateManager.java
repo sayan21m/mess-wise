@@ -34,8 +34,8 @@ import java.io.File;
  *
  * Expected Firebase node (example):
  * version_control/
- *   min_version_code: 5
- *   latest_version_code: 5
+ *   min_version_code: 6
+ *   latest_version_code: 7
  *   apk_url: https://.../MessWise.apk   (preferred direct APK link)
  *   update_url: https://...             (website fallback)
  *   update_message: "..."

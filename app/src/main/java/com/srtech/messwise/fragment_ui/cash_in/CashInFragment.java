@@ -2,6 +2,7 @@ package com.srtech.messwise.fragment_ui.cash_in;
 
 import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.FinanceUtils;
+import com.srtech.messwise.utils.HistoryMonthNavigator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -62,6 +63,8 @@ public class CashInFragment extends Fragment {
     private boolean isAdmin;
     private CashInAdapter cashInAdapter, fullAdapter;
     private final List<CashInModel> fullCashInList = new ArrayList<>();
+    @Nullable private HistoryMonthNavigator cashHistoryNav;
+    @Nullable private TextView cashHistoryEmpty;
     private EditText etAmount;
     private MaterialButton btnAddMoney;
     private TextView tvAmountPreview, tvWalletBalance;
@@ -443,7 +446,7 @@ public class CashInFragment extends Fragment {
 
                         cashInAdapter.setData(recentList);
                         if (fullAdapter != null) {
-                            fullAdapter.setData(fullCashInList);
+                            syncCashHistoryMonths();
                         }
                         
                         if (canManageFinances()) {
@@ -484,13 +487,16 @@ public class CashInFragment extends Fragment {
             return WindowInsetsCompat.CONSUMED;
         });
 
+        TextView title = dialogView.findViewById(R.id.tvDialogTitle);
+        if (title != null) title.setText(R.string.cash_in_history_title);
+
         RecyclerView rvFullHistory = dialogView.findViewById(R.id.rvFullHistory);
         View btnClose = dialogView.findViewById(R.id.btnClose);
+        cashHistoryEmpty = dialogView.findViewById(R.id.tvHistoryEmpty);
 
         rvFullHistory.setLayoutManager(new LinearLayoutManager(requireContext()));
         fullAdapter = new CashInAdapter();
         rvFullHistory.setAdapter(fullAdapter);
-        fullAdapter.setData(fullCashInList);
 
         if (canManageFinances()) {
             fullAdapter.setOnLongClickListener(model -> {
@@ -498,10 +504,37 @@ public class CashInFragment extends Fragment {
             });
         }
 
+        cashHistoryNav = HistoryMonthNavigator.bind(dialogView, this::applyCashHistoryFilter);
+        cashHistoryNav.setMonths(
+                HistoryMonthNavigator.collectMonthKeys(fullCashInList, CashInModel::getTimestampMillis),
+                HistoryMonthNavigator.currentMonthKey());
+
         btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.setOnDismissListener(d -> fullAdapter = null);
+        dialog.setOnDismissListener(d -> {
+            fullAdapter = null;
+            cashHistoryNav = null;
+            cashHistoryEmpty = null;
+        });
 
         dialog.show();
+    }
+
+    private void syncCashHistoryMonths() {
+        if (cashHistoryNav == null || fullAdapter == null) return;
+        cashHistoryNav.setMonths(
+                HistoryMonthNavigator.collectMonthKeys(fullCashInList, CashInModel::getTimestampMillis),
+                cashHistoryNav.getSelectedMonthKey());
+    }
+
+    private void applyCashHistoryFilter(@NonNull String monthKey) {
+        if (fullAdapter == null) return;
+        List<CashInModel> monthList = HistoryMonthNavigator.filterByMonth(
+                fullCashInList, CashInModel::getTimestampMillis, monthKey);
+        Collections.sort(monthList, (a, b) -> Long.compare(b.getTimestampMillis(), a.getTimestampMillis()));
+        fullAdapter.setData(monthList);
+        if (cashHistoryEmpty != null) {
+            cashHistoryEmpty.setVisibility(monthList.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void updateEmptyState(boolean thisMonthEmpty) {

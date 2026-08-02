@@ -5,6 +5,7 @@ public class Member {
     private Boolean is_admin;
     private Integer meal_count;
     private String role; // "Admin", "Meal Manager", "Member", or custom
+    private String upi_id;
 
     public Member() {}
 
@@ -63,6 +64,14 @@ public class Member {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getUpi_id() {
+        return upi_id;
+    }
+
+    public void setUpi_id(String upi_id) {
+        this.upi_id = upi_id;
     }
 
     @Override

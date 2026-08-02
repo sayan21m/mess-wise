@@ -43,6 +43,8 @@ import com.srtech.messwise.data_models.Member;
 import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.utils.SettlementDialogHelper;
+import com.srtech.messwise.utils.SettlementUtils;
+import com.srtech.messwise.utils.UpiCrypto;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -337,6 +339,14 @@ public class MemberAdminActivity extends BaseActivity {
                             tvDue.setTextColor(getColor(R.color.dark_success));
                             tvSummaryDue.setTextColor(getColor(R.color.dark_success));
                         }
+
+                        TextView tvUpi = dialogView.findViewById(R.id.tvMemberUpi);
+                        String upi = SettlementUtils.readUpiId(messId, snapshot);
+                        if (upi != null) {
+                            tvUpi.setText(getString(R.string.member_upi_label, upi));
+                        } else {
+                            tvUpi.setText(R.string.member_upi_none);
+                        }
                     }
 
                     @Override
@@ -354,6 +364,9 @@ public class MemberAdminActivity extends BaseActivity {
             dialog.dismiss();
             showClearPreviousCarryDialog(member);
         });
+
+        dialogView.findViewById(R.id.btnEditUpi).setOnClickListener(v ->
+                showEditMemberUpiDialog(member, dialogView.findViewById(R.id.tvMemberUpi)));
         
         View btnManageRole = dialogView.findViewById(R.id.btnManageRole);
         btnManageRole.setVisibility(View.GONE);
@@ -371,6 +384,61 @@ public class MemberAdminActivity extends BaseActivity {
         });
 
         dialog.show();
+    }
+
+    private void showEditMemberUpiDialog(Member member, @Nullable TextView tvUpiLabel) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_update_upi, null);
+        EditText etUpi = dialogView.findViewById(R.id.etUpiId);
+        MaterialButton btnUpdate = dialogView.findViewById(R.id.btnUpdate);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        AlertDialog editDialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        if (editDialog.getWindow() != null) {
+            editDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        db.getReference().child(messId).child("member").child(member.getUid()).child(SettlementUtils.UPI_FIELD)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    String existing = UpiCrypto.decrypt(messId, snap.getValue(String.class));
+                    if (existing != null && etUpi != null) {
+                        etUpi.setText(existing);
+                        etUpi.setSelection(etUpi.getText().length());
+                    }
+                });
+
+        btnCancel.setOnClickListener(v -> editDialog.dismiss());
+        btnUpdate.setOnClickListener(v -> {
+            String upi = etUpi.getText() != null ? etUpi.getText().toString().trim() : "";
+            if (!SettlementUtils.isValidUpiId(upi)) {
+                etUpi.setError(getString(R.string.toast_upi_invalid));
+                return;
+            }
+            btnUpdate.setEnabled(false);
+            SettlementUtils.setMemberUpi(messId, member.getUid(), upi,
+                    () -> {
+                        btnUpdate.setEnabled(true);
+                        editDialog.dismiss();
+                        if (tvUpiLabel != null) {
+                            if (upi.isEmpty()) {
+                                tvUpiLabel.setText(R.string.member_upi_none);
+                            } else {
+                                tvUpiLabel.setText(getString(R.string.member_upi_label, upi));
+                            }
+                        }
+                        Toast.makeText(this,
+                                upi.isEmpty() ? R.string.toast_upi_cleared : R.string.toast_upi_updated,
+                                Toast.LENGTH_SHORT).show();
+                    },
+                    () -> {
+                        btnUpdate.setEnabled(true);
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+                    });
+        });
+
+        editDialog.show();
     }
 
     private void showManageRoleDialog(Member member) {

@@ -225,11 +225,40 @@
 
     <!-- Clear previous month carry -->
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnClearPrevCarry"
+        android:id="@+id/btnEditUpi"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
+        android:text="@string/member_edit_upi"
+        android:textAllCaps="false"
+        android:textColor="@color/teal_accent"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/ic_wallet_modern"
+        app:iconGravity="textStart"
+        app:iconSize="16dp"
+        app:iconTint="@color/teal_accent"
+        app:layout_constraintTop_toBottomOf="@id/noteBox"
+        app:strokeColor="@color/teal_accent" />
+
+    <TextView
+        android:id="@+id/tvMemberUpi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/member_upi_none"
+        android:textColor="@color/mw_secondary"
+        android:textSize="12sp"
+        app:layout_constraintTop_toBottomOf="@id/btnEditUpi" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClearPrevCarry"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
         android:text="@string/member_clear_prev_carry"
         android:textAllCaps="false"
         android:textColor="@color/dark_text_muted"
@@ -240,7 +269,7 @@
         app:iconGravity="textStart"
         app:iconSize="16dp"
         app:iconTint="@color/dark_text_muted"
-        app:layout_constraintTop_toBottomOf="@id/noteBox"
+        app:layout_constraintTop_toBottomOf="@id/tvMemberUpi"
         app:strokeColor="@color/mw_border" />
 
     <!-- Action Buttons Footer -->

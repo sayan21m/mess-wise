@@ -134,8 +134,8 @@
     <string name="summary_settlement_view">View settlement</string>
     <string name="summary_pay_via_upi">Pay via UPI</string>
     <string name="summary_pay_in_person">Pay in person</string>
-    <string name="summary_no_upi_hint">Enter UPI when paying — saved only on this device</string>
-    <string name="settlement_enter_upi_for">Enter %1$s\'s UPI ID (saved on this device only)</string>
+    <string name="summary_no_upi_hint">No UPI ID set — ask them to add one in Settings, or mark paid offline</string>
+    <string name="settlement_enter_upi_for">Enter %1$s\'s UPI ID</string>
     <string name="settlement_title">Clear Dues</string>
     <string name="settlement_month_title">Settle %1$s</string>
     <string name="settlement_you_owe">You owe ₹%1$s</string>
@@ -146,20 +146,31 @@
     <string name="settlement_not_paid">Not yet</string>
     <string name="settlement_cleared">Settlement recorded</string>
     <string name="settlement_failed">Could not update settlement</string>
+    <string name="settlement_already_done">This settlement was already recorded</string>
     <string name="settlement_shortfall">₹%1$s cannot be matched (mess shortfall — no surplus left)</string>
     <string name="settlement_no_surplus">No member has surplus to receive payments this month</string>
     <string name="settlement_upi_missing_app">No UPI app found</string>
+    <string name="settlement_upi_not_configured">This member has no UPI ID yet</string>
     <string name="settlement_cannot_pay_self">This is your own surplus</string>
     <string name="settlement_need_debt">You have no pending debt to settle</string>
+    <string name="settlement_mark_offline">Mark as Paid Offline</string>
+    <string name="settlement_confirm_received">Confirm received</string>
+    <string name="settlement_confirm_offline">Confirm</string>
+    <string name="settlement_offline_pay_confirm_msg">Confirm only after %2$s has received ₹%1$s (cash or other). This clears the pending due between you.</string>
+    <string name="settlement_offline_receive_confirm_msg">Confirm you received ₹%1$s from %2$s. This clears the pending due between you.</string>
 
     <string name="setting_upi_id">UPI ID</string>
-    <string name="setting_upi_id_desc">Optional — saved only on this device</string>
+    <string name="setting_upi_id_desc">Encrypted on your mess profile for settlements</string>
     <string name="setting_upi_title">UPI ID</string>
-    <string name="setting_upi_subtitle">Optional. Stored on this device only — never uploaded to the cloud</string>
+    <string name="setting_upi_subtitle">Encrypted before sync. Only you or an admin can change it; others can pay you in one tap.</string>
     <string name="setting_upi_hint">name@upi</string>
     <string name="toast_upi_updated">UPI ID saved</string>
     <string name="toast_upi_cleared">UPI ID removed</string>
     <string name="toast_upi_invalid">Enter a valid UPI ID (e.g. name@upi)</string>
+    <string name="toast_upi_loading">Loading…</string>
+    <string name="member_edit_upi">Edit UPI ID</string>
+    <string name="member_upi_label">UPI: %1$s</string>
+    <string name="member_upi_none">No UPI ID</string>
 
     <string name="insight_cash_healthy">Cash in is healthy</string>
     <string name="insight_cash_exceeding">Expenses exceeding!</string>
@@ -333,6 +344,10 @@
     <string name="report_chooser">Share Report via</string>
     <string name="report_member_meal_count">%1$s- %2$d</string>
     <string name="report_member_net_item">%1$s- %2$s</string>
+    <string name="report_pick_title">Share summary</string>
+    <string name="report_pick_this_month">This month (%1$s)</string>
+    <string name="report_pick_previous_month">Previous month (%1$s)</string>
+    <string name="report_previous_unavailable">Previous month summary is not available yet</string>
 
     <!-- Cash In -->
     <string name="cash_in_title">Cash In</string>
@@ -364,6 +379,10 @@
     <string name="cash_in_session_error">Session expired. Please log in again.</string>
     <string name="cash_in_payment_method_title">Select payment method</string>
     <string name="cash_in_history_title">Transaction History</string>
+    <string name="expenses_history_title">Expense History</string>
+    <string name="history_prev_month">Previous month</string>
+    <string name="history_next_month">Next month</string>
+    <string name="history_month_empty">No transactions in this month</string>
     <string name="cash_in_no_history">No transactions yet</string>
     <string name="cash_in_no_history_desc">Your recent cash in history will appear here</string>
     <string-array name="cash_in_payment_methods">

@@ -41,6 +41,8 @@ import com.srtech.messwise.BuildConfig;
 import com.srtech.messwise.LoginActivity;
 import com.srtech.messwise.R;
 import com.srtech.messwise.utils.FinanceUtils;
+import com.srtech.messwise.utils.SettlementUtils;
+import com.srtech.messwise.utils.UpiCrypto;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -594,6 +596,10 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void showUpdateUpiDialog() {
+        if (messId == null || userId == null) {
+            Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_update_upi);
         setupDialogWindow(dialog);
@@ -602,24 +608,38 @@ public class SettingsActivity extends BaseActivity {
         MaterialButton btnUpdate = dialog.findViewById(R.id.btnUpdate);
         MaterialButton btnCancel = dialog.findViewById(R.id.btnCancel);
 
-        String existing = com.srtech.messwise.utils.UpiLocalStore.getMyUpi(this);
-        if (existing != null && etUpi != null) {
-            etUpi.setText(existing);
-            etUpi.setSelection(etUpi.getText().length());
-        }
+        Toast.makeText(this, R.string.toast_upi_loading, Toast.LENGTH_SHORT).show();
+        FirebaseDatabase.getInstance().getReference().child(messId).child("member").child(userId)
+                .child(SettlementUtils.UPI_FIELD)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    String existing = UpiCrypto.decrypt(messId, snap.getValue(String.class));
+                    if (existing != null && etUpi != null) {
+                        etUpi.setText(existing);
+                        etUpi.setSelection(etUpi.getText().length());
+                    }
+                });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
         btnUpdate.setOnClickListener(v -> {
             String upi = etUpi.getText().toString().trim();
-            if (!com.srtech.messwise.utils.SettlementUtils.isValidUpiId(upi)) {
+            if (!SettlementUtils.isValidUpiId(upi)) {
                 etUpi.setError(getString(R.string.toast_upi_invalid));
                 return;
             }
-            com.srtech.messwise.utils.UpiLocalStore.setMyUpi(this, upi);
-            dialog.dismiss();
-            Toast.makeText(this,
-                    upi.isEmpty() ? R.string.toast_upi_cleared : R.string.toast_upi_updated,
-                    Toast.LENGTH_SHORT).show();
+            btnUpdate.setEnabled(false);
+            SettlementUtils.setMemberUpi(messId, userId, upi,
+                    () -> {
+                        btnUpdate.setEnabled(true);
+                        dialog.dismiss();
+                        Toast.makeText(this,
+                                upi.isEmpty() ? R.string.toast_upi_cleared : R.string.toast_upi_updated,
+                                Toast.LENGTH_SHORT).show();
+                    },
+                    () -> {
+                        btnUpdate.setEnabled(true);
+                        Toast.makeText(this, R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+                    });
         });
 
         dialog.show();

@@ -46,7 +46,7 @@
         <header class="page-hero">
             <p class="text-teal-400 font-semibold section-kicker text-xs uppercase mb-3">Legal</p>
             <h1 class="section-title font-bold mb-4">Privacy Policy</h1>
-            <p class="text-slate-400 text-sm sm:text-base">Last updated: June 2026</p>
+            <p class="text-slate-400 text-sm sm:text-base">Last updated: August 2026</p>
         </header>
 
         <article class="page-card glass legal-content border border-white/5">
@@ -55,17 +55,16 @@
 
             <h2>Information we collect</h2>
             <ul>
-                <li><strong>Account data:</strong> Name, email address, and mess membership details when you register or join a mess.</li>
-                <li><strong>Mess data:</strong> Meal attendance, expenses, cash-in records, dues, settlement confirmations, and admin settings stored in Firebase Realtime Database for your mess group.</li>
-                <li><strong>Device-only data:</strong> Optional UPI IDs you enter for settlement are stored encrypted on your device only. They are not uploaded to Firebase or shared with other members through our servers.</li>
+                <li><strong>Account data:</strong> Name, email address (Firebase Authentication), and mess membership details when you register or join a mess.</li>
+                <li><strong>Mess data:</strong> Meal attendance, expenses, cash-in records, dues, AES-encrypted UPI IDs on member profiles, settlement history and transfer locks, archived monthly summary reports, and admin settings stored in Firebase Realtime Database for your mess group.</li>
                 <li><strong>Device data:</strong> Basic app version and crash reports via Firebase Crashlytics to improve stability.</li>
             </ul>
 
             <h2>How we use your information</h2>
-            <p>We use collected data solely to operate mess management features — tracking meals, calculating dues, matching month-end settlements, generating reports, and syncing data between mess members. We do not sell your personal data to third parties. UPI payments themselves are processed by your chosen UPI app; MessWise only records a settlement after you confirm payment in the app.</p>
+            <p>We use collected data solely to operate mess management features — tracking meals, calculating dues, matching month-end settlements, generating and archiving reports, and syncing data between mess members. We do not sell your personal data to third parties. UPI payments themselves are processed by your chosen UPI app; MessWise only records a settlement after you confirm payment (or mark an offline payment) in the app. Each matched payer–receiver transfer is recorded once so both sides cannot double-apply the same payment.</p>
 
             <h2>Data storage & security</h2>
-            <p>Mess data is stored on Google Firebase infrastructure. Sensitive preferences on your device — including optional UPI IDs — are encrypted using Android EncryptedSharedPreferences. Financial screens use anti-screenshot protection where enabled.</p>
+            <p>Mess data — including optional UPI IDs (AES-encrypted at rest in Firebase) on member profiles — is stored on Google Firebase infrastructure. UPI ciphertext is decryptable by authenticated clients in the same mess so members can pay each other; Firebase Realtime Database security rules remain essential. Sensitive preferences on your device are encrypted using Android EncryptedSharedPreferences. Financial screens use anti-screenshot protection where enabled. Only you or a mess admin can edit your UPI ID. Previous-month summary report text may be stored under your mess so it remains shareable after settlement.</p>
 
             <h2>Data sharing</h2>
             <p>Your mess data is visible to other members and admins within the same mess. We do not share data outside your mess except as required by law or to provide core Firebase hosting services.</p>
@@ -88,7 +87,7 @@
                         </span>
                         <span class="text-lg font-bold">MessWise</span>
                     </div>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, matched settlement, and optional on-device UPI in one app.</p>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-xs">Mess management for students — meals, money, matched settlement, and one-tap UPI in one app.</p>
                     <a href="https://github.com/sayan21m/mess-wise" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-4 text-sm text-slate-400 hover:text-teal-400 transition">
                         <i data-lucide="github" class="w-4 h-4"></i>
                         github.com/sayan21m/mess-wise
