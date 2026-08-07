@@ -6,7 +6,7 @@
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717?style=flat-square&logo=github)](https://github.com/sayan21m/mess-wise)
 [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/sayan21m/mess-wise)
 
-**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.6
+**Live site:** [mess-wise.web.app](https://mess-wise.web.app) · **Download APK:** [MessWise.apk](https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk) · **Latest release:** v1.7
 
 ---
 

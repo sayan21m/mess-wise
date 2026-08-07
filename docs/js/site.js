@@ -1,8 +1,8 @@
 const GITHUB_URL = 'https://github.com/sayan21m/mess-wise';
 const APK_URL = 'https://github.com/sayan21m/mess-wise/raw/main/app/release/MessWise.apk';
 const SITE_URL = 'https://mess-wise.web.app';
-const APP_VERSION = '1.6';
-const APP_VERSION_CODE = 7;
+const APP_VERSION = '1.7';
+const APP_VERSION_CODE = 8;
 
 function openGitHub() {
     window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
