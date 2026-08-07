@@ -43,6 +43,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.srtech.messwise.admin_ui.MealAdminActivity;
@@ -136,6 +137,17 @@ public class MainActivity extends BaseActivity {
 
         checkAndShowMonthlyAwards();
         // Settlement prompt also runs from onResume each session until dues clear
+
+        // Backfill public mess index so new members can verify this mess ID when joining
+        if (messId != null && !messId.isEmpty()) {
+            String display = messName != null && !messName.isEmpty() ? messName : messId;
+            DatabaseReference publicRef = db.getReference().child("public_mess").child(messId);
+            publicRef.get().addOnCompleteListener(task -> {
+                if (!task.isSuccessful() || task.getResult() == null || !task.getResult().exists()) {
+                    publicRef.setValue(display);
+                }
+            });
+        }
 
         adminWheelContainer = findViewById(R.id.adminWheelContainer);
         adminWheelMenu = findViewById(R.id.adminWheelMenu);

@@ -110,7 +110,7 @@ public class LoginActivity extends BaseActivity {
                 return;
             }
 
-            String messId = etMessId.getText().toString().trim();
+            String messId = etMessId.getText().toString().trim().toLowerCase(java.util.Locale.US).replaceAll("\\s+", "");
             String email = etUserMail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
@@ -118,6 +118,7 @@ public class LoginActivity extends BaseActivity {
                 etMessId.setError("Mess ID is required");
                 return;
             }
+            etMessId.setText(messId);
 
             if (email.isEmpty()) {
                 etUserMail.setError("Email is required");

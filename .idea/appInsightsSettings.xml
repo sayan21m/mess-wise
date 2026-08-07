@@ -6,14 +6,6 @@
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
-              <option name="connection">
-                <ConnectionSetting>
-                  <option name="appId" value="com.srtech.messwise" />
-                  <option name="mobileSdkAppId" value="1:806347499064:android:9ab387b4b1b639dff6a8cd" />
-                  <option name="projectId" value="mess-wise" />
-                  <option name="projectNumber" value="806347499064" />
-                </ConnectionSetting>
-              </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
               <option name="timeIntervalDays" value="THIRTY_DAYS" />
               <option name="visibilityType" value="ALL" />

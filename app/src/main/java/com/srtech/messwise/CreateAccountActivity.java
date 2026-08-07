@@ -23,6 +23,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -33,6 +35,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.srtech.messwise.utils.FormUtils;
 
@@ -112,7 +115,7 @@ public class CreateAccountActivity extends BaseActivity {
             typeMember.setTextColor(ContextCompat.getColorStateList(this, R.color.white));
             typeAdmin.setTextColor(ContextCompat.getColorStateList(this, R.color.dark_text_muted));
             messNameText.setText(R.string.label_mess_id);
-            etMessName.setHint("chatraniwas123");
+            etMessName.setHint("your-mess-ab12");
             isAdmin = false;
         });
 
@@ -193,27 +196,23 @@ public class CreateAccountActivity extends BaseActivity {
                         createAccount(managerMail, password, messID, managerName, messName, cbRemember());
                     }
                     @Override public void onError(String message) {
-                        Toast.makeText(CreateAccountActivity.this,
-                                getString(R.string.toast_mess_check_failed, message),
-                                Toast.LENGTH_LONG).show();
+                        // Pre-auth collision check failed (often rules) — still try create; write will fail if taken
+                        Log.w("SGT", "Admin messId check error, proceeding: " + message);
+                        createAccount(managerMail, password, messID, managerName, messName, cbRemember());
                     }
                 });
             } else {
-                // Member: messName field holds the existing Mess ID
-                messIdExistance(messName, new MessCheckCallback() {
-                    @Override public void onExists() {
-                        createAccount(managerMail, password, messName, managerName, messName, cbRemember());
-                    }
-                    @Override public void onNotExists() {
-                        Toast.makeText(CreateAccountActivity.this, R.string.toast_id_not_exists, Toast.LENGTH_SHORT).show();
-                        etMessName.setError(getString(R.string.toast_id_not_exists));
-                    }
-                    @Override public void onError(String message) {
-                        Toast.makeText(CreateAccountActivity.this,
-                                getString(R.string.toast_mess_check_failed, message),
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+                // Member: field holds Mess ID from invite — normalize, then auth first.
+                // Pre-auth reads of mess_name often look "missing" under RTDB rules that hide
+                // non-member data, so we verify the mess after Firebase Auth instead.
+                String joinMessId = normalizeMessId(messName);
+                if (joinMessId.isEmpty()) {
+                    etMessName.setError(getString(R.string.toast_id_not_exists));
+                    return;
+                }
+                etMessName.setText(joinMessId);
+                uMessName = joinMessId;
+                createAccount(managerMail, password, joinMessId, managerName, joinMessId, cbRemember());
             }
         });
     }
@@ -327,19 +326,99 @@ public class CreateAccountActivity extends BaseActivity {
             return;
         }
 
-        // Joining existing mess — resolve display name from public mess_name, then write profile
-        db.getReference().child(messId).child("mess_name").get()
-                .addOnSuccessListener(nameSnapshot -> {
-                    String actualMessName = nameSnapshot.getValue(String.class);
-                    if (actualMessName == null || actualMessName.trim().isEmpty()) {
-                        actualMessName = messNameInput;
+        // Joining existing mess — verify after auth (pre-auth checks are unreliable with RTDB rules)
+        final String joinMessId = normalizeMessId(messId);
+        verifyMessExists(joinMessId, (exists, displayName) -> {
+            if (!exists) {
+                resetCreateButton();
+                Toast.makeText(this, R.string.toast_id_not_exists, Toast.LENGTH_LONG).show();
+                etMessName.setError(getString(R.string.toast_id_not_exists));
+                return;
+            }
+            String resolvedName = displayName != null && !displayName.trim().isEmpty()
+                    ? displayName.trim()
+                    : joinMessId;
+            saveMembership(joinMessId, uid, name, email, resolvedName, rememberMe);
+        });
+    }
+
+    private interface MessExistsCallback {
+        void onResult(boolean exists, @Nullable String displayName);
+    }
+
+    /**
+     * Confirm a mess exists via mess_name and/or admin_uid.
+     * Tries several paths because restrictive rules may hide some children from non-members.
+     */
+    private void verifyMessExists(@NonNull String messId, @NonNull MessExistsCallback callback) {
+        if (messId.isEmpty()) {
+            callback.onResult(false, null);
+            return;
+        }
+
+        // 1) Public index (readable even when mess internals are restricted)
+        db.getReference().child("public_mess").child(messId).get()
+                .addOnSuccessListener(publicSnap -> {
+                    if (publicSnap.exists() && publicSnap.getValue() != null) {
+                        String name = publicSnap.getValue(String.class);
+                        callback.onResult(true, name != null ? name : messId);
+                        return;
                     }
-                    saveMembership(messId, uid, name, email, actualMessName, rememberMe);
+                    verifyMessExistsFallback(messId, callback);
+                })
+                .addOnFailureListener(e -> verifyMessExistsFallback(messId, callback));
+    }
+
+    private void verifyMessExistsFallback(@NonNull String messId, @NonNull MessExistsCallback callback) {
+        db.getReference().child(messId).child("mess_name").get()
+                .addOnSuccessListener(nameSnap -> {
+                    if (nameSnap.exists()) {
+                        callback.onResult(true, nameSnap.getValue(String.class));
+                        return;
+                    }
+                    db.getReference().child(messId).child("admin_uid").get()
+                            .addOnSuccessListener(adminSnap -> {
+                                if (adminSnap.exists() && adminSnap.getValue() != null) {
+                                    callback.onResult(true, messId);
+                                } else {
+                                    db.getReference().child(messId).get()
+                                            .addOnSuccessListener(rootSnap -> {
+                                                boolean ok = rootSnap.exists() && (
+                                                        rootSnap.child("mess_name").exists()
+                                                                || rootSnap.child("admin_uid").exists()
+                                                                || rootSnap.child("member").exists());
+                                                String name = rootSnap.child("mess_name").getValue(String.class);
+                                                callback.onResult(ok, name != null ? name : messId);
+                                            })
+                                            .addOnFailureListener(e -> callback.onResult(false, null));
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("SGT", "admin_uid check failed: " + e.getMessage());
+                                db.getReference().child(messId).get()
+                                        .addOnSuccessListener(rootSnap -> {
+                                            boolean ok = rootSnap.exists() && (
+                                                    rootSnap.child("mess_name").exists()
+                                                            || rootSnap.child("admin_uid").exists()
+                                                            || rootSnap.child("member").exists());
+                                            String name = rootSnap.child("mess_name").getValue(String.class);
+                                            callback.onResult(ok, name != null ? name : messId);
+                                        })
+                                        .addOnFailureListener(err -> {
+                                            Log.e("SGT", "Mess verify failed: " + err.getMessage());
+                                            callback.onResult(false, null);
+                                        });
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("SGT", "Name fetch failed: " + e.getMessage());
-                    // Mess ID was already verified; proceed with the typed value as display name
-                    saveMembership(messId, uid, name, email, messNameInput, rememberMe);
+                    Log.e("SGT", "mess_name check failed: " + e.getMessage());
+                    db.getReference().child(messId).child("admin_uid").get()
+                            .addOnSuccessListener(adminSnap ->
+                                    callback.onResult(adminSnap.exists() && adminSnap.getValue() != null, messId))
+                            .addOnFailureListener(err -> {
+                                Log.e("SGT", "Mess verify failed after auth: " + err.getMessage());
+                                callback.onResult(false, null);
+                            });
                 });
     }
 
@@ -348,6 +427,8 @@ public class CreateAccountActivity extends BaseActivity {
             Map<String, Object> updates = new HashMap<>();
             updates.put(messId + "/admin_uid", uid);
             updates.put(messId + "/mess_name", messDisplayName);
+            // Public lookup so joiners can verify the ID even when mess internals are locked down
+            updates.put("public_mess/" + messId, messDisplayName);
             updates.put(messId + "/member/" + uid + "/role", "Admin");
             updates.put(messId + "/member/" + uid + "/meal_count", 0);
             updates.put(messId + "/member/" + uid + "/name", name);
@@ -357,38 +438,50 @@ public class CreateAccountActivity extends BaseActivity {
             return;
         }
 
-        // Joining: never demote an existing admin / admin_uid owner
-        db.getReference().child(messId).get().addOnSuccessListener(messSnap -> {
-            String adminUid = messSnap.child("admin_uid").getValue(String.class);
-            DataSnapshot existing = messSnap.child("member").child(uid);
-            boolean preserveAdmin = uid.equals(adminUid)
-                    || Boolean.TRUE.equals(existing.child("is_admin").getValue(Boolean.class));
-            String existingRole = existing.child("role").getValue(String.class);
-
-            Map<String, Object> updates = new HashMap<>();
-            updates.put(messId + "/member/" + uid + "/name", name);
-            updates.put(messId + "/member/" + uid + "/mail", mail);
-            if (preserveAdmin) {
-                updates.put(messId + "/member/" + uid + "/is_admin", true);
-                if (existingRole == null || existingRole.trim().isEmpty()) {
-                    updates.put(messId + "/member/" + uid + "/role", "Admin");
-                }
-                // Keep existing role when present
-            } else {
-                updates.put(messId + "/member/" + uid + "/is_admin", false);
-                if (!existing.exists() || existingRole == null || existingRole.trim().isEmpty()) {
-                    updates.put(messId + "/member/" + uid + "/role", "Member");
-                }
-            }
-            applyMembershipUpdates(messId, uid, messDisplayName, rememberMe, updates, preserveAdmin);
+        // Joining: write membership without requiring a full mess read (often denied by RTDB
+        // rules until the user is already a member). Prefer a narrow member/{uid} read; if
+        // that fails, still create a normal Member profile.
+        DatabaseReference memberRef = db.getReference().child(messId).child("member").child(uid);
+        memberRef.get().addOnSuccessListener(existing -> {
+            db.getReference().child(messId).child("admin_uid").get()
+                    .addOnCompleteListener(adminTask -> {
+                        String adminUid = adminTask.isSuccessful() && adminTask.getResult() != null
+                                ? adminTask.getResult().getValue(String.class) : null;
+                        boolean preserveAdmin = uid.equals(adminUid)
+                                || Boolean.TRUE.equals(existing.child("is_admin").getValue(Boolean.class));
+                        String existingRole = existing.child("role").getValue(String.class);
+                        writeJoinerMembership(messId, uid, name, mail, messDisplayName, rememberMe,
+                                existing.exists(), preserveAdmin, existingRole);
+                    });
         }).addOnFailureListener(error -> {
-            resetCreateButton();
-            Log.e("SGT", "Membership read failed: " + error.getMessage());
-            Toast.makeText(this,
-                    getString(R.string.toast_join_failed)
-                            + (error.getMessage() != null ? "\n" + error.getMessage() : ""),
-                    Toast.LENGTH_LONG).show();
+            Log.w("SGT", "Member self-read skipped: " + error.getMessage());
+            writeJoinerMembership(messId, uid, name, mail, messDisplayName, rememberMe,
+                    false, false, null);
         });
+    }
+
+    private void writeJoinerMembership(String messId, String uid, String name, String mail,
+                                       String messDisplayName, boolean rememberMe,
+                                       boolean memberExists, boolean preserveAdmin,
+                                       @Nullable String existingRole) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(messId + "/member/" + uid + "/name", name);
+        updates.put(messId + "/member/" + uid + "/mail", mail);
+        if (preserveAdmin) {
+            updates.put(messId + "/member/" + uid + "/is_admin", true);
+            if (existingRole == null || existingRole.trim().isEmpty()) {
+                updates.put(messId + "/member/" + uid + "/role", "Admin");
+            }
+        } else {
+            updates.put(messId + "/member/" + uid + "/is_admin", false);
+            if (!memberExists || existingRole == null || existingRole.trim().isEmpty()) {
+                updates.put(messId + "/member/" + uid + "/role", "Member");
+            }
+            if (!memberExists) {
+                updates.put(messId + "/member/" + uid + "/meal_count", 0);
+            }
+        }
+        applyMembershipUpdates(messId, uid, messDisplayName, rememberMe, updates, preserveAdmin);
     }
 
     private void applyMembershipUpdates(String messId, String uid, String messDisplayName,
@@ -444,14 +537,28 @@ public class CreateAccountActivity extends BaseActivity {
     }
 
     private void messIdExistance(String messId, MessCheckCallback callback) {
-        // We check for the 'mess_name' field specifically, which we'll make publicly readable
-        db.getReference().child(messId).child("mess_name").get()
+        String id = normalizeMessId(messId);
+        if (id.isEmpty()) {
+            callback.onNotExists();
+            return;
+        }
+        // Prefer mess_name; fall back to admin_uid so older/partial trees still resolve
+        db.getReference().child(id).child("mess_name").get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()) {
                         callback.onExists();
-                    } else {
-                        callback.onNotExists();
+                        return;
                     }
+                    db.getReference().child(id).child("admin_uid").get()
+                            .addOnSuccessListener(adminSnap -> {
+                                if (adminSnap.exists() && adminSnap.getValue() != null) {
+                                    callback.onExists();
+                                } else {
+                                    callback.onNotExists();
+                                }
+                            })
+                            .addOnFailureListener(error -> callback.onError(
+                                    error.getMessage() != null ? error.getMessage() : "Unknown error"));
                 })
                 .addOnFailureListener(error -> {
                     Log.e("SGT", "Mess existence check failed: " + error.getMessage());
@@ -460,13 +567,24 @@ public class CreateAccountActivity extends BaseActivity {
                 });
     }
 
+    /** Mess IDs are stored lowercase (see {@link #makeMessId}); normalize join/login input. */
+    @NonNull
+    private static String normalizeMessId(@Nullable String raw) {
+        if (raw == null) return "";
+        return raw.trim()
+                .toLowerCase(java.util.Locale.US)
+                .replaceAll("\\s+", "");
+    }
+
     private String makeMessId(String messName) {
         String cleanName = messName.trim()
-                .toLowerCase()
+                .toLowerCase(java.util.Locale.US)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
 
-        String suffix = UUID.randomUUID().toString().substring(0, 4).toLowerCase();
+        if (cleanName.isEmpty()) cleanName = "mess";
+
+        String suffix = UUID.randomUUID().toString().substring(0, 4).toLowerCase(java.util.Locale.US);
         return cleanName + "-" + suffix;
     }
 }

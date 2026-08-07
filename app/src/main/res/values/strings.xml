@@ -281,12 +281,12 @@
     <string name="toast_logout_success">Logged out successfully</string>
     <string name="toast_login_success">Login successful!</string>
     <string name="toast_login_failed">Login failed</string>
-    <string name="toast_mess_not_found">Mess not found!</string>
+    <string name="toast_mess_not_found">Mess not found. Check the Mess ID from your invite.</string>
     <string name="toast_language_updated">Language updated</string>
     <string name="toast_no_internet">No internet connection. Please check your network.</string>
     <string name="toast_agree_terms">Please agree to the terms</string>
     <string name="toast_id_exists">Mess ID already exists</string>
-    <string name="toast_id_not_exists">Mess ID not exists</string>
+    <string name="toast_id_not_exists">Mess ID not found. Use the exact ID from your invite (e.g. my-mess-a1b2).</string>
     <string name="toast_mess_check_failed">Could not verify Mess ID: %1$s</string>
     <string name="toast_user_null">User is null</string>
     <string name="toast_already_member">You are already a member of this mess</string>
