@@ -147,7 +147,33 @@ public final class MonthlyReportUtils {
         return report.toString();
     }
 
-    /** Save/overwrite the archived report text for a month (idempotent for previous months). */
+    /** Rebuild the month from live mess data and overwrite the archive. */
+    public static void rebuildAndSave(@NonNull Context context,
+                                      @NonNull String messId,
+                                      @NonNull DataSnapshot messSnapshot,
+                                      @NonNull String monthKey) {
+        String text = buildReport(context, messSnapshot, monthKey);
+        if (!text.trim().isEmpty()) {
+            saveReport(messId, monthKey, text);
+        }
+    }
+
+    /**
+     * After a backdated cash-in / expense, refresh that month's archived summary
+     * so Share → Previous month is not stuck on the old snapshot.
+     */
+    public static void rebuildAndSaveAsync(@Nullable Context context,
+                                           @Nullable String messId,
+                                           @Nullable String monthKey) {
+        if (context == null || messId == null || monthKey == null || messId.isEmpty() || monthKey.isEmpty()) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        FirebaseDatabase.getInstance().getReference().child(messId).get()
+                .addOnSuccessListener(snapshot -> rebuildAndSave(app, messId, snapshot, monthKey));
+    }
+
+    /** Save/overwrite the archived report text for a month. */
     public static void saveReport(@NonNull String messId,
                                   @NonNull String monthKey,
                                   @NonNull String reportText) {
@@ -163,7 +189,8 @@ public final class MonthlyReportUtils {
 
     /**
      * If previous month has no archived text yet, build once from live data and store it.
-     * Does not overwrite an existing archive (settlements must not rewrite last month).
+     * Existing archives are refreshed when cash-in/expense for that month is saved,
+     * or when the user shares that month's summary.
      */
     public static void ensurePreviousMonthArchived(@NonNull Context context,
                                                    @NonNull String messId,

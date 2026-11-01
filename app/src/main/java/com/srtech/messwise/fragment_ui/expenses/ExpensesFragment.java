@@ -3,6 +3,7 @@ package com.srtech.messwise.fragment_ui.expenses;
 import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.HistoryMonthNavigator;
+import com.srtech.messwise.utils.MonthlyReportUtils;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -159,6 +160,13 @@ public class ExpensesFragment extends Fragment {
         return isAdmin || prefs.getBoolean("perm_manage_finances", false);
     }
 
+    private void refreshMonthTotals(String monthKey) {
+        FinanceUtils.refreshDuesForMonth(messId, monthKey);
+        if (isAdded()) {
+            MonthlyReportUtils.rebuildAndSaveAsync(requireContext(), messId, monthKey);
+        }
+    }
+
     private void showExpenseOptionsDialog(ExpenseModel model) {
         String[] options = {"Edit", "Delete"};
         new MaterialAlertDialogBuilder(requireContext())
@@ -215,7 +223,7 @@ public class ExpensesFragment extends Fragment {
                                 if (isAdded()) {
                                     Toast.makeText(getContext(), "Updated", Toast.LENGTH_SHORT).show();
                                     String monthKey = DateUtils.formatMonthKey(model.getTimestampMillis());
-                                    FinanceUtils.refreshDuesForMonth(messId, monthKey);
+                                    refreshMonthTotals(monthKey);
                                 }
                             });
                     dialog.dismiss();
@@ -253,8 +261,7 @@ public class ExpensesFragment extends Fragment {
                     .addOnSuccessListener(aVoid -> {
                         if (isAdded()) {
                             Toast.makeText(getContext(), "Deleted", Toast.LENGTH_SHORT).show();
-                            FinanceUtils.refreshDuesForMonth(messId,
-                                    DateUtils.formatMonthKey(model.getTimestampMillis()));
+                            refreshMonthTotals(DateUtils.formatMonthKey(model.getTimestampMillis()));
                         }
                     });
             dialog.dismiss();
@@ -347,7 +354,7 @@ public class ExpensesFragment extends Fragment {
                     etExpenseAmount.setText("");
                     etExpenseDescription.setText("");
                     Toast.makeText(getContext(), "Expense added successfully", Toast.LENGTH_SHORT).show();
-                    FinanceUtils.refreshDuesForMonth(messId, DateUtils.formatMonthKey(timestamp));
+                    refreshMonthTotals(DateUtils.formatMonthKey(timestamp));
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;

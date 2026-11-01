@@ -187,7 +187,7 @@ public class SummaryFragment extends Fragment {
                 updateStatsUI(snapshot);
                 updateInsights(snapshot);
                 updateChart();
-                // Archive previous month once so settlements don't overwrite the saved summary text
+                // Seed previous-month archive if missing; later cash-in/expense rebuilds it
                 MonthlyReportUtils.ensurePreviousMonthArchived(requireContext(), messId, snapshot);
             }
 
@@ -570,19 +570,16 @@ public class SummaryFragment extends Fragment {
                 .setTitle(R.string.report_pick_title)
                 .setItems(options, (d, which) -> {
                     if (which == 0) {
-                        shareMonthReport(thisMonth, true);
+                        shareMonthReport(thisMonth);
                     } else {
-                        shareMonthReport(prevMonth, false);
+                        shareMonthReport(prevMonth);
                     }
                 })
                 .show();
     }
 
-    /**
-     * @param allowOverwrite when true (current month), refresh the archived copy from live data.
-     *                       when false (previous month), prefer the saved archive and never overwrite it.
-     */
-    private void shareMonthReport(@NonNull String monthKey, boolean allowOverwrite) {
+    /** Always rebuild from live meals / expenses / cash-in so backdated edits are included. */
+    private void shareMonthReport(@NonNull String monthKey) {
         if (messId == null || !isAdded()) return;
 
         db.getReference().child(messId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -590,23 +587,15 @@ public class SummaryFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
 
-                String text = null;
-                if (!allowOverwrite) {
+                String text = MonthlyReportUtils.buildReport(requireContext(), snapshot, monthKey);
+                if (text.trim().isEmpty()) {
                     text = MonthlyReportUtils.readArchivedText(snapshot, monthKey);
                 }
-
-                if (text == null) {
-                    text = MonthlyReportUtils.buildReport(requireContext(), snapshot, monthKey);
-                    if (text.trim().isEmpty()) {
-                        Toast.makeText(requireContext(), R.string.report_previous_unavailable, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    // Save: always for current month; for previous only if not archived yet
-                    if (allowOverwrite || MonthlyReportUtils.readArchivedText(snapshot, monthKey) == null) {
-                        MonthlyReportUtils.saveReport(messId, monthKey, text);
-                    }
+                if (text == null || text.trim().isEmpty()) {
+                    Toast.makeText(requireContext(), R.string.report_previous_unavailable, Toast.LENGTH_SHORT).show();
+                    return;
                 }
-
+                MonthlyReportUtils.saveReport(messId, monthKey, text);
                 shareText(text);
             }
 

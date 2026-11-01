@@ -3,6 +3,8 @@ package com.srtech.messwise.fragment_ui.cash_in;
 import com.srtech.messwise.utils.DateUtils;
 import com.srtech.messwise.utils.FinanceUtils;
 import com.srtech.messwise.utils.HistoryMonthNavigator;
+import com.srtech.messwise.utils.MonthlyReportUtils;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -70,8 +72,10 @@ public class CashInFragment extends Fragment {
     private TextView tvAmountPreview, tvWalletBalance;
     private TextView chip500, chip1000, chip2000, chip5000;
     private LinearLayout layoutEmptyTransactions, layoutMemberPicker, btnSelectMember;
-    private TextView tvSelectedMember, tvSelectedMemberInitials;
+    private View btnSelectDate;
+    private TextView tvSelectedMember, tvSelectedMemberInitials, tvCashInDate;
     private RecyclerView rvRecentTransactions;
+    private final Calendar selectedDate = Calendar.getInstance();
     private View btnViewAll;
     private FirebaseDatabase db;
     private double totalCashIn = 0, totalExpenses = 0, settledExpenses = 0;
@@ -129,6 +133,9 @@ public class CashInFragment extends Fragment {
         btnSelectMember = view.findViewById(R.id.btnSelectMember);
         tvSelectedMember = view.findViewById(R.id.tvSelectedMember);
         tvSelectedMemberInitials = view.findViewById(R.id.tvSelectedMemberInitials);
+        btnSelectDate = view.findViewById(R.id.btnSelectDate);
+        tvCashInDate = view.findViewById(R.id.tvCashInDate);
+        refreshDateLabel();
 
         cashInAdapter = new CashInAdapter();
         rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -289,7 +296,45 @@ public class CashInFragment extends Fragment {
             addCashIn();
         });
 
+        if (btnSelectDate != null) {
+            btnSelectDate.setOnClickListener(v -> showDatePicker(selectedDate, this::refreshDateLabel));
+        }
+
         btnViewAll.setOnClickListener(v -> showAllTransactionsDialog());
+    }
+
+    private void refreshDateLabel() {
+        if (tvCashInDate != null) {
+            tvCashInDate.setText(DateUtils.formatMealDay(selectedDate.getTime()));
+        }
+    }
+
+    private void showDatePicker(@NonNull Calendar date, @NonNull Runnable onPicked) {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                requireContext(),
+                (view, year, month, dayOfMonth) -> {
+                    date.set(Calendar.YEAR, year);
+                    date.set(Calendar.MONTH, month);
+                    date.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    onPicked.run();
+                },
+                date.get(Calendar.YEAR),
+                date.get(Calendar.MONTH),
+                date.get(Calendar.DAY_OF_MONTH)
+        );
+        datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        datePickerDialog.setTitle(getString(R.string.dialog_select_date));
+        datePickerDialog.show();
+    }
+
+    /** Use exact now when the picked day is today so history time stays accurate. */
+    private long resolveSelectedTimestampMillis() {
+        Calendar now = Calendar.getInstance();
+        if (selectedDate.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+                && selectedDate.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)) {
+            return System.currentTimeMillis();
+        }
+        return selectedDate.getTimeInMillis();
     }
 
     private void setChipListener(TextView chip, String amount) {
@@ -606,7 +651,7 @@ public class CashInFragment extends Fragment {
             return;
         }
 
-        long timestampMillis = System.currentTimeMillis();
+        long timestampMillis = resolveSelectedTimestampMillis();
         String currentMonthKey = DateUtils.formatMonthKey(timestampMillis);
         String timestamp = DateUtils.formatTimestamp(timestampMillis);
         final double finalAmountToAdd = amountToAdd;
@@ -664,6 +709,7 @@ public class CashInFragment extends Fragment {
                         cashInData.put("amount", finalAmountToAdd);
                         cashInData.put("timestamp", timestamp);
                         cashInData.put("timestampMillis", timestampMillis);
+                        cashInData.put("balanceMonthKey", currentMonthKey);
                         cashInData.put("status", "success");
                         cashInData.put("type", "cash_in");
                         cashInData.put("updatedBalance", updatedBalance);
@@ -684,7 +730,7 @@ public class CashInFragment extends Fragment {
                                                 Toast.LENGTH_SHORT).show();
                                     }
                                     etAmount.setText("");
-                                    FinanceUtils.refreshDuesForMonth(messId, currentMonthKey);
+                                    refreshMonthTotals(currentMonthKey);
                                 })
                                 .addOnFailureListener(e -> {
                                     btnAddMoney.setEnabled(true);
@@ -714,12 +760,29 @@ public class CashInFragment extends Fragment {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_cash_in, null);
         EditText etAmount = dialogView.findViewById(R.id.etAmount);
         TextView tvMemberName = dialogView.findViewById(R.id.tvMemberName);
+        TextView tvEditDate = dialogView.findViewById(R.id.tvCashInDate);
+        View btnEditDate = dialogView.findViewById(R.id.btnSelectDate);
         View btnUpdate = dialogView.findViewById(R.id.btnUpdate);
         View btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        Calendar editDate = Calendar.getInstance();
+        if (model.getTimestampMillis() > 0) {
+            editDate.setTimeInMillis(model.getTimestampMillis());
+        }
 
         tvMemberName.setText(model.getUserName());
         etAmount.setText(model.getAmountText());
         etAmount.setSelection(etAmount.getText().length());
+        if (tvEditDate != null) {
+            tvEditDate.setText(DateUtils.formatMealDay(editDate.getTime()));
+        }
+        if (btnEditDate != null) {
+            btnEditDate.setOnClickListener(v -> showDatePicker(editDate, () -> {
+                if (tvEditDate != null) {
+                    tvEditDate.setText(DateUtils.formatMealDay(editDate.getTime()));
+                }
+            }));
+        }
         
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -742,7 +805,7 @@ public class CashInFragment extends Fragment {
                     etAmount.setError(getString(R.string.cash_in_invalid_amount));
                     return;
                 }
-                updateCashIn(model, parsed);
+                updateCashIn(model, parsed, editDate.getTimeInMillis());
                 dialog.dismiss();
             } catch (NumberFormatException e) {
                 etAmount.setError(getString(R.string.cash_in_invalid_amount));
@@ -753,50 +816,106 @@ public class CashInFragment extends Fragment {
         dialog.show();
     }
 
-    private void updateCashIn(CashInModel model, double newAmount) {
+    private void updateCashIn(CashInModel model, double newAmount, long newTimestampMillis) {
         double oldAmount = model.getAmountValue();
-        double diff = newAmount - oldAmount;
-        String monthKey = model.resolveBalanceMonthKey();
+        String oldMonthKey = model.resolveBalanceMonthKey();
+        String newMonthKey = DateUtils.formatMonthKey(newTimestampMillis);
+        String newTimestamp = DateUtils.formatTimestamp(newTimestampMillis);
 
-        // 1. Update member balance
-        db.getReference().child(messId).child("member").child(model.getUserId()).child("monthly_balance").child(monthKey)
+        if (oldMonthKey.equals(newMonthKey)) {
+            applyBalanceDelta(model.getUserId(), oldMonthKey, newAmount - oldAmount, () ->
+                    writeCashInEdits(model, newAmount, newTimestamp, newTimestampMillis, newMonthKey,
+                            () -> refreshMonthTotals(oldMonthKey),
+                            () -> applyBalanceDelta(model.getUserId(), oldMonthKey, oldAmount - newAmount, null, null)),
+                    null);
+            return;
+        }
+
+        applyBalanceDelta(model.getUserId(), oldMonthKey, -oldAmount, () ->
+                applyBalanceDelta(model.getUserId(), newMonthKey, newAmount, () ->
+                        writeCashInEdits(model, newAmount, newTimestamp, newTimestampMillis, newMonthKey, () -> {
+                            refreshMonthTotals(oldMonthKey);
+                            refreshMonthTotals(newMonthKey);
+                        }, () -> {
+                            applyBalanceDelta(model.getUserId(), newMonthKey, -newAmount, null, null);
+                            applyBalanceDelta(model.getUserId(), oldMonthKey, oldAmount, null, null);
+                        }),
+                        () -> applyBalanceDelta(model.getUserId(), oldMonthKey, oldAmount, null, null)),
+                null);
+    }
+
+    private void writeCashInEdits(CashInModel model, double newAmount, String timestamp,
+                                  long timestampMillis, String monthKey,
+                                  @Nullable Runnable onSuccess, @Nullable Runnable onWriteFail) {
+        model.setAmountValue(newAmount);
+        model.setTimestamp(timestamp);
+        model.setTimestampMillis(timestampMillis);
+        model.setBalanceMonthKey(monthKey);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("amount", newAmount);
+        updates.put("timestamp", timestamp);
+        updates.put("timestampMillis", timestampMillis);
+        updates.put("balanceMonthKey", monthKey);
+        db.getReference().child(messId).child("cash_in").child(model.getTransactionId())
+                .updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), R.string.common_updated, Toast.LENGTH_SHORT).show();
+                    if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(e -> {
+                    if (onWriteFail != null) onWriteFail.run();
+                    Toast.makeText(getContext(), R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void applyBalanceDelta(@Nullable String memberUserId, @Nullable String monthKey, double delta,
+                                   @Nullable Runnable onSuccess, @Nullable Runnable onFail) {
+        if (messId == null || memberUserId == null || monthKey == null) {
+            if (onFail != null) onFail.run();
+            return;
+        }
+        if (delta == 0) {
+            if (onSuccess != null) onSuccess.run();
+            return;
+        }
+        db.getReference().child(messId).child("member").child(memberUserId)
+                .child("monthly_balance").child(monthKey)
                 .runTransaction(new com.google.firebase.database.Transaction.Handler() {
                     @NonNull
                     @Override
-                    public com.google.firebase.database.Transaction.Result doTransaction(@NonNull com.google.firebase.database.MutableData currentData) {
+                    public com.google.firebase.database.Transaction.Result doTransaction(
+                            @NonNull com.google.firebase.database.MutableData currentData) {
                         double current = 0;
                         if (currentData.getValue() != null) {
                             try {
                                 current = Double.parseDouble(String.valueOf(currentData.getValue()));
                             } catch (Exception ignored) {}
                         }
-                        currentData.setValue(current + diff);
+                        currentData.setValue(current + delta);
                         return com.google.firebase.database.Transaction.success(currentData);
                     }
 
                     @Override
-                    public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                    public void onComplete(@Nullable DatabaseError error, boolean committed,
+                                           @Nullable DataSnapshot currentData) {
                         if (!isAdded()) return;
                         if (committed && error == null) {
-                            // Write amount as a number (not String) so Summary can read Double.
-                            model.setAmountValue(newAmount);
-                            java.util.Map<String, Object> updates = new java.util.HashMap<>();
-                            updates.put("amount", newAmount);
-                            db.getReference().child(messId).child("cash_in").child(model.getTransactionId())
-                                    .updateChildren(updates)
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(getContext(), R.string.common_updated, Toast.LENGTH_SHORT).show();
-                                        FinanceUtils.refreshDuesForMonth(messId, monthKey);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        adjustMemberBalance(model.getUserId(), monthKey, -diff);
-                                        Toast.makeText(getContext(), R.string.toast_update_failed, Toast.LENGTH_SHORT).show();
-                                    });
-                        } else if (error != null) {
-                            Toast.makeText(getContext(), R.string.toast_adjust_failed, Toast.LENGTH_SHORT).show();
+                            if (onSuccess != null) onSuccess.run();
+                        } else {
+                            if (onFail != null) onFail.run();
+                            if (error != null) {
+                                Toast.makeText(getContext(), R.string.toast_adjust_failed, Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 });
+    }
+
+    private void refreshMonthTotals(@Nullable String monthKey) {
+        FinanceUtils.refreshDuesForMonth(messId, monthKey);
+        if (isAdded()) {
+            MonthlyReportUtils.rebuildAndSaveAsync(requireContext(), messId, monthKey);
+        }
     }
 
     private boolean canManageFinances() {
@@ -878,7 +997,7 @@ public class CashInFragment extends Fragment {
                                     .removeValue()
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(getContext(), R.string.toast_trans_deleted, Toast.LENGTH_SHORT).show();
-                                        FinanceUtils.refreshDuesForMonth(messId, transactionMonthKey);
+                                        refreshMonthTotals(transactionMonthKey);
                                     })
                                     .addOnFailureListener(e -> {
                                         adjustMemberBalance(model.getUserId(), transactionMonthKey, finalAmount);
